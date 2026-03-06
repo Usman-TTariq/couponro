@@ -1,0 +1,13 @@
+# Couponro – robots.txt
+# https://www.robotstxt.org/robotstxt.html
+
+User-agent: *
+Allow: /
+
+# Don't index admin and API (no HTML content)
+Disallow: /admin
+Disallow: /admin/
+Disallow: /api/
+
+# Sitemap (update the host if your domain is different)
+Sitemap: https://couponro.com/sitemap.xml
