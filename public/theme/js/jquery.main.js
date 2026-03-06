@@ -1,14 +1,16 @@
-// page init
+// page init (try-catch so missing plugins don't break React app)
 jQuery(function(){
-	initFitVids();
-	initCarousel();
-	initMobileNav();
-	initParallaxBg();
-	initProgressBar();
-	initCycleCarousel();
-	initFormValidation();
-	initBackgroundResize();
-	jQuery('input, textarea').placeholder();
+	try {
+		initFitVids();
+		initCarousel();
+		initMobileNav();
+		initParallaxBg();
+		initProgressBar();
+		initCycleCarousel();
+		initFormValidation();
+		initBackgroundResize();
+		if (jQuery.fn.placeholder) jQuery('input, textarea').placeholder();
+	} catch (e) { /* theme inits are optional */ }
 });
 
 // Progress Bar
@@ -230,9 +232,9 @@ function initParallaxBg() {
 	});
 }
 
-// handle flexible video size
+// handle flexible video size (guard: FitVids plugin may not be loaded)
 function initFitVids() {
-	jQuery('#main').fitVids();
+	if (jQuery.fn.fitVids) jQuery('#main').fitVids();
 }
 
 (function($) {

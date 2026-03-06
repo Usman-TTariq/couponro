@@ -524,14 +524,18 @@ function ThemeScripts() {
         s.onerror = () => reject(new Error(`Failed to load ${src}`));
         document.body.appendChild(s);
       });
-    const base = "/theme/js";
-    loadScript(`${base}/jquery-1.11.2.min.js`)
-      .then(() => loadScript(`${base}/bootstrap.min.js`))
-      .then(() => loadScript(`${base}/jquery.main.js`))
-      .then(() => {
-        (window as unknown as { __nirvanaLoaded?: boolean }).__nirvanaLoaded = true;
-      })
-      .catch(() => {});
+    const run = () => {
+      const base = "/theme/js";
+      loadScript(`${base}/jquery-1.11.2.min.js`)
+        .then(() => loadScript(`${base}/bootstrap.min.js`))
+        .then(() => loadScript(`${base}/jquery.main.js`))
+        .then(() => {
+          (window as unknown as { __nirvanaLoaded?: boolean }).__nirvanaLoaded = true;
+        })
+        .catch(() => {});
+    };
+    const t = setTimeout(run, 100);
+    return () => clearTimeout(t);
   }, []);
   return null;
 }
