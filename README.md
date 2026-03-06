@@ -56,6 +56,16 @@ npm run dev
 - **Public:** Home page lists stores and latest coupons; each store has a page at `/stores/[slug]`.
 - **Admin:** Password-protected dashboard at `/admin` to create, edit, and delete stores and coupons. Data is read/written via Supabase.
 
+## Images on Vercel / Live
+
+For the home page hero and grid images to work on the live site:
+
+- **Commit all images:** Ensure every file in `public/` (e.g. `img01.jpg`, `img02.jpg`, …) is committed and pushed. Vercel only deploys what’s in Git.
+- **Check on GitHub:** In your repo, open `public/` and confirm the image files are there and have real size (not tiny LFS pointer files).
+- **Headers:** `vercel.json` sets `Content-Type: image/jpeg` and cache headers for `*.jpg`/`*.jpeg` so the browser treats them as images.
+
+If images still look wrong on live, try a fresh deploy (Vercel → Deployments → Redeploy) and hard refresh (Ctrl+Shift+R) or clear cache.
+
 ## Deploy (e.g. Vercel)
 
 1. Set the same environment variables in your host (Vercel → Project → Settings → Environment Variables).

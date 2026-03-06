@@ -109,7 +109,7 @@ export default function HomeNirvanaContent() {
                     <div className="nav-posts">
                       <strong className="title"><Link href="/blog" onClick={closeNav}>POPULAR POSTS</Link></strong>
                       <Link href="/blog" className="banner-gallery" onClick={closeNav}>
-                        <img src={IMG_NAV[0]} alt="" />
+                        <img src={IMG_NAV[0]} alt="" loading="eager" decoding="async" />
                         <div className="post-over">
                           <div className="box">
                             <div className="block">
@@ -124,7 +124,7 @@ export default function HomeNirvanaContent() {
                         </div>
                       </Link>
                       <Link href="/coupons" className="banner-gallery" onClick={closeNav}>
-                        <img src={IMG_NAV[1]} alt="" />
+                        <img src={IMG_NAV[1]} alt="" loading="eager" decoding="async" />
                         <div className="post-over">
                           <div className="box">
                             <div className="block">
@@ -139,7 +139,7 @@ export default function HomeNirvanaContent() {
                         </div>
                       </Link>
                       <Link href="/blog" className="banner-gallery" onClick={closeNav}>
-                        <img src={IMG_NAV[2]} alt="" />
+                        <img src={IMG_NAV[2]} alt="" loading="eager" decoding="async" />
                         <div className="post-over quotes">
                           <div className="box">
                             <div className="block">
@@ -177,7 +177,7 @@ export default function HomeNirvanaContent() {
                         <div className="col-sm-4 col-xs-12">
                           <Link href="/blog" className="banner-gallery">
                             <div className="bg-stretch">
-                              <img src={HERO_IMGS[0]} alt="Featured" />
+                              <img src={HERO_IMGS[0]} alt="Featured" loading="eager" decoding="async" />
                             </div>
                             <div className="post-over">
                               <div className="box">
@@ -215,7 +215,7 @@ export default function HomeNirvanaContent() {
                         <div className="col-sm-4 col-xs-12">
                           <Link href="/coupons" className="banner-gallery">
                             <div className="bg-stretch">
-                              <img src={HERO_IMGS[2]} alt="Coupon codes" />
+                              <img src={HERO_IMGS[2]} alt="Coupon codes" loading="eager" decoding="async" />
                             </div>
                             <div className="post-over">
                               <div className="box">
@@ -247,7 +247,7 @@ export default function HomeNirvanaContent() {
                         <div className="slideset">
                           <div className="slide">
                             <div className="bg-stretch">
-                              <img src={IMG_950[0]} alt="Gallery" />
+                              <img src={IMG_950[0]} alt="Gallery" loading="eager" decoding="async" />
                             </div>
                             <div className="post-over">
                               <div className="box">
@@ -273,7 +273,7 @@ export default function HomeNirvanaContent() {
                   <div className="row">
                     <article className="banner-gallery trending">
                       <div className="bg-stretch">
-                        <img src={IMG_950[1]} alt="Trending" />
+                        <img src={IMG_950[1]} alt="Trending" loading="eager" decoding="async" />
                       </div>
                       <div className="post-over">
                         <div className="box">
@@ -300,7 +300,7 @@ export default function HomeNirvanaContent() {
                   <div className="row">
                     <div className="banner-gallery">
                       <div className="bg-stretch">
-                        <img src={IMG_634[0]} alt="Quote" />
+                        <img src={IMG_634[0]} alt="Quote" loading="eager" decoding="async" />
                       </div>
                       <div className="post-over quotes">
                         <div className="box">
@@ -323,7 +323,7 @@ export default function HomeNirvanaContent() {
                   <div className="row">
                     <article className="banner-gallery">
                       <div className="bg-stretch">
-                        <img src={IMG_634[1]} alt="Stores" />
+                        <img src={IMG_634[1]} alt="Stores" loading="eager" decoding="async" />
                       </div>
                       <div className="post-over">
                         <div className="box">
@@ -370,7 +370,7 @@ export default function HomeNirvanaContent() {
                   <div className="row">
                     <div className="banner-gallery parallax-holder">
                       <div className="parallax-frame">
-                        <img src={IMG_FULLWIDTH} height={1333} width={2000} alt="Fullwidth" />
+                        <img src={IMG_FULLWIDTH} height={1333} width={2000} alt="Fullwidth" loading="eager" decoding="async" />
                       </div>
                       <div className="post-over">
                         <div className="box">
@@ -417,7 +417,7 @@ export default function HomeNirvanaContent() {
                   <div className="row">
                     <article className="banner-gallery">
                       <div className="bg-stretch">
-                        <img src={IMG_950[3]} alt="Deals" />
+                        <img src={IMG_950[3]} alt="Deals" loading="eager" decoding="async" />
                       </div>
                       <div className="post-over">
                         <div className="box">
@@ -479,7 +479,7 @@ export default function HomeNirvanaContent() {
                     {[1, 2, 3, 4, 5, 6].map((i) => (
                       <li key={i}>
                         <Link href="/blog">
-                          <img className="img-responsive" src={IMG_190[i - 1]} alt="" />
+                          <img className="img-responsive" src={IMG_190[i - 1]} alt="" loading="eager" decoding="async" />
                           <span className="btn-instagram"><i className="fa fa-instagram" /></span>
                           <div className="insta-over">
                             <span className="title">Blog</span>
@@ -534,7 +534,7 @@ function ThemeScripts() {
         })
         .catch(() => {});
     };
-    const t = setTimeout(run, 100);
+    const t = setTimeout(run, 800);
     return () => clearTimeout(t);
   }, []);
   return null;
