@@ -1,0 +1,482 @@
+"use client";
+
+import { useState, useMemo, useEffect } from "react";
+import Link from "next/link";
+import type { Store } from "@/types/store";
+import CouponPopup from "@/components/CouponPopup";
+
+function getCouponBadge(c: Store): string {
+  const label = (c.badgeLabel ?? c.couponTitle ?? "").trim();
+  const match = label.match(/(\d+%|\$\d+|FREE|free)/i);
+  if (match) return match[1].toUpperCase();
+  if (label.length > 0) return label.slice(0, 12);
+  return c.couponCode ? "CODE" : "DEAL";
+}
+
+function hasActualCode(c: Store): boolean {
+  return Boolean((c.couponCode ?? (c as Record<string, unknown>).coupon_code ?? "").toString().trim().length > 0);
+}
+
+function isCodeCoupon(c: Store): boolean {
+  const type = (c.couponType ?? "").toLowerCase();
+  if (type === "deal") return false;
+  const hasCode = hasActualCode(c);
+  return hasCode;
+}
+
+function getStoreSlug(s: Store): string {
+  return s.slug || s.name?.toLowerCase().replace(/\s+/g, "-") || s.id || "";
+}
+
+export default function StorePageContent({
+  store,
+  storeCoupons,
+  displayName,
+  otherStores,
+  slug = "",
+  initialPopupId,
+}: {
+  store: Store | null;
+  storeCoupons: Store[];
+  displayName: string;
+  otherStores: Store[];
+  slug?: string;
+  initialPopupId?: string;
+}) {
+  const [activeTab, setActiveTab] = useState<"code" | "deal">("code");
+  const [search, setSearch] = useState("");
+  const [popupCoupon, setPopupCoupon] = useState<Store | null>(null);
+
+  useEffect(() => {
+    if (!initialPopupId?.trim()) return;
+    const c = storeCoupons.find((x) => (x.id ?? "").trim() === initialPopupId.trim());
+    if (c) setPopupCoupon(c);
+  }, [initialPopupId, storeCoupons]);
+
+  const codeCoupons = useMemo(() => storeCoupons.filter(isCodeCoupon), [storeCoupons]);
+  const dealCoupons = useMemo(() => storeCoupons.filter((c) => !isCodeCoupon(c)), [storeCoupons]);
+
+  const filteredByTab = activeTab === "code" ? codeCoupons : dealCoupons;
+  const filtered = useMemo(() => {
+    let list = filteredByTab;
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      list = list.filter(
+        (c) =>
+          (c.couponTitle ?? "").toLowerCase().includes(q) ||
+          (c.couponCode ?? "").toLowerCase().includes(q) ||
+          (c.description ?? "").toLowerCase().includes(q)
+      );
+    }
+    /* Codes first (items with actual coupon code), then deals */
+    return [...list].sort((a, b) => (hasActualCode(b) ? 1 : 0) - (hasActualCode(a) ? 1 : 0));
+  }, [filteredByTab, search]);
+
+  const description = store?.description || storeCoupons[0]?.description || "";
+  const aboutText = store?.moreAboutStore || store?.description || description;
+  const shoppingTips = store?.shoppingTipsTitle && (store.shoppingTipsBullets?.length ?? 0) > 0;
+  const faqs = store?.faqs && store.faqs.length > 0 ? store.faqs : [];
+
+  const hasSidebarContent =
+    (store?.sidebarContent ?? "").trim().length > 0 ||
+    (store?.whyTrustUs ?? "").trim().length > 0 ||
+    (store?.moreInformation ?? "").trim().length > 0;
+
+  return (
+    <main className="flex-1 mx-auto w-full max-w-6xl px-3 sm:px-6 py-4 sm:py-8">
+      {/* Breadcrumbs */}
+      <nav className="text-xs sm:text-sm text-rebecca mb-3 sm:mb-4" aria-label="Breadcrumb">
+        <Link href="/" className="hover:text-lobster">Home</Link>
+        <span className="mx-2">›</span>
+        <Link href="/stores" className="hover:text-lobster">Stores</Link>
+        <span className="mx-2">›</span>
+        <span className="text-space font-medium">{displayName}</span>
+      </nav>
+
+      <div className="flex flex-col lg:flex-row gap-8 lg:gap-10">
+        {/* Main content column */}
+        <div className="flex-1 min-w-0">
+      {/* Title + count + View all */}
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+        <h2 className="text-base sm:text-xl font-bold text-space">
+          {displayName} Coupons &amp; Promo Codes
+        </h2>
+        <span className="text-rebecca font-medium text-sm sm:text-base">
+          {storeCoupons.length} Coupon{storeCoupons.length !== 1 ? "s" : ""} &amp; Deal{storeCoupons.length !== 1 ? "s" : ""} available
+        </span>
+        {storeCoupons.length > 0 && (
+          <Link
+            href="#coupon-list"
+            className="text-lobster font-semibold hover:underline"
+          >
+            View all coupons
+          </Link>
+        )}
+      </div>
+
+      {/* Tabs */}
+      {storeCoupons.length > 0 && (
+        <div className="flex gap-1 sm:gap-2 mb-3 sm:mb-4 border-b-2 border-rebecca/20 overflow-x-auto">
+          <button
+            type="button"
+            onClick={() => setActiveTab("code")}
+            className={`px-3 sm:px-5 py-2.5 sm:py-3 font-semibold text-xs sm:text-sm transition-colors border-b-2 -mb-0.5 flex-shrink-0 ${
+              activeTab === "code"
+                ? "border-lobster text-lobster"
+                : "border-transparent text-space hover:text-rebecca"
+            }`}
+          >
+            Coupon Codes ({codeCoupons.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("deal")}
+            className={`px-3 sm:px-5 py-2.5 sm:py-3 font-semibold text-xs sm:text-sm transition-colors border-b-2 -mb-0.5 flex-shrink-0 ${
+              activeTab === "deal"
+                ? "border-lobster text-lobster"
+                : "border-transparent text-space hover:text-rebecca"
+            }`}
+          >
+            Deals ({dealCoupons.length})
+          </button>
+        </div>
+      )}
+
+      {/* Search this store */}
+      {storeCoupons.length > 1 && (
+        <div className="mb-3 sm:mb-4">
+          <label htmlFor="store-search" className="sr-only">Search this store</label>
+          <input
+            id="store-search"
+            type="search"
+            placeholder="Search this store"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full max-w-sm rounded-xl border-2 border-rebecca/20 bg-white px-3 sm:px-4 py-2 sm:py-2.5 text-sm text-space placeholder:text-slate-400 focus:border-rebecca focus:ring-2 focus:ring-rebecca/20 outline-none"
+          />
+        </div>
+      )}
+
+      {/* Top [Store] Coupons / List */}
+      <section id="coupon-list" className="mb-8 sm:mb-10">
+        <h3 className="text-base sm:text-lg font-bold text-space mb-3 sm:mb-4">
+          Top {displayName} Coupons
+        </h3>
+        {filtered.length === 0 ? (
+          <p className="text-rebecca py-6">
+            {search.trim() ? "No offers match your search." : `No ${activeTab === "code" ? "coupon codes" : "deals"} right now.`}
+          </p>
+        ) : (
+          <ul className="space-y-4">
+            {filtered.map((c) => (
+              <StoreCouponCard
+                key={c.id}
+                coupon={c}
+                displayName={displayName}
+                storeLogoUrl={store?.logoUrl}
+                onOpenPopup={() => {
+              const copyId = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `c_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+              const base = slug ? `/stores/${encodeURIComponent(slug)}` : "/coupons";
+              const trackingUrl = (c.trackingUrl ?? c.storeWebsiteUrl ?? c.link ?? store?.trackingUrl ?? store?.storeWebsiteUrl ?? "").toString().trim();
+              window.open(`${base}?popup=${encodeURIComponent(c.id)}&copy=${encodeURIComponent(copyId)}`, "_blank", "noopener,noreferrer");
+              if (trackingUrl && trackingUrl !== "#") window.location.href = trackingUrl;
+            }}
+              />
+            ))}
+          </ul>
+        )}
+
+        <CouponPopup
+          coupon={popupCoupon}
+          onClose={() => setPopupCoupon(null)}
+          storeLogoUrl={store?.logoUrl}
+          fallbackUrl={store?.trackingUrl?.trim() || store?.storeWebsiteUrl?.trim() || ""}
+        />
+      </section>
+
+      {/* SEO / Content blocks */}
+      <div className="space-y-10 rounded-2xl border-2 border-rebecca/15 bg-white p-6 sm:p-8 shadow-md">
+        {aboutText && (
+          <section>
+            <h3 className="text-lg font-bold text-space mb-3">About {displayName}</h3>
+            <p className="text-rebecca leading-relaxed">{aboutText}</p>
+          </section>
+        )}
+
+        {shoppingTips && (
+          <section>
+            <h3 className="text-lg font-bold text-space mb-3">
+              How to Use {displayName} Coupon Codes
+            </h3>
+            <p className="text-rebecca font-medium mb-2">{store?.shoppingTipsTitle}</p>
+            <ul className="list-disc list-inside text-rebecca space-y-1">
+              {(store?.shoppingTipsBullets ?? []).map((bullet, i) => (
+                <li key={i}>{bullet}</li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {!shoppingTips && storeCoupons.length > 0 && (
+          <section>
+            <h3 className="text-lg font-bold text-space mb-3">
+              How to Use {displayName} Coupon Codes
+            </h3>
+            <p className="text-rebecca leading-relaxed">
+              Copy the code from Couponro and paste it at checkout on {displayName}&apos;s website to get the discount. Some offers are deal links—click &quot;Get Deal&quot; to go to the store and the offer will apply automatically.
+            </p>
+          </section>
+        )}
+
+        <section>
+          <h3 className="text-lg font-bold text-space mb-3">
+            How to Never Miss a {displayName} Coupon
+          </h3>
+          <p className="text-rebecca leading-relaxed">
+            Bookmark this page and check back often. We update {displayName} coupons and deals regularly. You can also visit Couponro&apos;s homepage to see the latest offers from all your favorite stores.
+          </p>
+        </section>
+
+        {faqs.length > 0 && (
+          <section>
+            <h3 className="text-lg font-bold text-space mb-4">FAQs</h3>
+            <ul className="space-y-4">
+              {faqs.map((faq, i) => (
+                <li key={i}>
+                  <h4 className="font-semibold text-space">{faq.question}</h4>
+                  <p className="text-rebecca text-sm mt-1">{faq.answer}</p>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </div>
+
+      <p className="mt-10">
+        <Link href="/stores" className="text-rebecca hover:text-lobster font-semibold">
+          ← All stores
+        </Link>
+      </p>
+        </div>
+
+        {/* Sidebar: store info + deals + admin content */}
+        <aside className="lg:w-96 flex-shrink-0">
+          <div className="lg:sticky lg:top-6 space-y-5">
+            {/* Store logo, title, description */}
+            <div className="rounded-2xl border-2 border-rebecca/20 bg-white p-5 shadow-md">
+              {store?.logoUrl ? (
+                <div className="w-full flex justify-center mb-4">
+                  <div className="w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center bg-almond/50 rounded-xl p-2">
+                    <img
+                      src={store.logoUrl}
+                      alt={displayName}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="w-full flex justify-center mb-4">
+                  <div className="w-24 h-24 rounded-xl bg-almond flex items-center justify-center">
+                    <span className="text-4xl font-bold text-rebecca">{displayName?.charAt(0) ?? "?"}</span>
+                  </div>
+                </div>
+              )}
+              <h2 className="text-lg font-bold text-space text-center">{displayName}</h2>
+              {description && (
+                <p className="mt-2 text-rebecca text-sm leading-relaxed text-center">
+                  {description}
+                </p>
+              )}
+            </div>
+
+            {/* Top Deals Right Now – always show when there are coupons */}
+            {storeCoupons.length > 0 && (
+              <div className="rounded-2xl border-2 border-rebecca/20 bg-white p-5 shadow-md">
+                <h3 className="text-base font-bold text-space mb-4">
+                  Top {displayName} Deals Right Now
+                </h3>
+                <ul className="space-y-3">
+                  {storeCoupons.slice(0, 5).map((c) => {
+                    const isCode = isCodeCoupon(c);
+                    const title = c.couponTitle?.trim() || c.badgeLabel?.trim() || "Offer";
+                    const logoUrl = store?.logoUrl || c.logoUrl || "";
+                    return (
+                      <li key={c.id} className="flex items-center gap-3 rounded-xl bg-almond/50 p-3">
+                        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-almond flex items-center justify-center overflow-hidden p-0.5">
+                          {logoUrl ? (
+                            <img src={logoUrl} alt={displayName} className="w-full h-full object-contain" />
+                          ) : (
+                            <span className="text-lobster font-bold text-xs text-center leading-tight">
+                              {getCouponBadge(c)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold text-space text-sm line-clamp-2">{title}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                    const copyId = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `c_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+                    const base = slug ? `/stores/${encodeURIComponent(slug)}` : "/coupons";
+                    const trackingUrl = (c.trackingUrl ?? c.storeWebsiteUrl ?? c.link ?? store?.trackingUrl ?? store?.storeWebsiteUrl ?? "").toString().trim();
+                    window.open(`${base}?popup=${encodeURIComponent(c.id)}&copy=${encodeURIComponent(copyId)}`, "_blank", "noopener,noreferrer");
+                    if (trackingUrl && trackingUrl !== "#") window.location.href = trackingUrl;
+                  }}
+                          className="flex-shrink-0 rounded-lg bg-lobster text-white text-xs font-semibold uppercase tracking-wide px-3 py-1.5 hover:bg-lobster/90 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+                        >
+                          {isCode ? "GET CODE" : "GET DEAL"}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+
+            {/* Sidebar HTML from admin */}
+            {store?.sidebarContent?.trim() && (
+              <div className="rounded-2xl border-2 border-rebecca/20 bg-white p-5 shadow-md">
+                <h3 className="text-base font-bold text-space mb-3">
+                  {displayName} Codes &amp; Coupons
+                </h3>
+                <div
+                  className="store-sidebar-html text-rebecca text-sm leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: store.sidebarContent.trim() }}
+                />
+              </div>
+            )}
+
+            {/* Why Trust Us */}
+            {store?.whyTrustUs?.trim() && (
+              <div className="rounded-2xl border-2 border-rebecca/20 bg-white p-5 shadow-md">
+                <h3 className="text-base font-bold text-space mb-3">Why Trust Us</h3>
+                <p className="text-rebecca text-sm leading-relaxed whitespace-pre-line">
+                  {store.whyTrustUs.trim()}
+                </p>
+              </div>
+            )}
+
+            {/* More Information */}
+            {store?.moreInformation?.trim() && (
+              <div className="rounded-2xl border-2 border-rebecca/20 bg-white p-5 shadow-md">
+                <h3 className="text-base font-bold text-space mb-3">More Information</h3>
+                <p className="text-rebecca text-sm leading-relaxed whitespace-pre-line">
+                  {store.moreInformation.trim()}
+                </p>
+              </div>
+            )}
+
+            {/* Related Stores – always in sidebar */}
+            {otherStores.length > 0 && (
+              <div className="rounded-2xl border-2 border-rebecca/20 bg-white p-5 shadow-md">
+                <h3 className="text-base font-bold text-space mb-4">Related Stores</h3>
+                <ul className="space-y-2">
+                  {otherStores.slice(0, 6).map((s) => (
+                    <li key={s.id}>
+                      <Link
+                        href={`/stores/${encodeURIComponent(getStoreSlug(s))}`}
+                        className="flex items-center gap-3 rounded-lg p-2 hover:bg-almond/50 transition-colors"
+                      >
+                        <div className="w-10 h-10 rounded-lg bg-almond flex items-center justify-center overflow-hidden flex-shrink-0">
+                          {s.logoUrl ? (
+                            <img src={s.logoUrl} alt={s.name ?? ""} className="w-full h-full object-contain" />
+                          ) : (
+                            <span className="font-bold text-rebecca text-sm">{s.name?.charAt(0) ?? "?"}</span>
+                          )}
+                        </div>
+                        <span className="font-medium text-space text-sm">{s.name ?? "–"} Coupons</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Placeholder only when nothing from admin and no coupons/related */}
+            {!hasSidebarContent && storeCoupons.length === 0 && otherStores.length === 0 && (
+              <div className="rounded-2xl border-2 border-rebecca/15 bg-white p-5 shadow-md">
+                <h3 className="text-base font-bold text-space mb-2">About this store</h3>
+                <p className="text-rebecca text-sm">
+                  Add <strong>Sidebar</strong>, <strong>Why Trust Us</strong>, or <strong>More Information</strong> in the admin store editor to show more content here.
+                </p>
+              </div>
+            )}
+          </div>
+        </aside>
+      </div>
+    </main>
+  );
+}
+
+function getCouponCode(c: Store): string {
+  const code = c.couponCode ?? (c as Record<string, unknown>).coupon_code ?? "";
+  return String(code).trim();
+}
+
+function StoreCouponCard({
+  coupon,
+  displayName,
+  storeLogoUrl,
+  onOpenPopup,
+}: {
+  coupon: Store;
+  displayName: string;
+  storeLogoUrl?: string;
+  onOpenPopup: () => void;
+}) {
+  const [codeRevealed, setCodeRevealed] = useState(false);
+  const badge = getCouponBadge(coupon);
+  const code = getCouponCode(coupon);
+  const hasCode = code.length > 0;
+  const title = coupon.couponTitle?.trim() || coupon.badgeLabel?.trim() || `${displayName} offer`;
+  const logoUrl = storeLogoUrl || coupon.logoUrl || "";
+
+  return (
+    <li className="rounded-xl border-2 border-rebecca/20 bg-white p-3 sm:p-5 hover:border-rebecca/50 hover:shadow-md transition-all duration-200 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+      <div className="flex gap-3 sm:gap-4 flex-1 min-w-0">
+        <div className="flex-shrink-0 w-12 h-12 sm:w-16 sm:h-16 rounded-lg sm:rounded-xl bg-almond flex items-center justify-center overflow-hidden p-1">
+          {logoUrl ? (
+            <img src={logoUrl} alt={displayName} className="w-full h-full object-contain" />
+          ) : (
+            <span className="text-lobster font-bold text-xs sm:text-sm text-center leading-tight px-0.5 sm:px-1">
+              {badge}
+            </span>
+          )}
+        </div>
+        <div className="min-w-0">
+          <h4 className="font-bold text-space text-sm sm:text-base">{title}</h4>
+          {coupon.description?.trim() && (
+            <p className="text-xs sm:text-sm text-rebecca mt-0.5 line-clamp-2 sm:line-clamp-none">{coupon.description.trim().slice(0, 120)}</p>
+          )}
+          {coupon.expiry && (
+            <p className="text-xs text-slate-500 mt-1">Expires: {coupon.expiry}</p>
+          )}
+        </div>
+      </div>
+      <div className="flex flex-col items-start sm:items-end gap-2">
+        <div className="flex flex-col items-stretch sm:items-end gap-2">
+          {hasCode && (
+            <div
+              className="min-w-[80px] sm:min-w-[100px] w-20 sm:w-28 h-9 sm:h-10 px-2 flex items-center justify-center bg-white border-2 border-dashed border-slate-400 font-mono text-xs sm:text-sm font-semibold text-black rounded transition-colors hover:border-rebecca hover:bg-almond/30 cursor-pointer select-all"
+              style={{ borderStyle: "dashed" }}
+              onMouseEnter={() => setCodeRevealed(true)}
+              onMouseLeave={() => setCodeRevealed(false)}
+              title={codeRevealed ? "Click button to copy full code" : "Hover to peek last 2 chars"}
+            >
+              {codeRevealed ? "……..".slice(0, Math.max(0, 7 - code.slice(-2).length)) + code.slice(-2) : "…….."}
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={onOpenPopup}
+            className="rounded-lg bg-lobster text-white font-semibold text-xs uppercase tracking-wide px-3 sm:px-4 py-2 sm:py-2.5 hover:bg-lobster/90 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 whitespace-nowrap w-full sm:w-auto"
+          >
+            {hasCode ? "Coupon Code" : "Get Deal"}
+          </button>
+        </div>
+        <span className="text-xs text-slate-500">View Terms</span>
+      </div>
+    </li>
+  );
+}

@@ -1,0 +1,234 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Palette: Lobster #DB5461, Almond #FFD9CE, Rebecca #593C8F, Soft Cyan #8EF9F3, Space #171738 */
+:root {
+  --color-lobster: #DB5461;
+  --color-almond: #FFD9CE;
+  --color-rebecca: #593C8F;
+  --color-soft-cyan: #8EF9F3;
+  --color-space: #171738;
+}
+
+/* Fallback: ensure palette applies even if Tailwind JIT misses classes */
+.bg-space { background-color: var(--color-space) !important; }
+.bg-almond { background-color: var(--color-almond) !important; }
+.bg-lobster { background-color: var(--color-lobster) !important; }
+.bg-rebecca { background-color: var(--color-rebecca) !important; }
+.bg-rebecca\/80 { background-color: rgba(89, 60, 143, 0.8) !important; }
+.text-space { color: var(--color-space) !important; }
+.text-rebecca { color: var(--color-rebecca) !important; }
+.text-soft-cyan { color: var(--color-soft-cyan) !important; }
+.text-white { color: #fff !important; }
+.border-rebecca\/20 { border-color: rgba(89, 60, 143, 0.2) !important; }
+.border-rebecca\/30 { border-color: rgba(89, 60, 143, 0.3) !important; }
+.border-rebecca\/50 { border-color: rgba(89, 60, 143, 0.5) !important; }
+.border-lobster\/20 { border-color: rgba(219, 84, 97, 0.2) !important; }
+.border-soft-cyan\/50 { border-color: rgba(142, 249, 243, 0.5) !important; }
+.placeholder\:text-soft-cyan\/80::placeholder { color: rgba(142, 249, 243, 0.8) !important; }
+.ring-soft-cyan:focus { --tw-ring-color: var(--color-soft-cyan) !important; }
+
+/* Structural fallbacks so header/footer/main get palette (exclude theme #header) */
+header:not(#header) { background-color: var(--color-rebecca); color: white; }
+@media (min-width: 768px) {
+  header:not(#header) nav[class*="flex"] { display: flex !important; }
+  header:not(#header) form[action="/"],
+  header:not(#header) form[action="/coupons"] { display: flex !important; }
+}
+header:not(#header) > div:first-child { background-color: var(--color-lobster); color: white; }
+header:not(#header) a { color: var(--color-soft-cyan); }
+header:not(#header) a:hover { color: white; }
+header:not(#header) input[type="search"] { background-color: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.4); border-radius: 0.5rem 0 0 0.5rem; padding: 0.5rem 0.75rem; }
+header:not(#header) input[type="search"]::placeholder { color: rgba(142, 249, 243, 0.8); }
+header:not(#header) button[type="submit"] { background-color: var(--color-lobster); color: white; border: 0; border-radius: 0 0.5rem 0.5rem 0; padding: 0.5rem 0.75rem; }
+main:not(#main) { background-color: var(--color-almond); }
+main:not(#main) h2 { color: var(--color-space); }
+main:not(#main) p { color: var(--color-rebecca); }
+main:not(#main) a[href*="admin"] { color: var(--color-lobster); }
+/* Footer upper section (Rebecca) – white text (only site footer after #wrapper, not theme footer) */
+#wrapper ~ footer > div:first-child { background-color: var(--color-rebecca); color: #fff; }
+#wrapper ~ footer > div:first-child a { color: #fff; }
+#wrapper ~ footer > div:first-child a:hover { color: var(--color-lobster) !important; }
+#wrapper ~ footer > div:first-child h3 { color: #fff; }
+#wrapper ~ footer > div:first-child p { color: #fff; }
+#wrapper ~ footer > div:last-child { background-color: var(--color-lobster); color: white; }
+#wrapper ~ footer > div:last-child a { color: inherit; }
+#wrapper ~ footer > div:last-child a:hover { color: white; }
+
+/* Theme sidebar: opener/close buttons (React-controlled, same look as theme) */
+#wrapper .nav-opener-react {
+  float: right;
+  width: 20px;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+#wrapper .nav-opener-react span {
+  display: block;
+  height: 3px;
+  background: #fff;
+}
+#wrapper .nav-opener-react span + span {
+  margin-top: 3px;
+}
+#wrapper .nav-opener-react:hover span {
+  background: #ffcc39;
+}
+#wrapper .btn-close-react {
+  position: absolute;
+  top: 43px;
+  right: 29px;
+  font-size: 20px;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  color: #fff;
+}
+#wrapper .nav-holder .btn-close-react {
+  display: block;
+}
+#wrapper .btn-close-react:hover {
+  color: #fff;
+  opacity: 0.9;
+}
+
+/* Theme sidebar: ensure links and cards are clickable */
+#wrapper .nav-holder a,
+#wrapper .nav-holder .banner-gallery {
+  position: relative;
+  z-index: 2;
+  cursor: pointer;
+}
+#wrapper .nav-holder .post-over {
+  pointer-events: none;
+}
+
+/* Theme homepage: fix add-nav text ghosting/double rendering */
+#wrapper .post-over .add-nav {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+#wrapper .post-over .add-nav:before,
+#wrapper .post-over .add-nav:after {
+  pointer-events: none;
+}
+
+/* Theme homepage: hero/banner image fit only – no change to sections below or their animations */
+#wrapper .bg-stretch {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+}
+#wrapper .bg-stretch img {
+  object-fit: cover;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 100%;
+  min-height: 100%;
+  left: 0 !important;
+  top: 0 !important;
+  right: 0;
+  bottom: 0;
+}
+#wrapper .banner-gallery {
+  position: relative;
+  width: 100%;
+}
+
+/* Theme homepage: hero – 3 images layout, no gaps */
+#wrapper .hero-three .row {
+  margin-left: 0;
+  margin-right: 0;
+}
+#wrapper .hero-three .row > [class*="col-"] {
+  padding: 0;
+}
+#wrapper .hero-three .banner-gallery {
+  height: 340px;
+  border-radius: 0;
+  display: block;
+}
+#wrapper .hero-three .banner-gallery .bg-stretch,
+#wrapper .hero-three .banner-gallery .bg-stretch img {
+  border-radius: 0;
+}
+@media (min-width: 768px) {
+  #wrapper .hero-three .banner-gallery {
+    height: 400px;
+  }
+}
+/* Hero-three: same hover effect as two-cols – two white lines + metadata */
+#wrapper .hero-three .post-over:hover .add-nav:before {
+  top: 60px;
+}
+#wrapper .hero-three .post-over:hover .add-nav:after {
+  top: -75px;
+}
+
+@layer base {
+  body {
+    @apply antialiased;
+  }
+}
+
+/* Smooth focus ring for inputs */
+input:focus, select:focus, textarea:focus, button:focus-visible {
+  @apply outline-none ring-2 ring-offset-1 ring-zinc-400/50;
+}
+
+/* Hide number input spinner (up/down arrows) – everywhere */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button,
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  margin: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  height: 0 !important;
+  width: 0 !important;
+}
+input[type="number"],
+input[type="number"]:hover,
+input[type="number"]:focus {
+  -moz-appearance: textfield !important;
+  appearance: textfield !important;
+}
+
+/* Store page sidebar HTML (admin-editable) */
+.store-sidebar-html a { color: var(--color-rebecca); text-decoration: underline; }
+.store-sidebar-html a:hover { color: var(--color-lobster); }
+.store-sidebar-html ul { padding-left: 1.25rem; margin: 0.5rem 0; }
+.store-sidebar-html li { margin: 0.25rem 0; }
+.store-sidebar-html p { margin: 0.5rem 0; }
+
+/* Hide scrollbar on header nav (mobile) */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Subtle scrollbar in admin */
+.overflow-auto::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.overflow-auto::-webkit-scrollbar-track {
+  @apply bg-zinc-100 rounded-full;
+}
+.overflow-auto::-webkit-scrollbar-thumb {
+  @apply bg-zinc-300 rounded-full hover:bg-zinc-400;
+}
