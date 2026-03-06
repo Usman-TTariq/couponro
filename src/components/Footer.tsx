@@ -95,7 +95,7 @@ export default function Footer() {
 
       {/* Bottom strip – copyright (pink) */}
       <div className="bg-lobster text-white">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-4 text-center text-xs sm:text-sm">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-4 text-center text-xs sm:text-sm" suppressHydrationWarning>
           Copyright © {currentYear} Couponro LLC, A System1 Company
         </div>
       </div>

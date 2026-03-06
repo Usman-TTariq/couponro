@@ -161,7 +161,7 @@ export default function HomeNirvanaContent() {
                       <li><a href="https://x.com" target="_blank" rel="noopener noreferrer"><i className="fa fa-twitter" /></a></li>
                       <li><a href="https://plus.google.com" target="_blank" rel="noopener noreferrer"><i className="fa fa-google-plus" /></a></li>
                     </ul>
-                    <span className="copyrights">&copy; {new Date().getFullYear()} <Link href="/" onClick={closeNav}>Couponro</Link>. All rights reserved.</span>
+                    <span className="copyrights" suppressHydrationWarning>&copy; {new Date().getFullYear()} <Link href="/" onClick={closeNav}>Couponro</Link>. All rights reserved.</span>
                   </div>
                 </div>
               </div>
@@ -494,7 +494,7 @@ export default function HomeNirvanaContent() {
               </aside>
               <footer id="footer" className="row">
                 <div className="col-xs-12">
-                  <span className="copyrights">&copy; {new Date().getFullYear()} <Link href="/">Couponro</Link>. All rights reserved.</span>
+                  <span className="copyrights" suppressHydrationWarning>&copy; {new Date().getFullYear()} <Link href="/">Couponro</Link>. All rights reserved.</span>
                   <ul className="footer-nav list-inline">
                     <li><Link href="/">Home</Link></li>
                     <li><Link href="/coupons">Coupons</Link></li>
