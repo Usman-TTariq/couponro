@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import HomeNirvanaContent from "@/components/HomeNirvanaContent";
+import HomePageClient from "@/components/HomePageClient";
 
 export const dynamic = "force-dynamic";
 
@@ -10,9 +10,5 @@ export const metadata: Metadata = {
 };
 
 export default function HomePage() {
-  return (
-    <div className="min-h-screen flex flex-col">
-      <HomeNirvanaContent />
-    </div>
-  );
+  return <HomePageClient />;
 }
