@@ -34,7 +34,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       if (!slug) continue;
       entries.push({
         url: `${baseUrl}/stores/${encodeURIComponent(slug)}`,
-        lastModified: s.updatedAt || s.createdAt ? new Date(s.updatedAt || s.createdAt || 0) : new Date(),
+        lastModified: s.createdAt ? new Date(s.createdAt) : new Date(),
         changeFrequency: "weekly",
         priority: 0.8,
       });
@@ -52,7 +52,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       if (!id) continue;
       entries.push({
         url: `${baseUrl}/coupon/${encodeURIComponent(id)}`,
-        lastModified: c.updatedAt || c.createdAt ? new Date(c.updatedAt || c.createdAt || 0) : new Date(),
+        lastModified: c.createdAt ? new Date(c.createdAt) : new Date(),
         changeFrequency: "weekly",
         priority: 0.7,
       });
