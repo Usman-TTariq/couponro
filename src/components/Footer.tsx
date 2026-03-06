@@ -13,17 +13,17 @@ export default function Footer() {
       <div className="bg-rebecca text-white">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10 lg:py-12">
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
-            {/* Logo + Country – same logo as navbar */}
+            {/* Logo + Country */}
             <div className="lg:col-span-1">
-              <Link href="/" className="inline-flex items-center flex-shrink-0" aria-label="Couponro Home">
+              <Link href="/" className="inline-flex items-center flex-shrink-0 mb-4 block" aria-label="Couponro Home">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src="/couponro-logo.svg"
+                  src="/couponro%20logo%20svg.svg"
                   alt="Couponro"
-                  className="h-14 sm:h-20 w-auto max-h-24 object-contain object-left max-w-[220px]"
+                  className="h-12 sm:h-14 w-auto max-h-20 object-contain object-left max-w-[180px]"
                 />
               </Link>
-              <div className="mt-4">
+              <div>
                 <p className="text-xs text-white/70 mb-2">Change country:</p>
                 <button
                   type="button"

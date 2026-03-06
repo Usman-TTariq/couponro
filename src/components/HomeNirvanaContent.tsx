@@ -446,12 +446,10 @@ export default function HomeNirvanaContent() {
             <div className="container">
               <aside className="row footer-aside">
                 <div className="col-sm-3 col-xs-12 column social">
-                  <div className="footer-logo">
-                    <div className="logo">
-                      <Link href="/">
-                        <img className="img-responsive" src="/couponro-logo.svg" alt="Couponro" />
-                      </Link>
-                    </div>
+                  <div className="footer-logo mb-3">
+                    <Link href="/" aria-label="Couponro Home">
+                      <img className="img-responsive" src="/couponro%20logo%20svg.svg" alt="Couponro" style={{ maxHeight: "56px", width: "auto" }} />
+                    </Link>
                   </div>
                   <p>Couponro helps you save with verified coupon codes, promo codes, and free shipping offers from top stores.</p>
                   <h3><span className="txt"><Link href="/blog">Blog</Link></span></h3>
