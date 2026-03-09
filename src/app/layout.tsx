@@ -6,7 +6,9 @@ const SITE_NAME = "Couponro";
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  minimumScale: 1,
   maximumScale: 5,
+  userScalable: true,
 };
 const DEFAULT_DESCRIPTION =
   "Couponro – Find the best coupon codes, deals, and free shipping offers from top stores. Save money on your shopping with verified discounts and promo codes.";

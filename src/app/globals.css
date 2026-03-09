@@ -34,6 +34,14 @@ html,
 body {
   overflow-x: hidden;
   max-width: 100vw;
+  width: 100%;
+  overflow-y: auto;
+}
+/* Avoid zoom-out on Blog/Coupons/Stores: constrain root page wrapper */
+body > div {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 /* Structural fallbacks so header/footer/main get palette (exclude theme #header) */

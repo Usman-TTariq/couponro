@@ -107,7 +107,7 @@ export default function FreeShippingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-almond flex flex-col">
+    <div className="min-h-screen w-full min-w-0 bg-almond flex flex-col overflow-x-hidden">
       {navigating && (
         <div
           className="fixed top-0 left-0 right-0 z-[100] h-1 bg-rebecca animate-pulse"

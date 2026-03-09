@@ -93,7 +93,7 @@ export default function StoresPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-almond flex flex-col">
+    <div className="min-h-screen w-full min-w-0 bg-almond flex flex-col overflow-x-hidden">
       {/* Top loading bar when navigating to a store */}
       {navigating && (
         <div

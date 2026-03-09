@@ -19,7 +19,7 @@ const NAV_LINKS = [
   { href: "/coupons", label: "Coupons" },
   { href: "/stores", label: "Stores" },
   { href: "/freeshipping", label: "Free Shipping" },
-  { href: DEFAULT_BLOG_POST_URL, label: "Blogs" },
+  { href: "/blog", label: "Blogs" },
 ];
 
 // Sidebar quick links (humari links)
@@ -27,7 +27,7 @@ const SIDEBAR_LINKS = [
   { href: "/coupons", label: "Coupons" },
   { href: "/stores", label: "Stores" },
   { href: "/freeshipping", label: "Free Shipping" },
-  { href: DEFAULT_BLOG_POST_URL, label: "Blog" },
+  { href: "/blog", label: "Blog" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
   { href: "/categories", label: "Categories" },
