@@ -5,6 +5,13 @@ import type { Store } from "@/types/store";
 import { slugify } from "@/lib/slugify";
 import { parseCSV } from "@/lib/parse-csv";
 
+const FETCH_TIMEOUT_MS = 45000;
+function fetchWithTimeout(url: string, init?: RequestInit, ms = FETCH_TIMEOUT_MS): Promise<Response> {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  return fetch(url, { ...init, signal: ctrl.signal }).finally(() => clearTimeout(t));
+}
+
 export default function AdminCouponsPage() {
   const [stores, setStores] = useState<Store[]>([]);
   const [coupons, setCoupons] = useState<Store[]>([]);
@@ -116,12 +123,14 @@ export default function AdminCouponsPage() {
     const storeByName = (name: string) =>
       stores.find((s) => (s.name ?? "").trim().toLowerCase() === (name ?? "").trim().toLowerCase());
     const createdStores = new Map<string, Store>();
+    let firstError: string | null = null;
+    const BATCH_SIZE = 30;
     const getOrCreateStore = async (storeName: string): Promise<Store | null> => {
       const key = storeName.trim().toLowerCase();
       const existing = storeByName(storeName) ?? createdStores.get(key);
       if (existing) return existing;
       try {
-        const res = await fetch("/api/stores", {
+        const res = await fetchWithTimeout("/api/stores", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -130,18 +139,40 @@ export default function AdminCouponsPage() {
             description: "",
           }),
         });
-        if (!res.ok) return null;
+        if (!res.ok) {
+          const d = await res.json().catch(() => ({}));
+          if (!firstError) firstError = d?.error ?? res.statusText ?? "Store create failed";
+          return null;
+        }
         const store = await res.json();
         createdStores.set(key, store);
         return store;
-      } catch {
+      } catch (e) {
+        if (!firstError) firstError = e instanceof Error ? (e.name === "AbortError" ? "Request timed out (45s). Live site may be slow." : e.message) : "Network error";
         return null;
+      }
+    };
+    const sendCouponBatch = async (batch: Record<string, unknown>[]): Promise<boolean> => {
+      try {
+        const res = await fetchWithTimeout("/api/coupons/batch", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ coupons: batch }),
+        });
+        if (res.ok) return true;
+        const d = await res.json().catch(() => ({}));
+        if (!firstError) firstError = d?.error ?? res.statusText ?? "Batch failed";
+        return false;
+      } catch (err) {
+        if (!firstError) firstError = err instanceof Error ? (err.name === "AbortError" ? "Request timed out (45s)." : err.message) : "Network error";
+        return false;
       }
     };
     setUploadingCoupons(true);
     let ok = 0;
     let fail = 0;
     let skipped = 0;
+    let batch: Record<string, unknown>[] = [];
     for (let i = 0; i < rows.length; i++) {
       setUploadCouponsProgress(`Uploading ${i + 1} of ${rows.length}…`);
       const r = rows[i];
@@ -175,22 +206,18 @@ export default function AdminCouponsPage() {
         priority: 0,
         active: (r["Status"] ?? r["status"] ?? "Active").trim().toLowerCase() === "active",
       };
-      try {
-        const res = await fetch("/api/coupons", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        if (res.ok) ok++;
-        else {
-          const errData = await res.json().catch(() => ({}));
-          console.error("[Upload] Coupon failed:", errData?.error ?? res.statusText);
-          fail++;
-        }
-      } catch (err) {
-        console.error("[Upload] Coupon error:", err);
-        fail++;
+      batch.push(payload);
+      if (batch.length >= BATCH_SIZE) {
+        const success = await sendCouponBatch(batch);
+        if (success) ok += batch.length;
+        else fail += batch.length;
+        batch = [];
       }
+    }
+    if (batch.length > 0) {
+      const success = await sendCouponBatch(batch);
+      if (success) ok += batch.length;
+      else fail += batch.length;
     }
     setUploadingCoupons(false);
     setUploadCouponsProgress(null);
@@ -203,7 +230,7 @@ export default function AdminCouponsPage() {
       if (fail) parts.push(`${fail} failed.`);
       showMsg("ok", parts.join(" "));
     } else if (skipped === rows.length) showMsg("err", "No valid rows to upload. Check CSV has Store Name, and Title/Code/Description.");
-    else if (fail > 0) showMsg("err", `All ${fail} row(s) failed. Check browser console and ensure Supabase is configured.`);
+    else if (fail > 0) showMsg("err", firstError ? `Upload failed: ${firstError}` : `All ${fail} row(s) failed.`);
   };
 
   const handleExportCsv = async () => {
