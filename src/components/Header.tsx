@@ -2,24 +2,31 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import HeaderPromoStrip from "./HeaderPromoStrip";
 
 const navLinks = [
   { href: "/coupons", label: "Coupons" },
   { href: "/stores", label: "Stores" },
-  { href: "/cashback", label: "Free Shipping" },
+  { href: "/freeshipping", label: "Free Shipping" },
   { href: "/blog", label: "Blogs" },
   { href: "/contact", label: "Contact Us" },
 ];
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     if (menuOpen) document.body.classList.add("overflow-hidden");
     else document.body.classList.remove("overflow-hidden");
     return () => document.body.classList.remove("overflow-hidden");
   }, [menuOpen]);
+
+  /* Close mobile menu when navigating to another page so content doesn’t stay behind menu */
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
 
   return (
     <header className="bg-rebecca text-white">

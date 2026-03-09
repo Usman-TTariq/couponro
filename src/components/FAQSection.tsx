@@ -31,7 +31,7 @@ const FAQ_ITEMS = [
 const POPULAR_ARTICLES = [
   { label: "How to use coupon codes", href: "/#coupons" },
   { label: "Top stores with deals", href: "/#stores" },
-  { label: "Saving tips and guides", href: "/blog" },
+  { label: "Saving tips and guides", href: "/blog/touchtunes-coupon-codes-deals-discounts-2026" },
 ];
 
 export default function FAQSection() {

@@ -66,7 +66,6 @@ function CouponCodeCard({
 }) {
   const [revealed, setRevealed] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [hoverButton, setHoverButton] = useState(false);
   const code = getCouponCode(coupon);
   const logoUrl = storeLogoUrl || coupon.logoUrl || "";
   const slug = coupon.slug || coupon.name?.toLowerCase().replace(/\s+/g, "-") || "";
@@ -84,12 +83,7 @@ function CouponCodeCard({
     }
   };
 
-  const suffix = code.slice(-2);
-  const codeDisplay = revealed
-    ? code
-    : hoverButton && code.length > 0
-      ? ".".repeat(Math.max(0, 8 - suffix.length)) + suffix
-      : "........";
+  const codeDisplay = code.toUpperCase();
 
   return (
     <li className="bg-white">
@@ -124,17 +118,15 @@ function CouponCodeCard({
             <button
               type="button"
               onClick={handleClick}
-              onMouseEnter={() => setHoverButton(true)}
-              onMouseLeave={() => setHoverButton(false)}
               className="rounded bg-[#1e88e5] hover:bg-[#1565c0] text-white font-semibold text-xs uppercase tracking-wide px-4 py-2.5 whitespace-nowrap transition-colors"
             >
               {revealed ? (copied ? "Copied!" : "Copy Code") : "Coupon Code"}
             </button>
             <div
-              className="min-w-[100px] w-28 h-10 px-2 flex items-center justify-center bg-white border-2 border-dashed border-slate-400 font-mono text-sm font-semibold text-slate-900 select-all"
+              className="w-fit min-w-[4ch] max-w-[10rem] h-10 px-1.5 flex items-center justify-center bg-white border-2 border-dashed border-slate-400 font-mono text-sm font-semibold text-slate-900 select-all uppercase"
               style={{ borderStyle: "dashed" }}
               role="textbox"
-              aria-label={revealed || hoverButton ? "Coupon code" : "Hover button to reveal"}
+              aria-label="Coupon code"
             >
               {codeDisplay}
             </div>

@@ -2,6 +2,7 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import AboutStats from "./AboutStats";
+import { DEFAULT_BLOG_POST_URL } from "@/lib/blog-posts";
 
 export const metadata = {
   title: "About Us",
@@ -102,7 +103,7 @@ export default function AboutPage() {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <Link
-              href="/blog"
+              href={DEFAULT_BLOG_POST_URL}
               className="block rounded-2xl bg-white shadow-sm border border-slate-200 p-5 hover:border-rebecca/40 hover:shadow-md transition-all"
             >
               <p className="text-slate-500 text-xs uppercase tracking-wide mb-2">Savings</p>
@@ -110,7 +111,7 @@ export default function AboutPage() {
               <span className="text-rebecca font-medium text-sm">Read more →</span>
             </Link>
             <Link
-              href="/blog"
+              href={DEFAULT_BLOG_POST_URL}
               className="block rounded-2xl bg-white shadow-sm border border-slate-200 p-5 hover:border-rebecca/40 hover:shadow-md transition-all"
             >
               <p className="text-slate-500 text-xs uppercase tracking-wide mb-2">Deals</p>
@@ -118,7 +119,7 @@ export default function AboutPage() {
               <span className="text-rebecca font-medium text-sm">Read more →</span>
             </Link>
             <Link
-              href="/blog"
+              href={DEFAULT_BLOG_POST_URL}
               className="block rounded-2xl bg-white shadow-sm border border-slate-200 p-5 hover:border-rebecca/40 hover:shadow-md transition-all"
             >
               <p className="text-slate-500 text-xs uppercase tracking-wide mb-2">Tips</p>

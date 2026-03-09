@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { getStores, getCoupons, slugify } from "@/lib/stores";
+import { getBlogSlugForStore } from "@/lib/blog-posts";
 import type { Store } from "@/types/store";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -64,6 +65,7 @@ export default async function StorePage({
   const { slug } = await params;
   const sp = await searchParams;
   const { store, storeCoupons, displayName, otherStores } = await getStoreData(slug);
+  const relatedBlogSlug = getBlogSlugForStore(slug);
 
   if (!store && storeCoupons.length === 0) {
     return (
@@ -91,6 +93,7 @@ export default async function StorePage({
         otherStores={otherStores}
         slug={slug}
         initialPopupId={sp?.popup ?? undefined}
+        relatedBlogSlug={relatedBlogSlug ?? undefined}
       />
       <Footer />
     </div>

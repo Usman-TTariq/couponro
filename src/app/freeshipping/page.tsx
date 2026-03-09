@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { DEFAULT_BLOG_POST_URL } from "@/lib/blog-posts";
 import type { Store } from "@/types/store";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -41,12 +43,22 @@ function getStoreCategory(store: Store): string {
   return "Other";
 }
 
-export default function CashbackPage() {
+export default function FreeShippingPage() {
   const [stores, setStores] = useState<Store[]>([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState("All");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [navigating, setNavigating] = useState(false);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    setNavigating(false);
+  }, [pathname]);
+
+  const handleStoreClick = useCallback(() => {
+    setNavigating(true);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -96,11 +108,22 @@ export default function CashbackPage() {
 
   return (
     <div className="min-h-screen bg-almond flex flex-col">
+      {navigating && (
+        <div
+          className="fixed top-0 left-0 right-0 z-[100] h-1 bg-rebecca animate-pulse"
+          aria-live="polite"
+          aria-label="Loading page"
+        />
+      )}
       <Header />
       <main className="flex-1 mx-auto w-full max-w-6xl px-4 sm:px-6 py-8">
         <h1 className="text-3xl md:text-4xl font-bold text-space mb-10 tracking-tight">
           Today&apos;s Top Free Shipping Offers
         </h1>
+        <p className="text-space/90 mb-8">
+          For saving tips and free-shipping store guides, read our{" "}
+          <Link href={DEFAULT_BLOG_POST_URL} className="text-lobster font-medium hover:underline">saving tips guide</Link>.
+        </p>
 
         {loading ? (
           <div className="flex items-center justify-center py-16">
@@ -113,12 +136,12 @@ export default function CashbackPage() {
             <section className="mb-12">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-6">
                 {topThree.map((store) => (
-                  <CashbackFeaturedCard key={store.id} store={store} size="large" />
+                  <FreeShippingFeaturedCard key={store.id} store={store} size="large" onStoreClick={handleStoreClick} />
                 ))}
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
                 {nextSix.map((store) => (
-                  <CashbackFeaturedCard key={store.id} store={store} size="small" />
+                  <FreeShippingFeaturedCard key={store.id} store={store} size="small" onStoreClick={handleStoreClick} />
                 ))}
               </div>
             </section>
@@ -173,7 +196,7 @@ export default function CashbackPage() {
                       <li className="p-12 text-center text-rebecca text-lg">No stores found.</li>
                     ) : (
                       listStores.map((store) => (
-                        <CashbackRow key={store.id} store={store} />
+                        <FreeShippingRow key={store.id} store={store} onStoreClick={handleStoreClick} />
                       ))
                     )}
                   </ul>
@@ -235,7 +258,7 @@ export default function CashbackPage() {
   );
 }
 
-function CashbackFeaturedCard({ store, size }: { store: Store; size: "large" | "small" }) {
+function FreeShippingFeaturedCard({ store, size, onStoreClick }: { store: Store; size: "large" | "small"; onStoreClick?: () => void }) {
   const slug = store.slug || store.name?.toLowerCase().replace(/\s+/g, "-") || "";
   const isLarge = size === "large";
   const pct = 3 + (store.name?.length ?? 0) % 6;
@@ -243,6 +266,7 @@ function CashbackFeaturedCard({ store, size }: { store: Store; size: "large" | "
   return (
     <Link
       href={`/stores/${encodeURIComponent(slug)}`}
+      onClick={onStoreClick}
       className={`block rounded-2xl border-2 border-white bg-white shadow-lg hover:shadow-xl hover:border-soft-cyan/50 hover:-translate-y-0.5 transition-all duration-200 ${
         isLarge ? "p-6" : "p-5"
       }`}
@@ -271,14 +295,13 @@ function CashbackFeaturedCard({ store, size }: { store: Store; size: "large" | "
   );
 }
 
-function CashbackRow({ store }: { store: Store }) {
+function FreeShippingRow({ store, onStoreClick }: { store: Store; onStoreClick?: () => void }) {
   const slug = store.slug || store.name?.toLowerCase().replace(/\s+/g, "-") || "";
-  const trackingLink = getStoreTrackingUrl(store);
   const pct = 3 + (store.name?.length ?? 0) % 6;
 
   return (
     <li className="flex flex-col sm:flex-row gap-5 items-start sm:items-center p-5 sm:p-6 border-b border-rebecca/10 last:border-b-0 hover:bg-almond/40 transition-colors">
-      <Link href={`/stores/${encodeURIComponent(slug)}`} className="flex items-center gap-5 flex-1 min-w-0 group">
+      <Link href={`/stores/${encodeURIComponent(slug)}`} onClick={onStoreClick} className="flex items-center gap-5 flex-1 min-w-0 group">
         <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-almond flex items-center justify-center overflow-hidden flex-shrink-0 ring-2 ring-white shadow-md group-hover:ring-soft-cyan/40 transition-all">
           {store.logoUrl ? (
             <img src={store.logoUrl} alt={store.name ?? ""} className="w-full h-full object-contain p-1" />
@@ -291,14 +314,13 @@ function CashbackRow({ store }: { store: Store }) {
           <p className="text-base text-rebecca font-medium mt-0.5">Get up to {pct}% back</p>
         </div>
       </Link>
-      <a
-        href={trackingLink}
-        target="_blank"
-        rel="noopener noreferrer"
+      <Link
+        href={`/stores/${encodeURIComponent(slug)}`}
+        onClick={onStoreClick}
         className="flex-shrink-0 w-full sm:w-auto text-center rounded-xl bg-lobster text-white font-bold text-base uppercase tracking-wider px-8 py-4 hover:bg-lobster/90 hover:shadow-xl hover:scale-[1.03] active:scale-[0.98] transition-all duration-200 border-2 border-transparent hover:border-white/30"
       >
         Shop Now
-      </a>
+      </Link>
     </li>
   );
 }

@@ -6,10 +6,6 @@ export const metadata: Metadata = {
     "Read Couponro's blog for saving tips, shopping guides, and the latest deals. Learn how to save more with coupons and promo codes.",
 };
 
-export default function BlogLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function BlogLayout({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }

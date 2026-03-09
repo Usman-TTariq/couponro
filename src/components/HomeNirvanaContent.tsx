@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { DEFAULT_BLOG_POST_URL, STORES_BLOG_POST_URL, FREE_SHIPPING_BLOG_POST_URL, DEALS_BLOG_POST_URL, FOOTER_TILE_BLOG_URLS, FOOTER_TILE_TITLES } from "@/lib/blog-posts";
 
 // Big layouts (hero, fullwidth, footer bg, 950x450): use larger images
 const HERO_IMGS = ["/img01.jpg", "/img03.jpg", "/img04.jpg"];
@@ -17,16 +18,16 @@ const IMG_190 = ["/img13.jpg", "/img14.jpg", "/img15.jpg", "/img16.jpg", "/img17
 const NAV_LINKS = [
   { href: "/coupons", label: "Coupons" },
   { href: "/stores", label: "Stores" },
-  { href: "/cashback", label: "Free Shipping" },
-  { href: "/blog", label: "Blogs" },
+  { href: "/freeshipping", label: "Free Shipping" },
+  { href: DEFAULT_BLOG_POST_URL, label: "Blogs" },
 ];
 
 // Sidebar quick links (humari links)
 const SIDEBAR_LINKS = [
   { href: "/coupons", label: "Coupons" },
   { href: "/stores", label: "Stores" },
-  { href: "/cashback", label: "Free Shipping" },
-  { href: "/blog", label: "Blog" },
+  { href: "/freeshipping", label: "Free Shipping" },
+  { href: DEFAULT_BLOG_POST_URL, label: "Blog" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
   { href: "/categories", label: "Categories" },
@@ -107,8 +108,8 @@ export default function HomeNirvanaContent() {
                       ))}
                     </ul>
                     <div className="nav-posts">
-                      <strong className="title"><Link href="/blog" onClick={closeNav}>POPULAR POSTS</Link></strong>
-                      <Link href="/blog" className="banner-gallery" onClick={closeNav}>
+                      <strong className="title"><Link href={DEFAULT_BLOG_POST_URL} onClick={closeNav}>POPULAR POSTS</Link></strong>
+                      <Link href={DEFAULT_BLOG_POST_URL} className="banner-gallery" onClick={closeNav}>
                         <img src={IMG_NAV[0]} alt="" loading="eager" decoding="async" />
                         <div className="post-over">
                           <div className="box">
@@ -138,7 +139,7 @@ export default function HomeNirvanaContent() {
                           </div>
                         </div>
                       </Link>
-                      <Link href="/blog" className="banner-gallery" onClick={closeNav}>
+                      <Link href={DEFAULT_BLOG_POST_URL} className="banner-gallery" onClick={closeNav}>
                         <img src={IMG_NAV[2]} alt="" loading="eager" decoding="async" />
                         <div className="post-over quotes">
                           <div className="box">
@@ -175,18 +176,18 @@ export default function HomeNirvanaContent() {
                     <section className="hero-three" aria-label="Hero">
                       <div className="row">
                         <div className="col-sm-4 col-xs-12">
-                          <Link href="/blog" className="banner-gallery">
+                          <Link href={DEFAULT_BLOG_POST_URL} className="banner-gallery">
                             <div className="bg-stretch">
                               <img src={HERO_IMGS[0]} alt="Featured" loading="eager" decoding="async" />
                             </div>
                             <div className="post-over">
                               <div className="box">
                                 <div className="block">
-                                  <h2><Link href="/blog">Featured</Link></h2>
+                                  <h2><Link href={DEFAULT_BLOG_POST_URL}>Featured</Link></h2>
                                   <ul className="add-nav list-inline">
                                     <li>by <Link href="/">Couponro</Link></li>
                                     <li><time dateTime="2026-03-04">Mar 4, 2026</time></li>
-                                    <li><Link href="/blog">Blog</Link></li>
+                                    <li><Link href={DEFAULT_BLOG_POST_URL}>Blog</Link></li>
                                   </ul>
                                 </div>
                               </div>
@@ -194,18 +195,18 @@ export default function HomeNirvanaContent() {
                           </Link>
                         </div>
                         <div className="col-sm-4 col-xs-12">
-                          <Link href="/blog" className="banner-gallery">
+                          <Link href={DEFAULT_BLOG_POST_URL} className="banner-gallery">
                             <div className="bg-stretch">
                               <img src={HERO_IMGS[1]} alt="Saving tips" />
                             </div>
                             <div className="post-over">
                               <div className="box">
                                 <div className="block">
-                                  <h2><Link href="/blog">Saving tips</Link></h2>
+                                  <h2><Link href={DEFAULT_BLOG_POST_URL}>Saving tips</Link></h2>
                                   <ul className="add-nav list-inline">
                                     <li>by <Link href="/">Couponro</Link></li>
                                     <li><time dateTime="2026-03-04">Mar 4, 2026</time></li>
-                                    <li><Link href="/blog">Blog</Link></li>
+                                    <li><Link href={DEFAULT_BLOG_POST_URL}>Blog</Link></li>
                                   </ul>
                                 </div>
                               </div>
@@ -213,18 +214,18 @@ export default function HomeNirvanaContent() {
                           </Link>
                         </div>
                         <div className="col-sm-4 col-xs-12">
-                          <Link href="/coupons" className="banner-gallery">
+                          <Link href={DEFAULT_BLOG_POST_URL} className="banner-gallery">
                             <div className="bg-stretch">
                               <img src={HERO_IMGS[2]} alt="Coupon codes" loading="eager" decoding="async" />
                             </div>
                             <div className="post-over">
                               <div className="box">
                                 <div className="block">
-                                  <h2><Link href="/coupons">Coupon codes</Link></h2>
+                                  <h2><Link href={DEFAULT_BLOG_POST_URL}>Coupon codes</Link></h2>
                                   <ul className="add-nav list-inline">
                                     <li>by <Link href="/">Couponro</Link></li>
                                     <li><time dateTime="2026-03-04">Mar 4, 2026</time></li>
-                                    <li><Link href="/coupons">Coupons</Link></li>
+                                    <li><Link href={DEFAULT_BLOG_POST_URL}>Coupons</Link></li>
                                   </ul>
                                 </div>
                               </div>
@@ -252,11 +253,11 @@ export default function HomeNirvanaContent() {
                             <div className="post-over">
                               <div className="box">
                                 <div className="block">
-                                  <h2><Link href="/blog">Blog post</Link></h2>
+                                  <h2><Link href={DEFAULT_BLOG_POST_URL}>Blog post</Link></h2>
                                   <ul className="add-nav list-inline">
-                                    <li>by <Link href="/blog">Couponro</Link></li>
+                                    <li>by <Link href={DEFAULT_BLOG_POST_URL}>Couponro</Link></li>
                                     <li><time dateTime="2026-03-04">Mar 4, 2026</time></li>
-                                    <li><Link href="/blog">Blog</Link></li>
+                                    <li><Link href={DEFAULT_BLOG_POST_URL}>Blog</Link></li>
                                   </ul>
                                 </div>
                               </div>
@@ -278,13 +279,13 @@ export default function HomeNirvanaContent() {
                       <div className="post-over">
                         <div className="box">
                           <div className="block">
-                            <h2><Link href="/blog">Trending</Link></h2>
+                            <h2><Link href={DEFAULT_BLOG_POST_URL}>Trending</Link></h2>
                             <ul className="add-nav list-inline">
-                              <li>by <Link href="/blog">Couponro</Link></li>
+                              <li>by <Link href={DEFAULT_BLOG_POST_URL}>Couponro</Link></li>
                               <li><time dateTime="2026-03-04">Mar 4, 2026</time></li>
-                              <li><Link href="/blog">Blog</Link></li>
+                              <li><Link href={DEFAULT_BLOG_POST_URL}>Blog</Link></li>
                             </ul>
-                            <Link href="/blog" className="btn-flash"><i className="fa fa-bolt" /></Link>
+                            <Link href={DEFAULT_BLOG_POST_URL} className="btn-flash"><i className="fa fa-bolt" /></Link>
                           </div>
                         </div>
                       </div>
@@ -306,7 +307,7 @@ export default function HomeNirvanaContent() {
                         <div className="box">
                           <div className="block">
                             <blockquote className="post-quotes">
-                              <p><Link href="/blog">&ldquo;Saving tips &amp; deals&rdquo;</Link></p>
+                              <p><Link href={DEFAULT_BLOG_POST_URL}>&ldquo;Saving tips &amp; deals&rdquo;</Link></p>
                               <footer><cite title="Couponro">Couponro</cite></footer>
                             </blockquote>
                             <ul className="add-nav list-inline">
@@ -321,44 +322,44 @@ export default function HomeNirvanaContent() {
                 </div>
                 <div className="col-sm-4 col-xs-12 three-cols">
                   <div className="row">
-                    <article className="banner-gallery">
+                    <Link href={STORES_BLOG_POST_URL} className="banner-gallery">
                       <div className="bg-stretch">
-                        <img src={IMG_634[1]} alt="Stores" loading="eager" decoding="async" />
+                        <img src={IMG_950[0]} alt="Stores" loading="eager" decoding="async" />
                       </div>
                       <div className="post-over">
                         <div className="box">
                           <div className="block">
-                            <h3><Link href="/stores">Stores</Link></h3>
+                            <h3><span>Stores</span></h3>
                             <ul className="add-nav list-inline">
                               <li>by <Link href="/">Couponro</Link></li>
                               <li><time dateTime="2026-03-04">Mar 4, 2026</time></li>
-                              <li><Link href="/stores">Stores</Link></li>
+                              <li><span>Stores</span></li>
                             </ul>
                           </div>
                         </div>
                       </div>
-                    </article>
+                    </Link>
                   </div>
                 </div>
                 <div className="col-sm-4 col-xs-12 three-cols">
                   <div className="row">
-                    <article className="banner-gallery">
+                    <Link href={DEFAULT_BLOG_POST_URL} className="banner-gallery">
                       <div className="bg-stretch">
-                        <img src={IMG_634[2]} alt="Coupons" />
+                        <img src={IMG_950[1]} alt="Coupons" loading="eager" decoding="async" />
                       </div>
                       <div className="post-over">
                         <div className="box">
                           <div className="block">
-                            <h3><Link href="/coupons">Coupons</Link></h3>
+                            <h3><span>Coupons</span></h3>
                             <ul className="add-nav list-inline">
                               <li>by <Link href="/">Couponro</Link></li>
                               <li><time dateTime="2026-03-04">Mar 4, 2026</time></li>
-                              <li><Link href="/coupons">Coupons</Link></li>
+                              <li><span>Coupons</span></li>
                             </ul>
                           </div>
                         </div>
                       </div>
-                    </article>
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -375,11 +376,11 @@ export default function HomeNirvanaContent() {
                       <div className="post-over">
                         <div className="box">
                           <div className="block">
-                            <h2><Link href="/blog">Blog</Link></h2>
+                            <h2><Link href={DEFAULT_BLOG_POST_URL}>Blog</Link></h2>
                             <ul className="add-nav list-inline">
                               <li>by <Link href="/">Couponro</Link></li>
                               <li><time dateTime="2026-03-04">Mar 4, 2026</time></li>
-                              <li><Link href="/blog">Blog</Link></li>
+                              <li><Link href={DEFAULT_BLOG_POST_URL}>Blog</Link></li>
                             </ul>
                           </div>
                         </div>
@@ -401,11 +402,11 @@ export default function HomeNirvanaContent() {
                       <div className="post-over">
                         <div className="box">
                           <div className="block">
-                            <h2><Link href="/cashback">Free Shipping</Link></h2>
+                            <h2><Link href={FREE_SHIPPING_BLOG_POST_URL}>Free Shipping</Link></h2>
                             <ul className="add-nav list-inline">
                               <li>by <Link href="/">Couponro</Link></li>
                               <li><time dateTime="2026-03-04">Mar 4, 2026</time></li>
-                              <li><Link href="/cashback">Free Shipping</Link></li>
+                              <li><Link href={FREE_SHIPPING_BLOG_POST_URL}>Free Shipping</Link></li>
                             </ul>
                           </div>
                         </div>
@@ -422,11 +423,11 @@ export default function HomeNirvanaContent() {
                       <div className="post-over">
                         <div className="box">
                           <div className="block">
-                            <h2><Link href="/coupons">Deals</Link></h2>
+                            <h2><Link href={DEALS_BLOG_POST_URL}>Deals</Link></h2>
                             <ul className="add-nav list-inline">
                               <li>by <Link href="/">Couponro</Link></li>
                               <li><time dateTime="2026-03-04">Mar 4, 2026</time></li>
-                              <li><Link href="/coupons">Coupons</Link></li>
+                              <li><Link href={DEALS_BLOG_POST_URL}>Coupons</Link></li>
                             </ul>
                           </div>
                         </div>
@@ -452,7 +453,7 @@ export default function HomeNirvanaContent() {
                     </Link>
                   </div>
                   <p>Couponro helps you save with verified coupon codes, promo codes, and free shipping offers from top stores.</p>
-                  <h3><span className="txt"><Link href="/blog">Blog</Link></span></h3>
+                  <h3><span className="txt"><Link href={DEFAULT_BLOG_POST_URL}>Blog</Link></span></h3>
                   <ul className="social-networks list-inline">
                     <li><a href="#"><i className="fa fa-facebook" /></a></li>
                     <li><a href="#"><i className="fa fa-twitter" /></a></li>
@@ -460,27 +461,27 @@ export default function HomeNirvanaContent() {
                   </ul>
                 </div>
                 <div className="col-sm-3 col-xs-12 column">
-                  <h3><span className="txt"><Link href="/blog">Categories</Link></span></h3>
+                  <h3><span className="txt"><Link href={DEFAULT_BLOG_POST_URL}>Categories</Link></span></h3>
                   <ul className="info-nav list-inline">
                     <li><Link href="/coupons">Coupons</Link></li>
                     <li><Link href="/stores">Stores</Link></li>
-                    <li><Link href="/cashback">Free Shipping</Link></li>
+                    <li><Link href="/freeshipping">Free Shipping</Link></li>
                   </ul>
-                  <h3><span className="txt"><Link href="/blog">Tags</Link></span></h3>
+                  <h3><span className="txt"><Link href={DEFAULT_BLOG_POST_URL}>Tags</Link></span></h3>
                   <ul className="info-nav list-inline">
                     <li><Link href="/coupons">Deals</Link></li>
-                    <li><Link href="/blog">Saving tips</Link></li>
+                    <li><Link href={DEFAULT_BLOG_POST_URL}>Saving tips</Link></li>
                   </ul>
                 </div>
                 <div className="col-sm-6 col-xs-12">
                   <ul className="instagram-nav list-inline">
                     {[1, 2, 3, 4, 5, 6].map((i) => (
                       <li key={i}>
-                        <Link href="/blog">
+                        <Link href={FOOTER_TILE_BLOG_URLS[i - 1]}>
                           <img className="img-responsive" src={IMG_190[i - 1]} alt="" loading="eager" decoding="async" />
                           <span className="btn-instagram"><i className="fa fa-instagram" /></span>
                           <div className="insta-over">
-                            <span className="title">Blog</span>
+                            <span className="title">{FOOTER_TILE_TITLES[i - 1]}</span>
                             <h3>Couponro</h3>
                             <time dateTime="2026-03-04">Mar 4, 2026</time>
                           </div>
@@ -497,7 +498,7 @@ export default function HomeNirvanaContent() {
                     <li><Link href="/">Home</Link></li>
                     <li><Link href="/coupons">Coupons</Link></li>
                     <li><Link href="/stores">Stores</Link></li>
-                    <li><Link href="/blog">Blog</Link></li>
+                    <li><Link href={DEFAULT_BLOG_POST_URL}>Blog</Link></li>
                   </ul>
                 </div>
               </footer>

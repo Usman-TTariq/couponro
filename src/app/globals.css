@@ -29,6 +29,13 @@
 .placeholder\:text-soft-cyan\/80::placeholder { color: rgba(142, 249, 243, 0.8) !important; }
 .ring-soft-cyan:focus { --tw-ring-color: var(--color-soft-cyan) !important; }
 
+/* Prevent horizontal overflow on all pages (Coupons, Stores, etc.) so content doesn’t “come out” */
+html,
+body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
 /* Structural fallbacks so header/footer/main get palette (exclude theme #header) */
 header:not(#header) { background-color: var(--color-rebecca); color: white; }
 @media (min-width: 768px) {
@@ -144,6 +151,24 @@ main:not(#main) a[href*="admin"] { color: var(--color-lobster); }
   width: 100%;
 }
 
+/* Home: main-gallery + two-cols section – ensure height so section is not empty (theme has no height for .two-cols .banner-gallery) */
+#wrapper .main-gallery .mask {
+  min-height: 380px;
+}
+#wrapper .main-gallery .slide {
+  min-height: 380px;
+}
+#wrapper .two-cols .banner-gallery {
+  min-height: 380px;
+}
+
+/* Home: three-cols (Quote, Stores, Coupons) – Stores/Coupons use <Link className="banner-gallery">; anchor needs block + height so right side is not white */
+#wrapper .three-cols .banner-gallery {
+  display: block;
+  min-height: 360px;
+  height: 360px;
+}
+
 /* Theme homepage: hero – 3 images layout, no gaps */
 #wrapper .hero-three .row {
   margin-left: 0;
@@ -172,6 +197,39 @@ main:not(#main) a[href*="admin"] { color: var(--color-lobster); }
 }
 #wrapper .hero-three .post-over:hover .add-nav:after {
   top: -75px;
+}
+
+/* Footer: overlay behind content (replaces .post-over which was covering text) */
+#wrapper .footer-holder .footer-holder-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(34, 34, 34, 0.6);
+  z-index: 0;
+}
+#wrapper .footer-holder .container {
+  position: relative;
+  z-index: 2;
+}
+#wrapper .footer-holder .footer-aside,
+#wrapper .footer-holder #footer {
+  position: relative;
+  z-index: 1;
+}
+/* Instagram grid: keep insta-over (hover text) inside its tile, no overlap on neighbours */
+#wrapper .footer-holder .instagram-nav li {
+  position: relative;
+  z-index: 0;
+}
+#wrapper .footer-holder .instagram-nav li a {
+  isolation: isolate;
+  overflow: hidden;
+}
+#wrapper .footer-holder .instagram-nav .insta-over {
+  z-index: 1;
+  pointer-events: none;
 }
 
 @layer base {

@@ -6,7 +6,7 @@ export const metadata: Metadata = {
     "Get free shipping and cashback at thousands of stores. Find the best free shipping deals and save on delivery at Couponro.",
 };
 
-export default function CashbackLayout({
+export default function FreeShippingLayout({
   children,
 }: {
   children: React.ReactNode;

@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { getStores, getCoupons } from "@/lib/stores";
 import { slugify } from "@/lib/slugify";
+import { getAllSlugs } from "@/lib/blog-posts";
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || "https://couponro.com";
 const baseUrl = BASE.replace(/\/$/, "");
@@ -20,10 +21,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/about`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.6 },
     { url: `${baseUrl}/contact`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.6 },
     { url: `${baseUrl}/blog`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.7 },
-    { url: `${baseUrl}/cashback`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.7 },
+    { url: `${baseUrl}/freeshipping`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.7 },
     { url: `${baseUrl}/promotions`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.7 },
   ];
   entries.push(...staticPages);
+
+  // --- Dynamic: blog post pages ---
+  const blogSlugs = getAllSlugs();
+  for (const slug of blogSlugs) {
+    entries.push({
+      url: `${baseUrl}/blog/${encodeURIComponent(slug)}`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.7,
+    });
+  }
 
   // --- Dynamic: store pages (HTML) ---
   try {

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
 import type { Store } from "@/types/store";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -11,7 +12,8 @@ const TRENDING_COUNT = 6;
 const RECENT_COUNT = 12;
 
 function getSlug(store: Store): string {
-  return store.slug || store.name?.toLowerCase().replace(/\s+/g, "-") || store.id || "";
+  const slug = store.slug || store.name?.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") || store.id || "";
+  return slug || String(store.id || "store");
 }
 
 function getFirstChar(name: string): string {
@@ -23,6 +25,26 @@ export default function StoresPage() {
   const [stores, setStores] = useState<Store[]>([]);
   const [loading, setLoading] = useState(true);
   const [letter, setLetter] = useState<string | null>(null);
+  const [navigating, setNavigating] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+
+  /* Clear navigating state when route changes (e.g. after store link click) */
+  useEffect(() => {
+    setNavigating(false);
+  }, [pathname]);
+
+  const handleStoreClick = useCallback(() => {
+    setNavigating(true);
+  }, []);
+
+  const prefetchStore = useCallback(
+    (slug: string) => {
+      if (!slug) return;
+      router.prefetch(`/stores/${encodeURIComponent(slug)}`);
+    },
+    [router]
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -72,6 +94,14 @@ export default function StoresPage() {
 
   return (
     <div className="min-h-screen bg-almond flex flex-col">
+      {/* Top loading bar when navigating to a store */}
+      {navigating && (
+        <div
+          className="fixed top-0 left-0 right-0 z-[100] h-1 bg-rebecca animate-pulse"
+          aria-live="polite"
+          aria-label="Loading page"
+        />
+      )}
       <Header />
       <main className="flex-1 mx-auto w-full max-w-6xl px-4 sm:px-6 py-8">
         <h1 className="text-3xl md:text-4xl font-bold text-space mb-10 tracking-tight text-center">
@@ -94,11 +124,16 @@ export default function StoresPage() {
                 {trendingAndRecent.length === 0 ? (
                   <p className="text-rebecca text-center w-full py-6">No stores yet.</p>
                 ) : (
-                  trendingAndRecent.map((store) => (
+                  trendingAndRecent.map((store) => {
+                    const slug = getSlug(store);
+                    return (
                     <Link
                       key={store.id}
-                      href={`/stores/${encodeURIComponent(getSlug(store))}`}
-                      className="flex-shrink-0 w-36 sm:w-40 rounded-2xl border-2 border-rebecca/15 bg-white p-5 shadow-lg hover:shadow-xl hover:border-soft-cyan/50 transition-all duration-200"
+                      href={`/stores/${encodeURIComponent(slug)}`}
+                      prefetch={true}
+                      onMouseEnter={() => prefetchStore(slug)}
+                      onClick={handleStoreClick}
+                      className="flex-shrink-0 w-36 sm:w-40 rounded-2xl border-2 border-rebecca/15 bg-white p-5 shadow-lg hover:shadow-xl hover:border-soft-cyan/50 transition-all duration-200 cursor-pointer active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-rebecca focus-visible:ring-offset-2"
                     >
                       <div className="w-20 h-20 mx-auto rounded-xl bg-almond flex items-center justify-center overflow-hidden mb-3">
                         {store.logoUrl ? (
@@ -117,7 +152,8 @@ export default function StoresPage() {
                         {store.name ?? "–"}
                       </p>
                     </Link>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </section>
@@ -127,17 +163,20 @@ export default function StoresPage() {
               <h2 className="text-xl md:text-2xl font-bold text-space mb-6 text-center">
                 Top Merchants
               </h2>
-              {/* A–Z navigation */}
-              <div className="flex flex-wrap justify-center gap-1 sm:gap-2 mb-6">
+              {/* A–Z navigation – clearly clickable */}
+              <div className="flex flex-wrap justify-center gap-1 sm:gap-2 mb-6" role="tablist" aria-label="Filter by letter">
                 {ALPHABET.map((c) => (
                   <button
                     key={c}
                     type="button"
+                    role="tab"
+                    aria-pressed={letter === c}
+                    aria-label={`Stores starting with ${c}`}
                     onClick={() => setLetter((prev) => (prev === c ? null : c))}
-                    className={`min-w-[2rem] rounded-lg px-2 py-1.5 text-sm font-semibold transition-all ${
+                    className={`min-w-[2.25rem] rounded-lg px-2 py-1.5 text-sm font-semibold transition-all cursor-pointer touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-rebecca focus-visible:ring-offset-2 active:scale-95 ${
                       letter === c
-                        ? "bg-rebecca text-white"
-                        : "bg-white border border-rebecca/25 text-space hover:bg-almond"
+                        ? "bg-rebecca text-white shadow-md"
+                        : "bg-white border border-rebecca/25 text-space hover:bg-rebecca/10 hover:border-rebecca/40"
                     }`}
                   >
                     {c}
@@ -145,11 +184,14 @@ export default function StoresPage() {
                 ))}
                 <button
                   type="button"
+                  role="tab"
+                  aria-pressed={letter === "#"}
+                  aria-label="Stores starting with number or symbol"
                   onClick={() => setLetter((prev) => (prev === "#" ? null : "#"))}
-                  className={`min-w-[2rem] rounded-lg px-2 py-1.5 text-sm font-semibold transition-all ${
+                  className={`min-w-[2.25rem] rounded-lg px-2 py-1.5 text-sm font-semibold transition-all cursor-pointer touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-rebecca focus-visible:ring-offset-2 active:scale-95 ${
                     letter === "#"
-                      ? "bg-rebecca text-white"
-                      : "bg-white border border-rebecca/25 text-space hover:bg-almond"
+                      ? "bg-rebecca text-white shadow-md"
+                      : "bg-white border border-rebecca/25 text-space hover:bg-rebecca/10 hover:border-rebecca/40"
                   }`}
                 >
                   #
@@ -168,16 +210,22 @@ export default function StoresPage() {
                 ) : (
                   topMerchantsCols.map((col, colIndex) => (
                     <ul key={colIndex} className="space-y-1.5">
-                      {col.map((store) => (
-                        <li key={store.id}>
-                          <Link
-                            href={`/stores/${encodeURIComponent(getSlug(store))}`}
-                            className="text-rebecca hover:text-lobster hover:underline font-medium"
-                          >
-                            {store.name ?? "–"} Coupons
-                          </Link>
-                        </li>
-                      ))}
+                      {col.map((store) => {
+                        const slug = getSlug(store);
+                        return (
+                          <li key={store.id}>
+                            <Link
+                              href={`/stores/${encodeURIComponent(slug)}`}
+                              prefetch={true}
+                              onMouseEnter={() => prefetchStore(slug)}
+                              onClick={handleStoreClick}
+                              className="inline-block text-rebecca hover:text-lobster hover:underline font-medium cursor-pointer py-0.5 pr-1 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-rebecca focus-visible:ring-offset-1 active:opacity-80 transition-colors"
+                            >
+                              {store.name ?? "–"} Coupons
+                            </Link>
+                          </li>
+                        );
+                      })}
                     </ul>
                   ))
                 )}
@@ -197,16 +245,22 @@ export default function StoresPage() {
                 ) : (
                   recentCols.map((col, colIndex) => (
                     <ul key={colIndex} className="space-y-1.5">
-                      {col.map((store) => (
-                        <li key={store.id}>
-                          <Link
-                            href={`/stores/${encodeURIComponent(getSlug(store))}`}
-                            className="text-rebecca hover:text-lobster hover:underline font-medium"
-                          >
-                            {store.name ?? "–"} Coupons
-                          </Link>
-                        </li>
-                      ))}
+                      {col.map((store) => {
+                        const slug = getSlug(store);
+                        return (
+                          <li key={store.id}>
+                            <Link
+                              href={`/stores/${encodeURIComponent(slug)}`}
+                              prefetch={true}
+                              onMouseEnter={() => prefetchStore(slug)}
+                              onClick={handleStoreClick}
+                              className="inline-block text-rebecca hover:text-lobster hover:underline font-medium cursor-pointer py-0.5 pr-1 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-rebecca focus-visible:ring-offset-1 active:opacity-80 transition-colors"
+                            >
+                              {store.name ?? "–"} Coupons
+                            </Link>
+                          </li>
+                        );
+                      })}
                     </ul>
                   ))
                 )}

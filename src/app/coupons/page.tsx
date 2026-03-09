@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
+import { DEFAULT_BLOG_POST_URL } from "@/lib/blog-posts";
 import { useSearchParams } from "next/navigation";
 import type { Store } from "@/types/store";
 import Header from "@/components/Header";
@@ -101,6 +102,10 @@ function CouponsPageContent() {
         <h1 className="text-2xl md:text-3xl font-bold text-[#37474f] mb-6">
           Featured Coupon Codes
         </h1>
+        <p className="text-[#37474f]/90 mb-6">
+          For saving tips and store guides, read our{" "}
+          <Link href={DEFAULT_BLOG_POST_URL} className="text-lobster font-medium hover:underline">saving tips guide</Link>.
+        </p>
 
         {loading ? (
           <div className="flex items-center justify-center py-16">
@@ -230,9 +235,9 @@ function FeaturedCouponCard({
   storeLogoUrl?: string;
   onOpenPopup: () => void;
 }) {
-  const [codeRevealed, setCodeRevealed] = useState(false);
   const code = getCouponCode(coupon);
   const hasCode = code.length > 0;
+  const codeDisplay = code.toUpperCase();
   const logoUrl = storeLogoUrl || coupon.logoUrl || "";
   const slug = coupon.slug || coupon.name?.toLowerCase().replace(/\s+/g, "-") || "";
   const offerTitle = coupon.couponTitle?.trim() || coupon.badgeLabel?.trim() || `${coupon.name} offer`;
@@ -241,8 +246,8 @@ function FeaturedCouponCard({
   const offCodeLabel = discountStr ? `${discountStr} OFF CODE` : "CODE";
 
   return (
-    <li className="bg-white border-b border-slate-200 last:border-b transition-colors hover:bg-slate-50/80">
-      <div className="flex flex-col sm:flex-row gap-4 p-4 sm:p-5 items-start">
+    <li className="group bg-white border-b border-slate-200 last:border-b transition-colors hover:bg-slate-50/80">
+      <div className="flex flex-col sm:flex-row gap-4 p-4 sm:p-5 items-start sm:items-center">
         {/* Left: logo + discount text (black, e.g. "20% OFF CODE") */}
         <div className="flex flex-col items-center sm:items-start gap-2 flex-shrink-0 sm:w-28">
           <Link href={`/stores/${encodeURIComponent(slug)}`} className="block rounded-lg transition-transform hover:opacity-90">
@@ -265,31 +270,38 @@ function FeaturedCouponCard({
           <p className="text-sm text-black mt-1">{description}</p>
         </div>
 
-        {/* Right: COUPON CODE / Get Deal button opens popup; store link below */}
-        <div className="flex flex-col items-start gap-2 flex-shrink-0 w-full sm:w-auto">
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              type="button"
-              onClick={onOpenPopup}
-              className="rounded border border-slate-300 bg-[#1e88e5] text-white font-semibold text-xs uppercase tracking-wide px-4 py-2.5 hover:bg-[#1565c0] hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
-            >
-              {hasCode ? "Coupon Code" : "Get Deal"}
-            </button>
-            {hasCode && (
-              <div
-                className="min-w-[100px] w-28 h-10 px-2 flex items-center justify-center bg-white border-2 border-dashed border-slate-400 font-mono text-sm font-semibold text-black rounded transition-colors hover:border-[#1e88e5] hover:bg-slate-50 cursor-pointer select-all"
-                style={{ borderStyle: "dashed" }}
-                onMouseEnter={() => setCodeRevealed(true)}
-                onMouseLeave={() => setCodeRevealed(false)}
-                title={codeRevealed ? "Click button to copy full code" : "Hover to peek last 2 chars"}
+        {/* Right: fixed width + ml-auto so all cards align on same right edge */}
+        <div className="relative flex flex-col items-end gap-2 flex-shrink-0 w-full sm:ml-auto sm:w-52">
+          <div className="relative rounded-none overflow-hidden border border-slate-300 shadow-sm w-full sm:w-52 min-w-[8rem] max-w-full h-10">
+            {hasCode ? (
+              <>
+                <div
+                  className="absolute inset-0 bg-white border-l-2 border-dashed border-slate-400 font-mono text-sm font-semibold text-black select-none rounded-none uppercase flex items-center justify-end pr-1.5"
+                  style={{ borderStyle: "dashed" }}
+                >
+                  {codeDisplay}
+                </div>
+                <button
+                  type="button"
+                  onClick={onOpenPopup}
+                  className="absolute left-0 top-0 bottom-0 z-10 w-[calc(100%-3ch)] rounded-none bg-rebecca text-white font-semibold text-xs uppercase tracking-wide px-2 sm:px-3 transition-all duration-200 flex items-center justify-center hover:bg-rebecca/90 hover:-translate-x-3 hover:shadow-md"
+                >
+                  Show Coupon Code
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={onOpenPopup}
+                className="w-full h-full rounded-none bg-rebecca text-white font-semibold text-xs uppercase tracking-wide hover:bg-rebecca/90 transition-colors flex items-center justify-center"
               >
-                {codeRevealed ? "……..".slice(0, Math.max(0, 7 - code.slice(-2).length)) + code.slice(-2) : "…….."}
-              </div>
+                Get Deal
+              </button>
             )}
           </div>
           <Link
             href={`/stores/${encodeURIComponent(slug)}`}
-            className="text-sm text-[#1e88e5] hover:text-[#1565c0] hover:underline transition-colors"
+            className="text-sm text-rebecca hover:text-lobster hover:underline transition-colors"
           >
             {coupon.name} Coupons
           </Link>

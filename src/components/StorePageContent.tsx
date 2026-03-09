@@ -35,6 +35,7 @@ export default function StorePageContent({
   otherStores,
   slug = "",
   initialPopupId,
+  relatedBlogSlug,
 }: {
   store: Store | null;
   storeCoupons: Store[];
@@ -42,9 +43,9 @@ export default function StorePageContent({
   otherStores: Store[];
   slug?: string;
   initialPopupId?: string;
+  /** When set, show a link to this blog post (store page does not redirect). */
+  relatedBlogSlug?: string;
 }) {
-  const [activeTab, setActiveTab] = useState<"code" | "deal">("code");
-  const [search, setSearch] = useState("");
   const [popupCoupon, setPopupCoupon] = useState<Store | null>(null);
 
   useEffect(() => {
@@ -53,24 +54,10 @@ export default function StorePageContent({
     if (c) setPopupCoupon(c);
   }, [initialPopupId, storeCoupons]);
 
-  const codeCoupons = useMemo(() => storeCoupons.filter(isCodeCoupon), [storeCoupons]);
-  const dealCoupons = useMemo(() => storeCoupons.filter((c) => !isCodeCoupon(c)), [storeCoupons]);
-
-  const filteredByTab = activeTab === "code" ? codeCoupons : dealCoupons;
+  /* Single list: all coupons, codes first then deals (no tabs/search on inner store page) */
   const filtered = useMemo(() => {
-    let list = filteredByTab;
-    if (search.trim()) {
-      const q = search.trim().toLowerCase();
-      list = list.filter(
-        (c) =>
-          (c.couponTitle ?? "").toLowerCase().includes(q) ||
-          (c.couponCode ?? "").toLowerCase().includes(q) ||
-          (c.description ?? "").toLowerCase().includes(q)
-      );
-    }
-    /* Codes first (items with actual coupon code), then deals */
-    return [...list].sort((a, b) => (hasActualCode(b) ? 1 : 0) - (hasActualCode(a) ? 1 : 0));
-  }, [filteredByTab, search]);
+    return [...storeCoupons].sort((a, b) => (hasActualCode(b) ? 1 : 0) - (hasActualCode(a) ? 1 : 0));
+  }, [storeCoupons]);
 
   const description = store?.description || storeCoupons[0]?.description || "";
   const aboutText = store?.moreAboutStore || store?.description || description;
@@ -96,75 +83,21 @@ export default function StorePageContent({
       <div className="flex flex-col lg:flex-row gap-8 lg:gap-10">
         {/* Main content column */}
         <div className="flex-1 min-w-0">
-      {/* Title + count + View all */}
-      <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+      {/* Title + count only (no View all / tabs / search on inner store page) */}
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
         <h2 className="text-base sm:text-xl font-bold text-space">
           {displayName} Coupons &amp; Promo Codes
         </h2>
         <span className="text-rebecca font-medium text-sm sm:text-base">
           {storeCoupons.length} Coupon{storeCoupons.length !== 1 ? "s" : ""} &amp; Deal{storeCoupons.length !== 1 ? "s" : ""} available
         </span>
-        {storeCoupons.length > 0 && (
-          <Link
-            href="#coupon-list"
-            className="text-lobster font-semibold hover:underline"
-          >
-            View all coupons
-          </Link>
-        )}
       </div>
 
-      {/* Tabs */}
-      {storeCoupons.length > 0 && (
-        <div className="flex gap-1 sm:gap-2 mb-3 sm:mb-4 border-b-2 border-rebecca/20 overflow-x-auto">
-          <button
-            type="button"
-            onClick={() => setActiveTab("code")}
-            className={`px-3 sm:px-5 py-2.5 sm:py-3 font-semibold text-xs sm:text-sm transition-colors border-b-2 -mb-0.5 flex-shrink-0 ${
-              activeTab === "code"
-                ? "border-lobster text-lobster"
-                : "border-transparent text-space hover:text-rebecca"
-            }`}
-          >
-            Coupon Codes ({codeCoupons.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("deal")}
-            className={`px-3 sm:px-5 py-2.5 sm:py-3 font-semibold text-xs sm:text-sm transition-colors border-b-2 -mb-0.5 flex-shrink-0 ${
-              activeTab === "deal"
-                ? "border-lobster text-lobster"
-                : "border-transparent text-space hover:text-rebecca"
-            }`}
-          >
-            Deals ({dealCoupons.length})
-          </button>
-        </div>
-      )}
-
-      {/* Search this store */}
-      {storeCoupons.length > 1 && (
-        <div className="mb-3 sm:mb-4">
-          <label htmlFor="store-search" className="sr-only">Search this store</label>
-          <input
-            id="store-search"
-            type="search"
-            placeholder="Search this store"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full max-w-sm rounded-xl border-2 border-rebecca/20 bg-white px-3 sm:px-4 py-2 sm:py-2.5 text-sm text-space placeholder:text-slate-400 focus:border-rebecca focus:ring-2 focus:ring-rebecca/20 outline-none"
-          />
-        </div>
-      )}
-
-      {/* Top [Store] Coupons / List */}
+      {/* Coupon list (no "Top X Coupons" heading) */}
       <section id="coupon-list" className="mb-8 sm:mb-10">
-        <h3 className="text-base sm:text-lg font-bold text-space mb-3 sm:mb-4">
-          Top {displayName} Coupons
-        </h3>
         {filtered.length === 0 ? (
           <p className="text-rebecca py-6">
-            {search.trim() ? "No offers match your search." : `No ${activeTab === "code" ? "coupon codes" : "deals"} right now.`}
+            No coupons or deals right now.
           </p>
         ) : (
           <ul className="space-y-4">
@@ -193,6 +126,21 @@ export default function StorePageContent({
           fallbackUrl={store?.trackingUrl?.trim() || store?.storeWebsiteUrl?.trim() || ""}
         />
       </section>
+
+      {/* Related blog guide – link only, no redirect */}
+      {relatedBlogSlug && (
+        <div className="mb-6 sm:mb-8 rounded-2xl border-2 border-rebecca/20 bg-white p-4 sm:p-5 shadow-sm">
+          <p className="text-sm text-space mb-2">
+            Read our complete savings guide for {displayName}:
+          </p>
+          <Link
+            href={`/blog/${encodeURIComponent(relatedBlogSlug)}`}
+            className="font-semibold text-lobster hover:underline"
+          >
+            {displayName} Coupon Codes, Deals &amp; Discounts (Complete Guide 2026) →
+          </Link>
+        </div>
+      )}
 
       {/* SEO / Content blocks */}
       <div className="space-y-10 rounded-2xl border-2 border-rebecca/15 bg-white p-6 sm:p-8 shadow-md">
@@ -425,15 +373,15 @@ function StoreCouponCard({
   storeLogoUrl?: string;
   onOpenPopup: () => void;
 }) {
-  const [codeRevealed, setCodeRevealed] = useState(false);
   const badge = getCouponBadge(coupon);
   const code = getCouponCode(coupon);
   const hasCode = code.length > 0;
+  const codeDisplay = code.toUpperCase();
   const title = coupon.couponTitle?.trim() || coupon.badgeLabel?.trim() || `${displayName} offer`;
   const logoUrl = storeLogoUrl || coupon.logoUrl || "";
 
   return (
-    <li className="rounded-xl border-2 border-rebecca/20 bg-white p-3 sm:p-5 hover:border-rebecca/50 hover:shadow-md transition-all duration-200 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+    <li className="group rounded-xl border-2 border-rebecca/20 bg-white p-3 sm:p-5 hover:border-rebecca/50 hover:shadow-md transition-all duration-200 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
       <div className="flex gap-3 sm:gap-4 flex-1 min-w-0">
         <div className="flex-shrink-0 w-12 h-12 sm:w-16 sm:h-16 rounded-lg sm:rounded-xl bg-almond flex items-center justify-center overflow-hidden p-1">
           {logoUrl ? (
@@ -454,26 +402,34 @@ function StoreCouponCard({
           )}
         </div>
       </div>
-      <div className="flex flex-col items-start sm:items-end gap-2">
-        <div className="flex flex-col items-stretch sm:items-end gap-2">
-          {hasCode && (
-            <div
-              className="min-w-[80px] sm:min-w-[100px] w-20 sm:w-28 h-9 sm:h-10 px-2 flex items-center justify-center bg-white border-2 border-dashed border-slate-400 font-mono text-xs sm:text-sm font-semibold text-black rounded transition-colors hover:border-rebecca hover:bg-almond/30 cursor-pointer select-all"
-              style={{ borderStyle: "dashed" }}
-              onMouseEnter={() => setCodeRevealed(true)}
-              onMouseLeave={() => setCodeRevealed(false)}
-              title={codeRevealed ? "Click button to copy full code" : "Hover to peek last 2 chars"}
+      <div className="relative flex flex-col items-start sm:items-end gap-2">
+        {/* Button overlaps code box from left; last 2 chars always visible (button max 70% width) */}
+        <div className="relative rounded-none overflow-hidden border border-slate-300 shadow-sm w-full min-w-[8rem] sm:min-w-[14rem] sm:w-auto max-w-full h-10 sm:h-11">
+          {hasCode ? (
+            <>
+              <div
+                className="absolute inset-0 bg-white border-l-2 border-dashed border-slate-400 font-mono text-xs sm:text-sm font-semibold text-black select-none rounded-none uppercase flex items-center justify-end pr-1.5"
+                style={{ borderStyle: "dashed" }}
+              >
+                {codeDisplay}
+              </div>
+              <button
+                type="button"
+                onClick={onOpenPopup}
+                className="absolute left-0 top-0 bottom-0 z-10 w-[calc(100%-3ch)] rounded-none bg-rebecca text-white font-semibold text-xs uppercase tracking-wide px-2 sm:px-3 transition-all duration-200 flex items-center justify-center hover:bg-rebecca/90 hover:-translate-x-3 hover:shadow-md"
+              >
+                Show Coupon Code
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={onOpenPopup}
+              className="w-full h-full rounded-none bg-rebecca text-white font-semibold text-xs uppercase tracking-wide hover:bg-rebecca/90 transition-colors flex items-center justify-center"
             >
-              {codeRevealed ? "……..".slice(0, Math.max(0, 7 - code.slice(-2).length)) + code.slice(-2) : "…….."}
-            </div>
+              Get Deal
+            </button>
           )}
-          <button
-            type="button"
-            onClick={onOpenPopup}
-            className="rounded-lg bg-lobster text-white font-semibold text-xs uppercase tracking-wide px-3 sm:px-4 py-2 sm:py-2.5 hover:bg-lobster/90 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 whitespace-nowrap w-full sm:w-auto"
-          >
-            {hasCode ? "Coupon Code" : "Get Deal"}
-          </button>
         </div>
         <span className="text-xs text-slate-500">View Terms</span>
       </div>
