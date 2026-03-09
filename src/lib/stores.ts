@@ -40,7 +40,7 @@ async function getStoresRaw(): Promise<Store[]> {
 export const getStores = unstable_cache(
   getStoresRaw,
   ["stores-list"],
-  { revalidate: CACHE_REVALIDATE }
+  { revalidate: CACHE_REVALIDATE, tags: ["stores"] }
 );
 
 async function getCouponsRaw(): Promise<Store[]> {
@@ -72,7 +72,7 @@ async function getCouponsRaw(): Promise<Store[]> {
 export const getCoupons = unstable_cache(
   getCouponsRaw,
   ["coupons-list"],
-  { revalidate: CACHE_REVALIDATE }
+  { revalidate: CACHE_REVALIDATE, tags: ["coupons"] }
 );
 
 export type CouponsPaginatedOptions = {

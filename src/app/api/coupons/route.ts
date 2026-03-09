@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 
 const CACHE_HEADERS = {
   "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
@@ -80,6 +81,7 @@ export async function POST(request: NextRequest) {
       active: body?.active !== false,
     };
     await insertCoupon(coupon);
+    revalidateTag("coupons");
     return NextResponse.json(coupon);
   } catch (e) {
     console.error("[api/coupons] POST:", e);
@@ -120,6 +122,7 @@ export async function PUT(request: NextRequest) {
       active: body?.active !== false,
     };
     await updateCoupon(id, coupon);
+    revalidateTag("coupons");
     return NextResponse.json(coupon);
   } catch (e) {
     console.error("[api/coupons] PUT:", e);
@@ -136,9 +139,11 @@ export async function DELETE(request: NextRequest) {
     const id = searchParams.get("id");
     if (!id) {
       await deleteAllCoupons();
+      revalidateTag("coupons");
       return NextResponse.json({ ok: true });
     }
     await deleteCoupon(id);
+    revalidateTag("coupons");
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error("[api/coupons] DELETE:", e);

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import {
   getStores,
   insertStore,
@@ -100,6 +101,7 @@ export async function POST(request: NextRequest) {
     const store = pickStoreFromBody(body);
     store.createdAt = new Date().toISOString();
     await insertStore(store);
+    revalidateTag("stores");
     return NextResponse.json(store);
   } catch (e) {
     console.error("[api/stores] POST:", e);
@@ -126,6 +128,7 @@ export async function PUT(request: NextRequest) {
     store.id = id;
     if (existing?.createdAt) store.createdAt = existing.createdAt;
     await updateStore(id, store);
+    revalidateTag("stores");
     return NextResponse.json(store);
   } catch (e) {
     console.error("[api/stores] PUT:", e);
@@ -147,6 +150,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
     await deleteStore(id);
+    revalidateTag("stores");
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error("[api/stores] DELETE:", e);

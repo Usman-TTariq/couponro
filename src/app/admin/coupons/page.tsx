@@ -22,6 +22,7 @@ export default function AdminCouponsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [uploadingCoupons, setUploadingCoupons] = useState(false);
   const [uploadCouponsProgress, setUploadCouponsProgress] = useState<string | null>(null);
+  const [deletingAll, setDeletingAll] = useState(false);
   const uploadCouponsInputRef = useRef<HTMLInputElement>(null);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -76,14 +77,22 @@ export default function AdminCouponsPage() {
 
   const handleDeleteAll = async () => {
     if (!confirm("Delete ALL coupons? This cannot be undone.")) return;
+    setDeletingAll(true);
     try {
-      await fetch("/api/coupons", { method: "DELETE" });
+      const res = await fetch("/api/coupons/delete-all", { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showMsg("err", data?.error ?? `Failed to delete (${res.status})`);
+        return;
+      }
       showMsg("ok", "All coupons deleted");
       resetForm();
       setPage(1);
       load();
     } catch {
       showMsg("err", "Failed to delete all");
+    } finally {
+      setDeletingAll(false);
     }
   };
 
@@ -106,6 +115,29 @@ export default function AdminCouponsPage() {
     }
     const storeByName = (name: string) =>
       stores.find((s) => (s.name ?? "").trim().toLowerCase() === (name ?? "").trim().toLowerCase());
+    const createdStores = new Map<string, Store>();
+    const getOrCreateStore = async (storeName: string): Promise<Store | null> => {
+      const key = storeName.trim().toLowerCase();
+      const existing = storeByName(storeName) ?? createdStores.get(key);
+      if (existing) return existing;
+      try {
+        const res = await fetch("/api/stores", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: storeName.trim(),
+            slug: slugify(storeName.trim()),
+            description: "",
+          }),
+        });
+        if (!res.ok) return null;
+        const store = await res.json();
+        createdStores.set(key, store);
+        return store;
+      } catch {
+        return null;
+      }
+    };
     setUploadingCoupons(true);
     let ok = 0;
     let fail = 0;
@@ -114,18 +146,26 @@ export default function AdminCouponsPage() {
       setUploadCouponsProgress(`Uploading ${i + 1} of ${rows.length}…`);
       const r = rows[i];
       const storeName = (r["Store Name"] ?? r["store name"] ?? "").trim();
-      if (!storeName) continue;
-      const store = storeByName(storeName);
+      if (!storeName) {
+        skipped++;
+        continue;
+      }
+      const store = storeByName(storeName) ?? await getOrCreateStore(storeName);
       if (!store) {
         skipped++;
         continue;
       }
       const title = (r["Title"] ?? r["title"] ?? "").trim();
       const code = (r["Code"] ?? r["code"] ?? "").trim();
+      const desc = (r["Description"] ?? r["description"] ?? "").trim();
+      if (!desc && !title && !code) {
+        skipped++;
+        continue;
+      }
       const payload = {
         name: store.name,
         slug: (store.slug ?? slugify(store.name)).trim(),
-        description: (r["Description"] ?? r["description"] ?? "").trim(),
+        description: desc || title || code || "Deal",
         logoUrl: store.logoUrl ?? "",
         expiry: (r["Expiry Date"] ?? r["expiry date"] ?? "Dec 31, 2026").trim(),
         status: (r["Status"] ?? r["status"] ?? "Active").trim().toLowerCase() === "active" ? "enable" : "disable",
@@ -142,8 +182,13 @@ export default function AdminCouponsPage() {
           body: JSON.stringify(payload),
         });
         if (res.ok) ok++;
-        else fail++;
-      } catch {
+        else {
+          const errData = await res.json().catch(() => ({}));
+          console.error("[Upload] Coupon failed:", errData?.error ?? res.statusText);
+          fail++;
+        }
+      } catch (err) {
+        console.error("[Upload] Coupon error:", err);
         fail++;
       }
     }
@@ -152,12 +197,13 @@ export default function AdminCouponsPage() {
     e.target.value = "";
     if (ok > 0) {
       load();
-      showMsg(
-        "ok",
-        `Uploaded ${ok} coupon(s) to their stores.${skipped ? ` ${skipped} row(s) skipped (store not found).` : ""}${fail ? ` ${fail} failed.` : ""}`
-      );
-    } else if (skipped === rows.length) showMsg("err", "No matching stores found. Upload stores first or fix Store Name in CSV.");
-    else if (fail > 0) showMsg("err", `All ${fail} row(s) failed to upload.`);
+      const parts = [`Uploaded ${ok} coupon(s).`];
+      if (createdStores.size > 0) parts.push(`${createdStores.size} store(s) created automatically.`);
+      if (skipped) parts.push(`${skipped} row(s) skipped.`);
+      if (fail) parts.push(`${fail} failed.`);
+      showMsg("ok", parts.join(" "));
+    } else if (skipped === rows.length) showMsg("err", "No valid rows to upload. Check CSV has Store Name, and Title/Code/Description.");
+    else if (fail > 0) showMsg("err", `All ${fail} row(s) failed. Check browser console and ensure Supabase is configured.`);
   };
 
   const handleExportCsv = async () => {
@@ -316,9 +362,10 @@ export default function AdminCouponsPage() {
           <button
             type="button"
             onClick={handleDeleteAll}
-            className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-500 transition-colors"
+            disabled={deletingAll}
+            className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-500 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            Delete All Coupons
+            {deletingAll ? "Deleting…" : "Delete All Coupons"}
           </button>
         </div>
       </div>
