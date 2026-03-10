@@ -72,7 +72,7 @@ function pickStoreFromBody(body: Record<string, unknown>, existing?: Store): Sto
 }
 
 const CACHE_HEADERS = {
-  "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+  "Cache-Control": "private, max-age=0, must-revalidate",
 };
 
 export async function GET() {
