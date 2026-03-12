@@ -204,6 +204,10 @@ export default function AdminCouponsPage() {
         skipped++;
         continue;
       }
+      const linkRaw = (r["Link"] ?? r["link"] ?? r["Coupon URL"] ?? r["coupon url"] ?? r["URL"] ?? r["url"] ?? "").trim();
+      const link = linkRaw || undefined;
+      const priorityRaw = r["Priority"] ?? r["priority"];
+      const priority = typeof priorityRaw === "number" ? priorityRaw : Math.max(0, parseInt(String(priorityRaw ?? "0").trim(), 10) || 0);
       const payload = {
         name: store.name,
         slug: (store.slug ?? slugify(store.name)).trim(),
@@ -214,8 +218,9 @@ export default function AdminCouponsPage() {
         couponType: code.length > 0 ? "code" : "deal",
         couponCode: code,
         couponTitle: title || code || "Deal",
-        priority: 0,
+        priority,
         active: (r["Status"] ?? r["status"] ?? "Active").trim().toLowerCase() === "active",
+        ...(link ? { link } : {}),
       };
       batch.push(payload);
       if (batch.length >= BATCH_SIZE) {
