@@ -142,12 +142,16 @@ export default function StorePageContent({
         </div>
       )}
 
-      {/* SEO / Content blocks */}
+      {/* SEO / Content blocks – from admin Category & Content */}
       <div className="space-y-10 rounded-2xl border-2 border-rebecca/15 bg-white p-6 sm:p-8 shadow-md">
         {aboutText && (
           <section>
             <h3 className="text-lg font-bold text-space mb-3">About {displayName}</h3>
-            <p className="text-rebecca leading-relaxed">{aboutText}</p>
+            {aboutText.includes("<") && aboutText.includes(">") ? (
+              <div className="text-rebecca leading-relaxed store-content-html" dangerouslySetInnerHTML={{ __html: aboutText }} />
+            ) : (
+              <p className="text-rebecca leading-relaxed">{aboutText}</p>
+            )}
           </section>
         )}
 
@@ -309,9 +313,13 @@ export default function StorePageContent({
             {store?.moreInformation?.trim() && (
               <div className="rounded-2xl border-2 border-rebecca/20 bg-white p-5 shadow-md">
                 <h3 className="text-base font-bold text-space mb-3">More Information</h3>
-                <p className="text-rebecca text-sm leading-relaxed whitespace-pre-line">
-                  {store.moreInformation.trim()}
-                </p>
+                {store.moreInformation.includes("<") && store.moreInformation.includes(">") ? (
+                  <div className="text-rebecca text-sm leading-relaxed store-content-html" dangerouslySetInnerHTML={{ __html: store.moreInformation.trim() }} />
+                ) : (
+                  <p className="text-rebecca text-sm leading-relaxed whitespace-pre-line">
+                    {store.moreInformation.trim()}
+                  </p>
+                )}
               </div>
             )}
 

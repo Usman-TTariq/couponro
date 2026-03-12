@@ -13,17 +13,40 @@ function normalizeSlug(s: string) {
   return s.toLowerCase().trim().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
 }
 
+function replaceSeoPlaceholders(
+  text: string,
+  opts: { storeName: string; activeCoupons: number }
+): string {
+  const now = new Date();
+  const monthYear = `${now.toLocaleString("default", { month: "long" })} ${now.getFullYear()}`;
+  return text
+    .replace(/\{store_name\}/gi, opts.storeName)
+    .replace(/\{active_coupons\}/gi, String(opts.activeCoupons))
+    .replace(/\{month_year\}/gi, monthYear);
+}
+
 export async function generateMetadata({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const { store, storeCoupons, displayName } = await getStoreData(params.slug);
-  const title = `${displayName} Coupons & Deals`;
+  const { slug } = await params;
+  const { store, storeCoupons, displayName } = await getStoreData(slug);
+  const activeCoupons = storeCoupons.length;
+  const replacer = (s: string) =>
+    replaceSeoPlaceholders(s, { storeName: displayName, activeCoupons });
+
+  const title =
+    store?.seoPageTitle?.trim()
+      ? replacer(store.seoPageTitle.trim()).slice(0, 100)
+      : `${displayName} Coupons & Deals`;
   const description =
-    store?.description ||
-    storeCoupons[0]?.description ||
-    `Find the latest ${displayName} coupon codes, promo codes, and deals. Save with Couponro.`;
+    store?.seoMetaDescription?.trim()
+      ? replacer(store.seoMetaDescription.trim()).slice(0, 160)
+      : store?.description ||
+        storeCoupons[0]?.description ||
+        `Find the latest ${displayName} coupon codes, promo codes, and deals. Save with Couponro.`;
+
   return {
     title,
     description,

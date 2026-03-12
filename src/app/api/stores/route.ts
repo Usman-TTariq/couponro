@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidateTag } from "next/cache";
+import { revalidateTag, revalidatePath } from "next/cache";
 import {
   getStores,
   insertStore,
@@ -131,6 +131,9 @@ export async function PUT(request: NextRequest) {
     await updateStore(id, store);
     revalidateTag("stores");
     const newSlug = (store.slug ?? slugify(store.name ?? "")).trim();
+    if (newSlug) revalidatePath(`/stores/${newSlug}`);
+    const oldSlug = (existing?.slug ?? slugify(existing?.name ?? "")).trim();
+    if (oldSlug && oldSlug !== newSlug) revalidatePath(`/stores/${oldSlug}`);
     if (newSlug) {
       try {
         const synced = await updateCouponSlugsForStoreName(store.name ?? "", newSlug);
