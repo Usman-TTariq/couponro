@@ -27,6 +27,7 @@ export default function AdminCouponsPage() {
   const [uploadingCoupons, setUploadingCoupons] = useState(false);
   const [uploadCouponsProgress, setUploadCouponsProgress] = useState<string | null>(null);
   const [deletingAll, setDeletingAll] = useState(false);
+  const [syncingSlugs, setSyncingSlugs] = useState(false);
   const uploadCouponsInputRef = useRef<HTMLInputElement>(null);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -287,7 +288,11 @@ export default function AdminCouponsPage() {
     }
     setSubmitting(true);
     try {
-      const slug = form.slug?.trim() || slugify(name);
+      const selectedStore = form.selectedStoreId ? stores.find((s) => s.id === form.selectedStoreId) : null;
+      const slug =
+        selectedStore
+          ? (selectedStore.slug ?? slugify(selectedStore.name ?? "")).trim()
+          : (form.slug?.trim() || slugify(name));
       const payload = {
         name,
         slug,
@@ -403,6 +408,32 @@ export default function AdminCouponsPage() {
             className="rounded-lg bg-red-600 px-3 py-2 text-xs sm:text-sm font-medium text-white hover:bg-red-500 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {deletingAll ? "Deleting…" : "Delete All"}
+          </button>
+          <button
+            type="button"
+            onClick={async () => {
+              setSyncingSlugs(true);
+              try {
+                const res = await fetch("/api/coupons/sync-slugs", { method: "POST" });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                  showMsg("err", data?.error ?? "Sync failed");
+                  return;
+                }
+                const n = typeof data?.updated === "number" ? data.updated : 0;
+                showMsg("ok", n === 0 ? "All coupon slugs already match their store." : `Updated ${n} coupon slug(s) to match store slugs.`);
+                load();
+              } catch {
+                showMsg("err", "Sync request failed");
+              } finally {
+                setSyncingSlugs(false);
+              }
+            }}
+            disabled={syncingSlugs}
+            className="rounded-lg bg-amber-600 px-3 py-2 text-xs sm:text-sm font-medium text-white hover:bg-amber-500 transition-colors disabled:opacity-70"
+            title="Set every coupon's slug to its store's slug (by name). Use after changing store slugs."
+          >
+            {syncingSlugs ? "Syncing…" : "Sync coupon slugs"}
           </button>
         </div>
       </div>
@@ -767,11 +798,13 @@ export default function AdminCouponsPage() {
                         <button
                           type="button"
                           onClick={() => {
+                            const store = stores.find((s) => (s.name ?? "").trim() === (c.name ?? "").trim());
                             setShowCreateForm(true);
                             setForm({
                               id: c.id,
                               name: c.name,
-                              slug: c.slug,
+                              slug: store?.slug ?? c.slug ?? (c.name ? slugify(c.name) : ""),
+                              selectedStoreId: store?.id ?? "",
                               description: c.description,
                               logoUrl: c.logoUrl,
                               expiry: c.expiry,

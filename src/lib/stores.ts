@@ -6,6 +6,7 @@ import {
   SUPABASE_STORES_TABLE,
   SUPABASE_COUPONS_TABLE,
 } from "./supabase-server";
+import { slugify } from "./slugify";
 
 const CACHE_REVALIDATE = 15; // seconds – balance freshness (after delete/add) vs Supabase load
 
@@ -217,6 +218,52 @@ export async function deleteCoupon(id: string): Promise<void> {
     .delete()
     .eq("id", id);
   if (error) throw new Error(error.message);
+}
+
+/**
+ * Update all coupons that belong to a store (by name match) to use the given slug.
+ * Call after updating a store's slug so store page continues to show those coupons.
+ */
+export async function updateCouponSlugsForStoreName(
+  storeName: string,
+  newSlug: string
+): Promise<number> {
+  const slug = (newSlug ?? "").trim();
+  if (!slug) return 0;
+  const nameKey = (storeName ?? "").trim().toLowerCase();
+  if (!nameKey) return 0;
+  const coupons = await getCouponsRaw();
+  let updated = 0;
+  for (const c of coupons) {
+    if ((c.name ?? "").trim().toLowerCase() !== nameKey) continue;
+    const currentSlug = (c.slug ?? slugify(c.name ?? "")).trim();
+    if (currentSlug === slug) continue;
+    await updateCoupon(c.id, { ...c, slug });
+    updated++;
+  }
+  return updated;
+}
+
+/**
+ * Sync every coupon's slug to its store's slug (match by store name).
+ * Use after changing store slugs in admin so all coupons show on the correct store page.
+ */
+export async function syncCouponSlugsFromStores(): Promise<{ updated: number }> {
+  const [stores, coupons] = await Promise.all([getStores(), getCouponsRaw()]);
+  let updated = 0;
+  for (const c of coupons) {
+    const nameKey = (c.name ?? "").trim().toLowerCase();
+    if (!nameKey) continue;
+    const store = stores.find((s) => (s.name ?? "").trim().toLowerCase() === nameKey);
+    if (!store) continue;
+    const wantSlug = (store.slug ?? slugify(store.name ?? "")).trim();
+    if (!wantSlug) continue;
+    const currentSlug = (c.slug ?? slugify(c.name ?? "")).trim();
+    if (currentSlug === wantSlug) continue;
+    await updateCoupon(c.id, { ...c, slug: wantSlug });
+    updated++;
+  }
+  return { updated };
 }
 
 export { slugify } from "./slugify";

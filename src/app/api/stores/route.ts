@@ -5,6 +5,7 @@ import {
   insertStore,
   updateStore,
   deleteStore,
+  updateCouponSlugsForStoreName,
 } from "@/lib/stores";
 import type { Store } from "@/types/store";
 import { slugify } from "@/lib/slugify";
@@ -129,6 +130,15 @@ export async function PUT(request: NextRequest) {
     if (existing?.createdAt) store.createdAt = existing.createdAt;
     await updateStore(id, store);
     revalidateTag("stores");
+    const newSlug = (store.slug ?? slugify(store.name ?? "")).trim();
+    if (newSlug) {
+      try {
+        const synced = await updateCouponSlugsForStoreName(store.name ?? "", newSlug);
+        if (synced > 0) revalidateTag("coupons");
+      } catch (e) {
+        console.error("[api/stores] PUT: sync coupon slugs:", e);
+      }
+    }
     return NextResponse.json(store);
   } catch (e) {
     console.error("[api/stores] PUT:", e);
