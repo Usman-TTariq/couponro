@@ -85,7 +85,7 @@ export default function Header() {
           {/* Desktop search */}
           <div className="hidden md:flex flex-1 items-center justify-end min-w-0 max-w-xs">
             <form
-              action="/coupons"
+              action="/stores"
               method="GET"
               className="w-full max-w-[220px] flex rounded-full border border-gray-200 bg-gray-50 focus-within:bg-white focus-within:border-[#34C759] focus-within:ring-2 focus-within:ring-[#34C759]/20 transition-all"
             >
@@ -204,7 +204,7 @@ export default function Header() {
             })}
           </nav>
           <div className="mt-6 pt-6 border-t border-gray-200">
-            <form action="/coupons" method="GET" className="flex gap-0">
+            <form action="/stores" method="GET" className="flex gap-0">
               <input
                 type="search"
                 name="q"

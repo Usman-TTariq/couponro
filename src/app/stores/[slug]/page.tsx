@@ -96,12 +96,12 @@ export default async function StorePage({
 
   if (!store && storeCoupons.length === 0) {
     return (
-      <div className="min-h-screen bg-almond flex flex-col">
+      <div className="min-h-screen bg-white flex flex-col">
         <Header />
         <main className="flex-1 mx-auto max-w-4xl px-4 py-12 text-center">
-          <h1 className="text-2xl font-bold text-space">Not found</h1>
-          <p className="mt-2 text-rebecca">This store or coupon page does not exist.</p>
-          <Link href="/" className="mt-4 inline-block text-lobster font-medium hover:underline">
+          <h1 className="text-2xl font-bold text-gray-900">Not found</h1>
+          <p className="mt-2 text-gray-600">This store or coupon page does not exist.</p>
+          <Link href="/" className="mt-4 inline-block text-[#34C759] font-medium hover:underline">
             ← Back to home
           </Link>
         </main>
@@ -111,7 +111,7 @@ export default async function StorePage({
   }
 
   return (
-    <div className="min-h-screen bg-almond flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col">
       <Header />
       <StorePageContent
         store={store}

@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import type { Store } from "@/types/store";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -33,6 +33,8 @@ export default function StoresPage() {
   const [navigating, setNavigating] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const query = (searchParams.get("q") ?? "").trim().toLowerCase();
 
   useEffect(() => {
     setNavigating(false);
@@ -69,9 +71,20 @@ export default function StoresPage() {
     };
   }, []);
 
+  // Filter by search query (nav search box)
+  const filteredStores = useMemo(() => {
+    if (!query) return stores;
+    return stores.filter((s) => {
+      const name = (s.name ?? "").toLowerCase();
+      const slug = (s.slug ?? "").toLowerCase();
+      const desc = (s.description ?? "").toLowerCase();
+      return name.includes(query) || slug.includes(query) || desc.includes(query);
+    });
+  }, [stores, query]);
+
   // Group stores by first character (letter or 0-9)
   const byLetter = new Map<string, Store[]>();
-  for (const store of stores) {
+  for (const store of filteredStores) {
     const key = getFirstChar(store.name ?? "");
     if (!byLetter.has(key)) byLetter.set(key, []);
     byLetter.get(key)!.push(store);
@@ -119,7 +132,7 @@ export default function StoresPage() {
               <span className="text-gray-700 font-medium">ALL STORES</span>
             </nav>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 tracking-tight">
-              All Stores
+              {query ? `Stores matching "${searchParams.get("q") ?? ""}"` : "All Stores"}
             </h1>
           </div>
         </div>
@@ -168,9 +181,21 @@ export default function StoresPage() {
             <div className="bg-[#f5f5f5] py-8 sm:py-10 w-full min-w-0">
               <div className="mx-auto max-w-6xl px-4 sm:px-6 w-full min-w-0">
                 {sectionOrder.length === 0 ? (
-                  <p className="text-center text-gray-500 py-12">
-                    No stores yet.
-                  </p>
+                  <div className="text-center py-12">
+                    <p className="text-gray-500">
+                      {query
+                        ? `No stores match "${searchParams.get("q") ?? ""}". Try a different search.`
+                        : "No stores found."}
+                    </p>
+                    {query && (
+                      <Link
+                        href="/stores"
+                        className="mt-3 inline-block text-[#34C759] font-medium hover:underline"
+                      >
+                        Show all stores
+                      </Link>
+                    )}
+                  </div>
                 ) : (
                   <div className="space-y-8">
                     {sectionOrder.map((letter) => {
