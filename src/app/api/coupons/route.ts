@@ -109,6 +109,8 @@ export async function POST(request: NextRequest) {
       couponType: body?.couponType ?? "code",
       couponCode: body?.couponCode ?? "",
       couponTitle: body?.couponTitle ?? "",
+      showCodeButtonText:
+        typeof body?.showCodeButtonText === "string" ? body.showCodeButtonText.trim() || undefined : undefined,
       badgeLabel: body?.badgeLabel ?? undefined,
       priority: typeof body?.priority === "number" ? body.priority : 0,
       active: body?.active !== false,
@@ -152,6 +154,8 @@ export async function PUT(request: NextRequest) {
       couponType: body?.couponType ?? "code",
       couponCode: body?.couponCode ?? "",
       couponTitle: body?.couponTitle ?? "",
+      showCodeButtonText:
+        typeof body?.showCodeButtonText === "string" ? body.showCodeButtonText.trim() || undefined : undefined,
       badgeLabel: body?.badgeLabel ?? undefined,
       priority: typeof body?.priority === "number" ? body.priority : 0,
       active: body?.active !== false,

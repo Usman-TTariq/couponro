@@ -43,6 +43,8 @@ export type Store = {
   couponType?: "code" | "deal";
   couponCode?: string;
   couponTitle?: string;
+  /** Custom label on the reveal-code button (code-type coupons). If empty, "Get Code" is used. */
+  showCodeButtonText?: string;
   badgeLabel?: string;
   priority?: number;
   active?: boolean;

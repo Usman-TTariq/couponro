@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import type { Store } from "@/types/store";
 import CouponPopup from "@/components/CouponPopup";
+import { getShowCodeButtonLabel } from "@/lib/coupon-button-labels";
 
 const SITE_NAME = "SeemPromo";
 type SortBy = "newest" | "popularity" | "ending_soon" | "expired";
@@ -87,6 +88,11 @@ export default function StorePageContent({
     (store?.sidebarContent ?? "").trim().length > 0 ||
     (store?.whyTrustUs ?? "").trim().length > 0 ||
     (store?.moreInformation ?? "").trim().length > 0;
+
+  /** Admin "Store Page Heading (above coupons)" — if set, replaces default title */
+  const storePageHeading = (store?.storePageHeading ?? "").trim();
+  const defaultPageTitle = `${displayName} Coupons & Promo Codes`;
+  const pageTitle = storePageHeading || defaultPageTitle;
 
   return (
     <main className="flex-1 mx-auto w-full max-w-6xl px-4 sm:px-6 py-6 sm:py-8 bg-white" style={{ backgroundColor: "white" }}>
@@ -379,6 +385,7 @@ function StoreCouponCard({
   const logoUrl = storeLogoUrl || coupon.logoUrl || "";
   const isDealType = isDeal(coupon);
   const badgeBg = hasCode ? "bg-[#34C759]" : isDealType ? "bg-blue-500" : "bg-gray-600";
+  const showCodeLabel = getShowCodeButtonLabel(coupon);
 
   return (
     <article className="group w-full rounded-none border border-gray-300 bg-white p-4 sm:p-5 shadow-sm hover:shadow-md transition-shadow">
@@ -429,8 +436,9 @@ function StoreCouponCard({
                   onClick={onOpenPopup}
                   className="absolute left-0 top-0 bottom-0 z-10 w-[calc(100%-3ch)] rounded-none bg-[#34C759] text-white font-semibold text-xs uppercase tracking-wide pl-3 pr-4 flex items-center justify-center hover:bg-[#2db34d] hover:-translate-x-3 hover:shadow-md transition-all duration-200"
                   style={{ clipPath: "polygon(0 0, 100% 0, calc(100% - 10px) 100%, 0 100%)" }}
+                  title={showCodeLabel}
                 >
-                  Get Code
+                  {showCodeLabel}
                 </button>
               </>
             ) : (

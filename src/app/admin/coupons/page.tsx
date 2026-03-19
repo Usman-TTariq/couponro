@@ -174,6 +174,8 @@ export default function AdminCouponsPage() {
         return null;
       }
     };
+    let batchCreated = 0;
+    let batchUpdated = 0;
     const sendCouponBatch = async (batch: Record<string, unknown>[]): Promise<boolean> => {
       try {
         const res = await fetchWithTimeout("/api/coupons/batch", {
@@ -181,8 +183,12 @@ export default function AdminCouponsPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ coupons: batch }),
         }, UPLOAD_TIMEOUT_MS);
-        if (res.ok) return true;
         const d = await res.json().catch(() => ({}));
+        if (res.ok) {
+          batchCreated += typeof d.created === "number" ? d.created : 0;
+          batchUpdated += typeof d.updated === "number" ? d.updated : 0;
+          return true;
+        }
         if (!firstError) firstError = d?.error ?? res.statusText ?? "Batch failed";
         return false;
       } catch (err) {
@@ -191,7 +197,6 @@ export default function AdminCouponsPage() {
       }
     };
     setUploadingCoupons(true);
-    let ok = 0;
     let fail = 0;
     let skipped = 0;
     let batch: Record<string, unknown>[] = [];
@@ -236,26 +241,28 @@ export default function AdminCouponsPage() {
       batch.push(payload);
       if (batch.length >= BATCH_SIZE) {
         const success = await sendCouponBatch(batch);
-        if (success) ok += batch.length;
-        else fail += batch.length;
+        if (!success) fail += batch.length;
         batch = [];
       }
     }
     if (batch.length > 0) {
       const success = await sendCouponBatch(batch);
-      if (success) ok += batch.length;
-      else fail += batch.length;
+      if (!success) fail += batch.length;
     }
     setUploadingCoupons(false);
     setUploadCouponsProgress(null);
     e.target.value = "";
-    if (ok > 0) {
+    const okTotal = batchCreated + batchUpdated;
+    if (okTotal > 0) {
       load();
-      const parts = [`Uploaded ${ok} coupon(s).`];
+      const parts: string[] = [];
+      if (batchCreated > 0) parts.push(`${batchCreated} new coupon(s)`);
+      if (batchUpdated > 0) parts.push(`${batchUpdated} existing updated (re-upload / no duplicates)`);
+      if (parts.length === 0) parts.push(`${okTotal} processed`);
       if (createdStores.size > 0) parts.push(`${createdStores.size} store(s) created automatically.`);
       if (skipped) parts.push(`${skipped} row(s) skipped.`);
-      if (fail) parts.push(`${fail} failed.`);
-      showMsg("ok", parts.join(" "));
+      if (fail) parts.push(`${fail} batch(es) failed.`);
+      showMsg("ok", parts.join(". ") + ".");
     } else if (skipped === rows.length) showMsg("err", "No valid rows to upload. Check CSV has Store Name, and Title/Code/Description.");
     else if (fail > 0) showMsg("err", firstError ? `Upload failed: ${firstError}` : `All ${fail} row(s) failed.`);
   };
@@ -320,6 +327,7 @@ export default function AdminCouponsPage() {
         couponType: form.couponType ?? "code",
         couponCode: form.couponCode?.trim() ?? "",
         couponTitle: form.couponTitle?.trim() ?? "",
+        showCodeButtonText: form.showCodeButtonText?.trim() || undefined,
         badgeLabel: form.badgeLabel?.trim() || undefined,
         priority: typeof form.priority === "number" ? form.priority : 0,
         active: form.active !== false,
@@ -651,7 +659,8 @@ export default function AdminCouponsPage() {
             </label>
           </div>
           <p className="mt-1 text-xs text-stone-500">
-            Code = &quot;Get Code&quot;, Deal = &quot;Get Deal&quot; on the frontend.
+            Select whether this is a coupon code or a deal. Frontend will show &quot;Get Code&quot; for codes and
+            &quot;Get Deal&quot; for deals (unless you set custom button text below).
           </p>
         </div>
 
@@ -697,6 +706,25 @@ export default function AdminCouponsPage() {
             placeholder="e.g. 20% Off Sitewide"
             className={inputClass}
           />
+        </div>
+
+        {/* Custom reveal-code button (screenshot-style: multilingual examples) */}
+        <div>
+          <label className="mb-1 block text-sm font-semibold text-slate-800">
+            Custom &quot;Get Code&quot; Button Text (Optional)
+          </label>
+          <input
+            type="text"
+            value={form.showCodeButtonText ?? ""}
+            onChange={(e) => setForm((f) => ({ ...f, showCodeButtonText: e.target.value }))}
+            placeholder='e.g., "Obtenir le code", "Obtener código", "कोड प्राप्त करें"'
+            className={inputClass}
+            disabled={form.couponType !== "code"}
+          />
+          <p className="mt-1 text-xs text-stone-500">
+            Leave empty to use default &quot;Get Code&quot;. Set custom text for any language. Only applies when type
+            is Code.
+          </p>
         </div>
 
         {/* Badge (optional) */}
@@ -946,6 +974,7 @@ export default function AdminCouponsPage() {
                               couponType: c.couponType ?? "deal",
                               couponCode: c.couponCode,
                               couponTitle: c.couponTitle,
+                              showCodeButtonText: c.showCodeButtonText,
                               badgeLabel: c.badgeLabel,
                               priority: c.priority ?? 0,
                               active: c.status !== "disable",
