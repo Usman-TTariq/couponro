@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
+import { DEFAULT_BLOG_POST_URL } from "@/lib/blog-posts";
 import { useSearchParams } from "next/navigation";
 import type { Store } from "@/types/store";
 import { getShowCodeButtonLabel } from "@/lib/coupon-button-labels";
@@ -9,9 +10,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CouponPopup from "@/components/CouponPopup";
 
-const SITE_NAME = "SeemPromo";
 const PER_PAGE = 12;
-type SortBy = "newest" | "popularity" | "ending_soon" | "expired";
 
 function getCouponCode(c: Store): string {
   const code = c.couponCode ?? (c as Record<string, unknown>).coupon_code ?? "";
@@ -31,7 +30,6 @@ function CouponsPageContent() {
   const [loading, setLoading] = useState(true);
   const [popupCoupon, setPopupCoupon] = useState<Store | null>(null);
   const [storesForPopup, setStoresForPopup] = useState<Store[]>([]);
-  const [sortBy, setSortBy] = useState<SortBy>("newest");
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -41,7 +39,7 @@ function CouponsPageContent() {
       try {
         const [sRes, cRes] = await Promise.all([
           fetch("/api/stores", { cache: "no-store" }),
-          fetch(`/api/coupons?page=${page}&limit=${PER_PAGE}&status=all&codes_first=1&sort=${encodeURIComponent(sortBy)}`, { cache: "no-store" }),
+          fetch(`/api/coupons?page=${page}&limit=${PER_PAGE}&status=all&codes_first=1`, { cache: "no-store" }),
         ]);
         if (cancelled) return;
         const sData = await sRes.json();
@@ -62,7 +60,7 @@ function CouponsPageContent() {
     }
     load();
     return () => { cancelled = true; };
-  }, [page, sortBy]);
+  }, [page]);
 
   // New tab with ?popup=id: load that coupon and show overlay so site is blurred behind
   useEffect(() => {
@@ -99,86 +97,16 @@ function CouponsPageContent() {
   const enabledCoupons = coupons.filter((c) => c.status !== "disable");
 
   return (
-    <div className="min-h-screen w-full min-w-0 bg-white flex flex-col overflow-x-hidden">
+    <div className="min-h-screen w-full min-w-0 bg-[#f0f5fa] flex flex-col overflow-x-hidden">
       <Header />
-      <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 py-6 lg:py-8">
-        <nav className="text-sm text-gray-500 mb-1" aria-label="Breadcrumb">
-          <Link href="/" className="hover:text-gray-700">{SITE_NAME}</Link>
-          <span className="mx-1.5">›</span>
-          <Link href="/coupons" className="text-gray-700 font-medium">Coupons</Link>
-        </nav>
-
-        <div className="flex flex-col lg:flex-row gap-8 lg:gap-10">
-          {/* Left sidebar */}
-          <aside className="lg:w-72 flex-shrink-0 space-y-6 order-2 lg:order-1">
-            {/* 1. Discount tags collage block */}
-            <div className="rounded-lg border border-gray-200 overflow-hidden bg-white shadow-sm">
-              <div className="p-3 flex flex-wrap gap-2 justify-center items-center min-h-[120px] bg-gray-50">
-                {["SALE", "SAVE", "20%", "25%", "30%", "40%", "50%", "OFF", "CLEARANCE", "LOWEST PRICE", "70%", "90%"].map((label, i) => (
-                  <span
-                    key={i}
-                    className={`text-xs font-bold px-2 py-1 rounded ${i % 4 === 0 ? "bg-red-500 text-white" : i % 4 === 1 ? "bg-amber-400 text-gray-900" : i % 4 === 2 ? "bg-[#34C759] text-white" : "bg-blue-500 text-white"}`}
-                  >
-                    {label}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* Image above About Coupons */}
-            <div className="rounded-lg border border-gray-200 overflow-hidden bg-white shadow-sm">
-              <img src="/sss.jpg" alt="Coupons and savings" className="w-full h-auto object-cover" />
-            </div>
-
-            {/* 2. About Coupons */}
-            <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-              <h2 className="text-base font-bold text-gray-900 mb-2">About Coupons</h2>
-              <div className="flex items-center gap-2 mb-3">
-                <div className="flex gap-0.5" aria-hidden>
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <span key={i} className={i <= 4 ? "text-amber-400" : "text-gray-300"}>
-                      ★
-                    </span>
-                  ))}
-                </div>
-                <span className="text-sm text-gray-600">4 / 5 ( 2 votes )</span>
-              </div>
-              <p className="text-sm text-gray-600 leading-relaxed">
-                Access a vast collection of coupons for a variety of products and services. From groceries to electronics, find coupons that help you save on everyday purchases. Maximize your budget and never pay full price again with our extensive and up-to-date coupon database.
-              </p>
-            </div>
-
-            {/* 3. Filter */}
-            <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-              <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-3">Filter</h2>
-              <p className="text-sm text-gray-700 mb-3">Sort by</p>
-              <fieldset className="space-y-2">
-                {[
-                  { value: "newest" as SortBy, label: "Newest" },
-                  { value: "popularity" as SortBy, label: "Popularity" },
-                  { value: "ending_soon" as SortBy, label: "Ending Soon" },
-                  { value: "expired" as SortBy, label: "Expired" },
-                ].map(({ value, label }) => (
-                  <label key={value} className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="sort"
-                      checked={sortBy === value}
-                      onChange={() => { setSortBy(value); setPage(1); }}
-                      className="w-4 h-4 text-[#34C759] border-gray-300 focus:ring-[#34C759]"
-                    />
-                    <span className="text-sm text-gray-700">{label}</span>
-                  </label>
-                ))}
-              </fieldset>
-            </div>
-          </aside>
-
-          {/* Right: coupon list */}
-          <div className="flex-1 min-w-0 order-1 lg:order-2">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">
-              Coupons &amp; Promo Codes
-            </h1>
+      <main className="flex-1 mx-auto w-full max-w-4xl px-4 sm:px-6 py-8">
+        <h1 className="text-2xl md:text-3xl font-bold text-[#37474f] mb-6">
+          Featured Coupon Codes
+        </h1>
+        <p className="text-[#37474f]/90 mb-6">
+          For saving tips and store guides, read our{" "}
+          <Link href={DEFAULT_BLOG_POST_URL} className="text-lobster font-medium hover:underline">saving tips guide</Link>.
+        </p>
 
         {loading ? (
           <div className="flex items-center justify-center py-16">
@@ -233,7 +161,7 @@ function CouponsPageContent() {
                   type="button"
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page <= 1}
-                  className="rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:border-slate-400 disabled:opacity-50 disabled:pointer-events-none transition-colors shadow-sm"
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:pointer-events-none"
                   aria-label="Previous page"
                 >
                   ←
@@ -246,10 +174,10 @@ function CouponsPageContent() {
                       key={p}
                       type="button"
                       onClick={() => setPage(p)}
-                      className={`min-w-[2.5rem] rounded-full px-3 py-2.5 text-sm font-semibold transition-all ${
+                      className={`min-w-[2.25rem] rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                         page === p
-                          ? "bg-[#34C759] text-white shadow-md border border-[#34C759]"
-                          : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-400"
+                          ? "bg-lobster text-white"
+                          : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
                       }`}
                     >
                       {p}
@@ -260,7 +188,7 @@ function CouponsPageContent() {
                   type="button"
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page >= totalPages}
-                  className="rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:border-slate-400 disabled:opacity-50 disabled:pointer-events-none transition-colors shadow-sm"
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:pointer-events-none"
                   aria-label="Next page"
                 >
                   →
@@ -269,8 +197,6 @@ function CouponsPageContent() {
             )}
           </>
         )}
-          </div>
-        </div>
       </main>
       <Footer />
     </div>
@@ -338,21 +264,11 @@ function FeaturedCouponCard({
           <span className="text-sm font-medium text-black">{offCodeLabel}</span>
         </div>
 
-        {/* Middle: bold blue title + verified badge + black description */}
+        {/* Middle: bold blue title + black description */}
         <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="font-bold text-[#1e88e5] text-base leading-snug">
-              {coupon.name && `${coupon.name}: `}{offerTitle}
-            </p>
-            <span className="inline-flex items-center gap-1.5 text-[#34C759] text-xs font-medium shrink-0" title="Verified">
-              <span className="flex items-center justify-center w-4 h-4 rounded-full border-2 border-[#34C759] shrink-0">
-                <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                </svg>
-              </span>
-              Verified
-            </span>
-          </div>
+          <p className="font-bold text-[#1e88e5] text-base leading-snug">
+            {coupon.name && `${coupon.name}: `}{offerTitle}
+          </p>
           <p className="text-sm text-black mt-1">{description}</p>
         </div>
 
@@ -362,16 +278,15 @@ function FeaturedCouponCard({
             {hasCode ? (
               <>
                 <div
-                  className="absolute inset-0 bg-white border-2 border-slate-400 font-mono text-sm font-semibold text-black select-none rounded-none uppercase flex items-center justify-end pr-1.5"
-                  style={{ borderLeftStyle: "dashed", borderRightStyle: "dotted", borderTopStyle: "dotted", borderBottomStyle: "dotted" }}
+                  className="absolute inset-0 bg-white border-l-2 border-dashed border-slate-400 font-mono text-sm font-semibold text-black select-none rounded-none uppercase flex items-center justify-end pr-1.5"
+                  style={{ borderStyle: "dashed" }}
                 >
                   {codeDisplay}
                 </div>
                 <button
                   type="button"
                   onClick={onOpenPopup}
-                  className="absolute left-0 top-0 bottom-0 z-10 w-[calc(100%-3ch)] rounded-none bg-[#34C759] text-white font-semibold text-xs uppercase tracking-wide pl-3 pr-4 transition-all duration-200 flex items-center justify-center hover:bg-[#2db34d] hover:-translate-x-3 hover:shadow-md"
-                  style={{ clipPath: "polygon(0 0, 100% 0, calc(100% - 10px) 100%, 0 100%)" }}
+                  className="absolute left-0 top-0 bottom-0 z-10 w-[calc(100%-3ch)] rounded-none bg-rebecca text-white font-semibold text-xs uppercase tracking-wide px-2 sm:px-3 transition-all duration-200 flex items-center justify-center hover:bg-rebecca/90 hover:-translate-x-3 hover:shadow-md"
                   title={showCodeLabel}
                 >
                   {showCodeLabel}
@@ -381,7 +296,7 @@ function FeaturedCouponCard({
               <button
                 type="button"
                 onClick={onOpenPopup}
-                className="w-full h-full rounded-none bg-[#34C759] text-white font-semibold text-xs uppercase tracking-wide hover:bg-[#2db34d] transition-colors flex items-center justify-center"
+                className="w-full h-full rounded-none bg-rebecca text-white font-semibold text-xs uppercase tracking-wide hover:bg-rebecca/90 transition-colors flex items-center justify-center"
               >
                 Get Deal
               </button>
@@ -389,7 +304,7 @@ function FeaturedCouponCard({
           </div>
           <Link
             href={`/stores/${encodeURIComponent(slug)}`}
-            className="text-sm text-[#34C759] hover:text-[#2db34d] hover:underline transition-colors"
+            className="text-sm text-rebecca hover:text-lobster hover:underline transition-colors"
           >
             {coupon.name} Coupons
           </Link>

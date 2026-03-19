@@ -101,25 +101,13 @@ export const getCoupons = unstable_cache(
   { revalidate: CACHE_REVALIDATE, tags: ["coupons"] }
 );
 
-export type SortByCoupons = "newest" | "popularity" | "ending_soon" | "expired";
-
-export type CouponListType = "code" | "deal" | "all";
-
 export type CouponsPaginatedOptions = {
   page: number;
   limit: number;
   status?: "all" | "enable" | "disable";
   search?: string;
   codesFirst?: boolean;
-  sortBy?: SortByCoupons;
-  type?: CouponListType;
 };
-
-function expiryToDate(expiry: string | undefined): Date {
-  if (!expiry?.trim()) return new Date(864000000000000); // max date = "no expiry"
-  const d = new Date(expiry.trim());
-  return isNaN(d.getTime()) ? new Date(864000000000000) : d;
-}
 
 function hasCode(c: Store): boolean {
   const code = (c.couponCode ?? (c as Record<string, unknown>).coupon_code ?? "").toString().trim();
@@ -141,13 +129,6 @@ export async function getCouponsPaginated(
   if (options.status && options.status !== "all") {
     list = list.filter((c) => (c.status ?? "enable") === options.status);
   }
-  if (options.type && options.type !== "all") {
-    const wantDeal = options.type === "deal";
-    list = list.filter((c) => {
-      const t = (c.couponType ?? "code").toLowerCase();
-      return wantDeal ? t === "deal" : t !== "deal";
-    });
-  }
   if (options.search?.trim()) {
     const q = options.search.trim().toLowerCase();
     list = list.filter(
@@ -158,23 +139,8 @@ export async function getCouponsPaginated(
         (c.couponCode ?? "").toLowerCase().includes(q)
     );
   }
-  if (options.codesFirst && options.sortBy !== "expired" && options.sortBy !== "ending_soon") {
+  if (options.codesFirst) {
     list = [...list].sort((a, b) => (hasCode(b) ? 1 : 0) - (hasCode(a) ? 1 : 0));
-  }
-  const sortBy = options.sortBy ?? "newest";
-  const now = new Date();
-  if (sortBy === "expired") {
-    list = list.filter((c) => expiryToDate(c.expiry).getTime() < now.getTime());
-    list = [...list].sort((a, b) => expiryToDate(b.expiry).getTime() - expiryToDate(a.expiry).getTime());
-  } else if (sortBy === "ending_soon") {
-    list = list.filter((c) => expiryToDate(c.expiry).getTime() >= now.getTime());
-    list = [...list].sort((a, b) => expiryToDate(a.expiry).getTime() - expiryToDate(b.expiry).getTime());
-  } else if (sortBy === "popularity") {
-    list = [...list].sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0));
-  } else {
-    list = [...list].sort((a, b) =>
-      (b.createdAt ?? "").localeCompare(a.createdAt ?? "")
-    );
   }
   const totalFromList = list.length;
   const useDbCount =

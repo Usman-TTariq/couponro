@@ -1,217 +1,540 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import {
-  DEFAULT_BLOG_POST_URL,
-  STORES_BLOG_POST_URL,
-  FREE_SHIPPING_BLOG_POST_URL,
-  DEALS_BLOG_POST_URL,
-  FOOTER_TILE_BLOG_URLS,
-  FOOTER_TILE_TITLES,
-} from "@/lib/blog-posts";
+import { DEFAULT_BLOG_POST_URL, STORES_BLOG_POST_URL, FREE_SHIPPING_BLOG_POST_URL, DEALS_BLOG_POST_URL, FOOTER_TILE_BLOG_URLS, FOOTER_TILE_TITLES } from "@/lib/blog-posts";
 
+// Big layouts (hero, fullwidth, footer bg, 950x450): use larger images
 const HERO_IMGS = ["/img01.jpg", "/img03.jpg", "/img04.jpg"];
 const IMG_FULLWIDTH = "/img06.jpg";
+const IMG_FOOTER_BG = "/img32.jpg";
 const IMG_950 = ["/img05.jpg", "/img07.jpg", "/img10.jpg", "/img31.jpg"];
+// Medium (634x360, 385x260 nav)
 const IMG_634 = ["/img02.jpg", "/img08.jpg", "/img09.jpg"];
+const IMG_NAV = ["/img29.jpg", "/img30.jpg", "/img40.jpg"];
+// Small (190x190 footer grid): use smaller images
 const IMG_190 = ["/img13.jpg", "/img14.jpg", "/img15.jpg", "/img16.jpg", "/img17.jpg", "/img18.jpg"];
 
-const HERO_CARDS = [
-  { img: HERO_IMGS[0], title: "Featured", href: DEFAULT_BLOG_POST_URL },
-  { img: HERO_IMGS[1], title: "Saving tips", href: DEFAULT_BLOG_POST_URL },
-  { img: HERO_IMGS[2], title: "Coupon codes", href: DEFAULT_BLOG_POST_URL },
+const NAV_LINKS = [
+  { href: "/coupons", label: "Coupons" },
+  { href: "/stores", label: "Stores" },
+  { href: "/freeshipping", label: "Free Shipping" },
+  { href: "/blog", label: "Blogs" },
+];
+
+// Sidebar quick links (humari links)
+const SIDEBAR_LINKS = [
+  { href: "/coupons", label: "Coupons" },
+  { href: "/stores", label: "Stores" },
+  { href: "/freeshipping", label: "Free Shipping" },
+  { href: "/blog", label: "Blog" },
+  { href: "/about", label: "About" },
+  { href: "/contact", label: "Contact" },
+  { href: "/categories", label: "Categories" },
 ];
 
 export default function HomeNirvanaContent() {
+  const [navOpen, setNavOpen] = useState(false);
+
+  // Theme sidebar: body.nav-active shifts .w1 and shows .nav-holder
+  useEffect(() => {
+    if (navOpen) document.body.classList.add("nav-active");
+    else document.body.classList.remove("nav-active");
+    return () => document.body.classList.remove("nav-active");
+  }, [navOpen]);
+
+  // Close sidebar when clicking outside (theme behaviour)
+  useEffect(() => {
+    if (!navOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest(".nav-holder") || target.closest(".nav-opener") || target.closest(".nav-opener-react")) return;
+      setNavOpen(false);
+    };
+    document.addEventListener("click", handleClick);
+    return () => document.removeEventListener("click", handleClick);
+  }, [navOpen]);
+
+  const closeNav = () => setNavOpen(false);
+
   return (
-    <div className="min-h-screen w-full min-w-0 bg-gray-50 flex flex-col overflow-x-hidden max-w-[100vw]">
-      <Header />
-
-      <main className="flex-1 w-full min-w-0 px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
-        {/* Hero – 3 cards, new shape & layout */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-10" aria-label="Featured">
-          {HERO_CARDS.map(({ img, title, href }) => (
-            <Link
-              key={title}
-              href={href}
-              className="group relative block aspect-[4/3] sm:aspect-[3/2] rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-shadow"
-            >
-              <img
-                src={img}
-                alt={title}
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-              <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5">
-                <h2 className="text-lg sm:text-xl font-bold text-white">{title}</h2>
-                <p className="text-xs sm:text-sm text-white/90 mt-0.5">by SeemPromo · Blog</p>
+    <>
+      <div id="wrapper">
+        <div className="w1">
+          <header id="header" className="container-fluid">
+            <div className="row">
+              <div className="col-xs-12">
+                <div className="logo">
+                  <Link href="/">
+                    <img className="img-responsive" src="/couponro-logo.svg" alt="Couponro" />
+                  </Link>
+                </div>
+                <div id="nav">
+                  <button
+                    type="button"
+                    className="nav-opener-react"
+                    aria-label={navOpen ? "Close menu" : "Open menu"}
+                    onClick={() => setNavOpen((o) => !o)}
+                  >
+                    <span />
+                    <span />
+                    <span />
+                  </button>
+                  <div className="nav-holder" role="dialog" aria-label="Menu">
+                    <button
+                      type="button"
+                      className="btn-close-react"
+                      aria-label="Close menu"
+                      onClick={closeNav}
+                    >
+                      <i className="fa fa-times" />
+                    </button>
+                    <form action="/coupons" method="GET" className="search-form">
+                      <input type="search" name="q" className="form-control" placeholder="Search store or brand" />
+                      <button type="submit" className="btn btn-default"><i className="fa fa-search" /></button>
+                    </form>
+                    <ul className="list-inline">
+                      {NAV_LINKS.map(({ href, label }) => (
+                        <li key={href}>
+                          <Link href={href} onClick={closeNav}>{label.toUpperCase()}</Link>
+                        </li>
+                      ))}
+                    </ul>
+                    <ul className="list-inline" style={{ marginTop: "0.5rem", paddingBottom: "1.5rem" }}>
+                      {SIDEBAR_LINKS.filter((l) => !NAV_LINKS.some((n) => n.href === l.href)).map(({ href, label }) => (
+                        <li key={href} style={{ marginRight: "1rem", marginBottom: "0.5rem" }}>
+                          <Link href={href} onClick={closeNav} style={{ fontSize: "14px", textTransform: "none" }}>{label}</Link>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="nav-posts">
+                      <strong className="title"><Link href={DEFAULT_BLOG_POST_URL} onClick={closeNav}>POPULAR POSTS</Link></strong>
+                      <Link href={DEFAULT_BLOG_POST_URL} className="banner-gallery" onClick={closeNav}>
+                        <img src={IMG_NAV[0]} alt="" loading="eager" decoding="async" />
+                        <div className="post-over">
+                          <div className="box">
+                            <div className="block">
+                              <h3>Featured</h3>
+                              <ul className="add-nav list-inline">
+                                <li>by Couponro</li>
+                                <li><time dateTime="2026-03-04">Mar 4, 2026</time></li>
+                                <li>Blog</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                      <Link href="/coupons" className="banner-gallery" onClick={closeNav}>
+                        <img src={IMG_NAV[1]} alt="" loading="eager" decoding="async" />
+                        <div className="post-over">
+                          <div className="box">
+                            <div className="block">
+                              <h3>Coupons</h3>
+                              <ul className="add-nav list-inline">
+                                <li>by Couponro</li>
+                                <li><time dateTime="2026-03-04">Mar 4, 2026</time></li>
+                                <li>Coupons</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                      <Link href={DEFAULT_BLOG_POST_URL} className="banner-gallery" onClick={closeNav}>
+                        <img src={IMG_NAV[2]} alt="" loading="eager" decoding="async" />
+                        <div className="post-over quotes">
+                          <div className="box">
+                            <div className="block">
+                              <blockquote className="post-quotes">
+                                <p>&ldquo;Saving tips&rdquo;</p>
+                                <cite title="Couponro">Couponro</cite>
+                              </blockquote>
+                              <ul className="add-nav list-inline">
+                                <li><time dateTime="2026-03-04">Mar 4, 2026</time></li>
+                                <li>Quote</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                    </div>
+                    <ul className="social-networks list-inline">
+                      <li><a href="https://facebook.com" target="_blank" rel="noopener noreferrer"><i className="fa fa-facebook" /></a></li>
+                      <li><a href="https://x.com" target="_blank" rel="noopener noreferrer"><i className="fa fa-twitter" /></a></li>
+                      <li><a href="https://plus.google.com" target="_blank" rel="noopener noreferrer"><i className="fa fa-google-plus" /></a></li>
+                    </ul>
+                    <span className="copyrights" suppressHydrationWarning>&copy; {new Date().getFullYear()} <Link href="/" onClick={closeNav}>Couponro</Link>. All rights reserved.</span>
+                  </div>
+                </div>
               </div>
-            </Link>
-          ))}
-        </section>
-
-        {/* Two cols – gallery + trending */}
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-8 sm:mb-10">
-          <Link
-            href={DEFAULT_BLOG_POST_URL}
-            className="group relative block aspect-[16/10] rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-shadow"
-          >
-            <img
-              src={IMG_950[0]}
-              alt="Blog post"
-              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-5">
-              <h2 className="text-xl font-bold text-white">Blog post</h2>
-              <p className="text-sm text-white/90 mt-1">by SeemPromo · Blog</p>
             </div>
-          </Link>
-          <Link
-            href={DEFAULT_BLOG_POST_URL}
-            className="group relative block aspect-[16/10] rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-shadow"
-          >
-            <img
-              src={IMG_950[1]}
-              alt="Trending"
-              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-5 flex items-end justify-between">
-              <div>
-                <h2 className="text-xl font-bold text-white">Trending</h2>
-                <p className="text-sm text-white/90 mt-1">by SeemPromo · Blog</p>
+          </header>
+          <main id="main" role="main">
+            <div className="container-fluid">
+              <div className="row">
+                <div className="col-xs-12">
+                  <div className="row">
+                    <section className="hero-three" aria-label="Hero">
+                      <div className="row">
+                        <div className="col-sm-4 col-xs-12">
+                          <Link href={DEFAULT_BLOG_POST_URL} className="banner-gallery">
+                            <div className="bg-stretch">
+                              <img src={HERO_IMGS[0]} alt="Featured" loading="eager" decoding="async" />
+                            </div>
+                            <div className="post-over">
+                              <div className="box">
+                                <div className="block">
+                                  <h2><Link href={DEFAULT_BLOG_POST_URL}>Featured</Link></h2>
+                                  <ul className="add-nav list-inline">
+                                    <li>by <Link href="/">Couponro</Link></li>
+                                    <li><time dateTime="2026-03-04">Mar 4, 2026</time></li>
+                                    <li><Link href={DEFAULT_BLOG_POST_URL}>Blog</Link></li>
+                                  </ul>
+                                </div>
+                              </div>
+                            </div>
+                          </Link>
+                        </div>
+                        <div className="col-sm-4 col-xs-12">
+                          <Link href={DEFAULT_BLOG_POST_URL} className="banner-gallery">
+                            <div className="bg-stretch">
+                              <img src={HERO_IMGS[1]} alt="Saving tips" />
+                            </div>
+                            <div className="post-over">
+                              <div className="box">
+                                <div className="block">
+                                  <h2><Link href={DEFAULT_BLOG_POST_URL}>Saving tips</Link></h2>
+                                  <ul className="add-nav list-inline">
+                                    <li>by <Link href="/">Couponro</Link></li>
+                                    <li><time dateTime="2026-03-04">Mar 4, 2026</time></li>
+                                    <li><Link href={DEFAULT_BLOG_POST_URL}>Blog</Link></li>
+                                  </ul>
+                                </div>
+                              </div>
+                            </div>
+                          </Link>
+                        </div>
+                        <div className="col-sm-4 col-xs-12">
+                          <Link href={DEFAULT_BLOG_POST_URL} className="banner-gallery">
+                            <div className="bg-stretch">
+                              <img src={HERO_IMGS[2]} alt="Coupon codes" loading="eager" decoding="async" />
+                            </div>
+                            <div className="post-over">
+                              <div className="box">
+                                <div className="block">
+                                  <h2><Link href={DEFAULT_BLOG_POST_URL}>Coupon codes</Link></h2>
+                                  <ul className="add-nav list-inline">
+                                    <li>by <Link href="/">Couponro</Link></li>
+                                    <li><time dateTime="2026-03-04">Mar 4, 2026</time></li>
+                                    <li><Link href={DEFAULT_BLOG_POST_URL}>Coupons</Link></li>
+                                  </ul>
+                                </div>
+                              </div>
+                            </div>
+                          </Link>
+                        </div>
+                      </div>
+                    </section>
+                  </div>
+                </div>
               </div>
-              <span className="rounded-full bg-[#34C759] p-2.5 text-white" aria-hidden>
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" /></svg>
-              </span>
             </div>
-          </Link>
-        </section>
 
-        {/* Three cols – quote, stores, coupons */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-10">
-          <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-md">
-            <img src={IMG_634[0]} alt="" className="absolute inset-0 w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-black/50 flex items-center justify-center p-6">
-              <blockquote className="text-center">
-                <p className="text-white font-medium italic">&ldquo;Saving tips &amp; deals&rdquo;</p>
-                <cite className="mt-2 block text-sm text-white/90 not-italic">— SeemPromo</cite>
-              </blockquote>
+            <div className="container-fluid">
+              <div className="row">
+                <div className="col-sm-6 col-xs-12 two-cols">
+                  <div className="row">
+                    <section className="main-gallery">
+                      <div className="mask">
+                        <div className="slideset">
+                          <div className="slide">
+                            <div className="bg-stretch">
+                              <img src={IMG_950[0]} alt="Gallery" loading="eager" decoding="async" />
+                            </div>
+                            <div className="post-over">
+                              <div className="box">
+                                <div className="block">
+                                  <h2><Link href={DEFAULT_BLOG_POST_URL}>Blog post</Link></h2>
+                                  <ul className="add-nav list-inline">
+                                    <li>by <Link href={DEFAULT_BLOG_POST_URL}>Couponro</Link></li>
+                                    <li><time dateTime="2026-03-04">Mar 4, 2026</time></li>
+                                    <li><Link href={DEFAULT_BLOG_POST_URL}>Blog</Link></li>
+                                  </ul>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <a className="btn-prev" href="#"><i className="fa fa-angle-left" /></a>
+                      <a className="btn-next" href="#"><i className="fa fa-angle-right" /></a>
+                    </section>
+                  </div>
+                </div>
+                <div className="col-sm-6 col-xs-12 two-cols">
+                  <div className="row">
+                    <article className="banner-gallery trending">
+                      <div className="bg-stretch">
+                        <img src={IMG_950[1]} alt="Trending" loading="eager" decoding="async" />
+                      </div>
+                      <div className="post-over">
+                        <div className="box">
+                          <div className="block">
+                            <h2><Link href={DEFAULT_BLOG_POST_URL}>Trending</Link></h2>
+                            <ul className="add-nav list-inline">
+                              <li>by <Link href={DEFAULT_BLOG_POST_URL}>Couponro</Link></li>
+                              <li><time dateTime="2026-03-04">Mar 4, 2026</time></li>
+                              <li><Link href={DEFAULT_BLOG_POST_URL}>Blog</Link></li>
+                            </ul>
+                            <Link href={DEFAULT_BLOG_POST_URL} className="btn-flash"><i className="fa fa-bolt" /></Link>
+                          </div>
+                        </div>
+                      </div>
+                    </article>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="container-fluid">
+              <div className="row">
+                <div className="col-sm-4 col-xs-12 three-cols">
+                  <div className="row">
+                    <div className="banner-gallery">
+                      <div className="bg-stretch">
+                        <img src={IMG_634[0]} alt="Quote" loading="eager" decoding="async" />
+                      </div>
+                      <div className="post-over quotes">
+                        <div className="box">
+                          <div className="block">
+                            <blockquote className="post-quotes">
+                              <p><Link href={DEFAULT_BLOG_POST_URL}>&ldquo;Saving tips &amp; deals&rdquo;</Link></p>
+                              <footer><cite title="Couponro">Couponro</cite></footer>
+                            </blockquote>
+                            <ul className="add-nav list-inline">
+                              <li><time dateTime="2026-03-04">Mar 4, 2026</time></li>
+                              <li>Quote</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="col-sm-4 col-xs-12 three-cols">
+                  <div className="row">
+                    <Link href={STORES_BLOG_POST_URL} className="banner-gallery">
+                      <div className="bg-stretch">
+                        <img src={IMG_950[0]} alt="Stores" loading="eager" decoding="async" />
+                      </div>
+                      <div className="post-over">
+                        <div className="box">
+                          <div className="block">
+                            <h3><span>Stores</span></h3>
+                            <ul className="add-nav list-inline">
+                              <li>by <Link href="/">Couponro</Link></li>
+                              <li><time dateTime="2026-03-04">Mar 4, 2026</time></li>
+                              <li><span>Stores</span></li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  </div>
+                </div>
+                <div className="col-sm-4 col-xs-12 three-cols">
+                  <div className="row">
+                    <Link href={DEFAULT_BLOG_POST_URL} className="banner-gallery">
+                      <div className="bg-stretch">
+                        <img src={IMG_950[1]} alt="Coupons" loading="eager" decoding="async" />
+                      </div>
+                      <div className="post-over">
+                        <div className="box">
+                          <div className="block">
+                            <h3><span>Coupons</span></h3>
+                            <ul className="add-nav list-inline">
+                              <li>by <Link href="/">Couponro</Link></li>
+                              <li><time dateTime="2026-03-04">Mar 4, 2026</time></li>
+                              <li><span>Coupons</span></li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="container-fluid">
+              <div className="row">
+                <article className="col-xs-12 fullwidth-post">
+                  <div className="row">
+                    <div className="banner-gallery parallax-holder">
+                      <div className="parallax-frame">
+                        <img src={IMG_FULLWIDTH} height={1333} width={2000} alt="Fullwidth" loading="eager" decoding="async" />
+                      </div>
+                      <div className="post-over">
+                        <div className="box">
+                          <div className="block">
+                            <h2><Link href={DEFAULT_BLOG_POST_URL}>Blog</Link></h2>
+                            <ul className="add-nav list-inline">
+                              <li>by <Link href="/">Couponro</Link></li>
+                              <li><time dateTime="2026-03-04">Mar 4, 2026</time></li>
+                              <li><Link href={DEFAULT_BLOG_POST_URL}>Blog</Link></li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              </div>
+            </div>
+
+            <div className="container-fluid">
+              <div className="row">
+                <div className="col-sm-6 col-xs-12 two-cols">
+                  <div className="row">
+                    <article className="banner-gallery">
+                      <div className="bg-stretch">
+                        <img src={IMG_950[2]} alt="Free Shipping" />
+                      </div>
+                      <div className="post-over">
+                        <div className="box">
+                          <div className="block">
+                            <h2><Link href={FREE_SHIPPING_BLOG_POST_URL}>Free Shipping</Link></h2>
+                            <ul className="add-nav list-inline">
+                              <li>by <Link href="/">Couponro</Link></li>
+                              <li><time dateTime="2026-03-04">Mar 4, 2026</time></li>
+                              <li><Link href={FREE_SHIPPING_BLOG_POST_URL}>Free Shipping</Link></li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </article>
+                  </div>
+                </div>
+                <div className="col-sm-6 col-xs-12 two-cols">
+                  <div className="row">
+                    <article className="banner-gallery">
+                      <div className="bg-stretch">
+                        <img src={IMG_950[3]} alt="Deals" loading="eager" decoding="async" />
+                      </div>
+                      <div className="post-over">
+                        <div className="box">
+                          <div className="block">
+                            <h2><Link href={DEALS_BLOG_POST_URL}>Deals</Link></h2>
+                            <ul className="add-nav list-inline">
+                              <li>by <Link href="/">Couponro</Link></li>
+                              <li><time dateTime="2026-03-04">Mar 4, 2026</time></li>
+                              <li><Link href={DEALS_BLOG_POST_URL}>Coupons</Link></li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </article>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </main>
+
+          <div className="footer-holder parallax-holder">
+            <div className="parallax-frame">
+              <img src={IMG_FOOTER_BG} height={541} width={1920} alt="" />
+            </div>
+            <div className="post-over" />
+            <div className="container">
+              <aside className="row footer-aside">
+                <div className="col-sm-3 col-xs-12 column social">
+                  <div className="footer-logo mb-3">
+                    <Link href="/" aria-label="Couponro Home">
+                      <img className="img-responsive" src="/couponro%20logo%20svg.svg" alt="Couponro" style={{ maxHeight: "56px", width: "auto" }} />
+                    </Link>
+                  </div>
+                  <p>Couponro helps you save with verified coupon codes, promo codes, and free shipping offers from top stores.</p>
+                  <h3><span className="txt"><Link href={DEFAULT_BLOG_POST_URL}>Blog</Link></span></h3>
+                  <ul className="social-networks list-inline">
+                    <li><a href="#"><i className="fa fa-facebook" /></a></li>
+                    <li><a href="#"><i className="fa fa-twitter" /></a></li>
+                    <li><a href="#"><i className="fa fa-google-plus" /></a></li>
+                  </ul>
+                </div>
+                <div className="col-sm-3 col-xs-12 column">
+                  <h3><span className="txt"><Link href={DEFAULT_BLOG_POST_URL}>Categories</Link></span></h3>
+                  <ul className="info-nav list-inline">
+                    <li><Link href="/coupons">Coupons</Link></li>
+                    <li><Link href="/stores">Stores</Link></li>
+                    <li><Link href="/freeshipping">Free Shipping</Link></li>
+                  </ul>
+                  <h3><span className="txt"><Link href={DEFAULT_BLOG_POST_URL}>Tags</Link></span></h3>
+                  <ul className="info-nav list-inline">
+                    <li><Link href="/coupons">Deals</Link></li>
+                    <li><Link href={DEFAULT_BLOG_POST_URL}>Saving tips</Link></li>
+                  </ul>
+                </div>
+                <div className="col-sm-6 col-xs-12">
+                  <ul className="instagram-nav list-inline">
+                    {[1, 2, 3, 4, 5, 6].map((i) => (
+                      <li key={i}>
+                        <Link href={FOOTER_TILE_BLOG_URLS[i - 1]}>
+                          <img className="img-responsive" src={IMG_190[i - 1]} alt="" loading="eager" decoding="async" />
+                          <span className="btn-instagram"><i className="fa fa-instagram" /></span>
+                          <div className="insta-over">
+                            <span className="title">{FOOTER_TILE_TITLES[i - 1]}</span>
+                            <h3>Couponro</h3>
+                            <time dateTime="2026-03-04">Mar 4, 2026</time>
+                          </div>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </aside>
+              <footer id="footer" className="row">
+                <div className="col-xs-12">
+                  <span className="copyrights" suppressHydrationWarning>&copy; {new Date().getFullYear()} <Link href="/">Couponro</Link>. All rights reserved.</span>
+                  <ul className="footer-nav list-inline">
+                    <li><Link href="/">Home</Link></li>
+                    <li><Link href="/coupons">Coupons</Link></li>
+                    <li><Link href="/stores">Stores</Link></li>
+                    <li><Link href={DEFAULT_BLOG_POST_URL}>Blog</Link></li>
+                  </ul>
+                </div>
+              </footer>
             </div>
           </div>
-          <Link
-            href={STORES_BLOG_POST_URL}
-            className="group relative block aspect-[4/3] rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-shadow"
-          >
-            <img
-              src={IMG_950[0]}
-              alt="Stores"
-              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-4">
-              <h3 className="text-lg font-bold text-white">Stores</h3>
-              <p className="text-sm text-white/90">by SeemPromo · Stores</p>
-            </div>
-          </Link>
-          <Link
-            href={DEFAULT_BLOG_POST_URL}
-            className="group relative block aspect-[4/3] rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-shadow"
-          >
-            <img
-              src={IMG_950[1]}
-              alt="Coupons"
-              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-4">
-              <h3 className="text-lg font-bold text-white">Coupons</h3>
-              <p className="text-sm text-white/90">by SeemPromo · Coupons</p>
-            </div>
-          </Link>
-        </section>
+        </div>
+      </div>
 
-        {/* Fullwidth */}
-        <section className="mb-8 sm:mb-10">
-          <Link
-            href={DEFAULT_BLOG_POST_URL}
-            className="group relative block aspect-[21/9] rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-shadow"
-          >
-            <img
-              src={IMG_FULLWIDTH}
-              alt="Blog"
-              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
-              <h2 className="text-2xl sm:text-3xl font-bold text-white">Blog</h2>
-              <p className="text-white/90 mt-1">by SeemPromo · Blog</p>
-            </div>
-          </Link>
-        </section>
-
-        {/* Two cols – free shipping, deals */}
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-10 sm:mb-12">
-          <Link
-            href={FREE_SHIPPING_BLOG_POST_URL}
-            className="group relative block aspect-[16/10] rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-shadow"
-          >
-            <img
-              src={IMG_950[2]}
-              alt="Free Shipping"
-              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-5">
-              <h2 className="text-xl font-bold text-white">Free Shipping</h2>
-              <p className="text-sm text-white/90 mt-1">by SeemPromo · Free Shipping</p>
-            </div>
-          </Link>
-          <Link
-            href={DEALS_BLOG_POST_URL}
-            className="group relative block aspect-[16/10] rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-shadow"
-          >
-            <img
-              src={IMG_950[3]}
-              alt="Deals"
-              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-5">
-              <h2 className="text-xl font-bold text-white">Deals</h2>
-              <p className="text-sm text-white/90 mt-1">by SeemPromo · Coupons</p>
-            </div>
-          </Link>
-        </section>
-
-        {/* Footer tiles – 6 images, new grid & shape */}
-        <section className="rounded-2xl bg-white border border-gray-200 shadow-sm p-6 sm:p-8" aria-label="More guides">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">More guides</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-            {FOOTER_TILE_TITLES.map((title, i) => (
-              <Link
-                key={i}
-                href={FOOTER_TILE_BLOG_URLS[i]}
-                className="group block rounded-xl overflow-hidden border border-gray-200 hover:border-[#34C759]/50 hover:shadow-md transition-all aspect-square"
-              >
-                <img
-                  src={IMG_190[i]}
-                  alt=""
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-                <span className="block p-2 text-xs font-medium text-gray-700 group-hover:text-[#34C759] text-center truncate">
-                  {title}
-                </span>
-              </Link>
-            ))}
-          </div>
-        </section>
-      </main>
-
-      <Footer />
-    </div>
+      <ThemeScripts />
+    </>
   );
+}
+
+function ThemeScripts() {
+  useEffect(() => {
+    if (typeof window === "undefined" || (window as unknown as { __nirvanaLoaded?: boolean }).__nirvanaLoaded) return;
+    const loadScript = (src: string): Promise<void> =>
+      new Promise((resolve, reject) => {
+        const s = document.createElement("script");
+        s.src = src;
+        s.onload = () => resolve();
+        s.onerror = () => reject(new Error(`Failed to load ${src}`));
+        document.body.appendChild(s);
+      });
+    const run = () => {
+      const base = "/theme/js";
+      loadScript(`${base}/jquery-1.11.2.min.js`)
+        .then(() => loadScript(`${base}/bootstrap.min.js`))
+        .then(() => loadScript(`${base}/jquery.main.js`))
+        .then(() => {
+          (window as unknown as { __nirvanaLoaded?: boolean }).__nirvanaLoaded = true;
+        })
+        .catch(() => {});
+    };
+    const t = setTimeout(run, 800);
+    return () => clearTimeout(t);
+  }, []);
+  return null;
 }

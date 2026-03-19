@@ -57,7 +57,7 @@ export default function HeaderPromoStrip() {
 
   if (offers.length === 0) {
     return (
-      <div className="bg-[#34C759] px-4 py-2 text-center text-sm text-white">
+      <div className="bg-lobster px-4 py-1.5 text-center text-sm text-white">
         Get the best deals – browse coupons &amp; stores
       </div>
     );
@@ -67,7 +67,7 @@ export default function HeaderPromoStrip() {
   const current = list[index % list.length];
 
   return (
-    <div className="bg-[#34C759] px-3 sm:px-4 py-2 text-center text-white overflow-hidden">
+    <div className="bg-lobster px-3 sm:px-4 py-2 sm:py-1.5 text-center text-white overflow-hidden">
       <Link
         href={`/stores/${encodeURIComponent(getSlug(current))}`}
         className="hover:underline font-medium text-xs sm:text-sm line-clamp-2 sm:line-clamp-none"

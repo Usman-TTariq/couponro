@@ -43,12 +43,6 @@ export async function GET(request: NextRequest) {
       const q = searchParams.get("q") ?? "";
       const codesFirst = searchParams.get("codes_first") === "1" || searchParams.get("codesFirst") === "true";
       const fresh = searchParams.get("fresh") === "1" || searchParams.get("fresh") === "true";
-      const sortParam = searchParams.get("sort") ?? searchParams.get("sortBy") ?? "newest";
-      const sortBy = ["newest", "popularity", "ending_soon", "expired"].includes(sortParam)
-        ? (sortParam as "newest" | "popularity" | "ending_soon" | "expired")
-        : "newest";
-      const typeParam = searchParams.get("type") ?? "all";
-      const type = ["code", "deal", "all"].includes(typeParam) ? (typeParam as "code" | "deal" | "all") : "all";
       const { coupons, total } = await withTimeout(
         getCouponsPaginated(
           {
@@ -56,9 +50,7 @@ export async function GET(request: NextRequest) {
             limit: limitNum,
             status: status === "enable" || status === "disable" ? status : "all",
             search: q,
-            codesFirst: type === "deal" ? false : codesFirst,
-            sortBy,
-            type,
+            codesFirst,
           },
           fresh
         ),

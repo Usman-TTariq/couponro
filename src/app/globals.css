@@ -47,18 +47,18 @@ body > div {
 }
 
 /* Structural fallbacks so header/footer/main get palette (exclude theme #header) */
-header:not(#header):not(#site-header) { background-color: var(--color-rebecca); color: white; }
+header:not(#header) { background-color: var(--color-rebecca); color: white; }
 @media (min-width: 768px) {
-  header:not(#header):not(#site-header) nav[class*="flex"] { display: flex !important; }
-  header:not(#header):not(#site-header) form[action="/"],
-  header:not(#header):not(#site-header) form[action="/coupons"] { display: flex !important; }
+  header:not(#header) nav[class*="flex"] { display: flex !important; }
+  header:not(#header) form[action="/"],
+  header:not(#header) form[action="/coupons"] { display: flex !important; }
 }
-header:not(#header):not(#site-header) > div:first-child { background-color: var(--color-lobster); color: white; }
-header:not(#header):not(#site-header) a { color: var(--color-soft-cyan); }
-header:not(#header):not(#site-header) a:hover { color: white; }
-header:not(#header):not(#site-header) input[type="search"] { background-color: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.4); border-radius: 0.5rem 0 0 0.5rem; padding: 0.5rem 0.75rem; }
-header:not(#header):not(#site-header) input[type="search"]::placeholder { color: rgba(142, 249, 243, 0.8); }
-header:not(#header):not(#site-header) button[type="submit"] { background-color: var(--color-lobster); color: white; border: 0; border-radius: 0 0.5rem 0.5rem 0; padding: 0.5rem 0.75rem; }
+header:not(#header) > div:first-child { background-color: var(--color-lobster); color: white; }
+header:not(#header) a { color: var(--color-soft-cyan); }
+header:not(#header) a:hover { color: white; }
+header:not(#header) input[type="search"] { background-color: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.4); border-radius: 0.5rem 0 0 0.5rem; padding: 0.5rem 0.75rem; }
+header:not(#header) input[type="search"]::placeholder { color: rgba(142, 249, 243, 0.8); }
+header:not(#header) button[type="submit"] { background-color: var(--color-lobster); color: white; border: 0; border-radius: 0 0.5rem 0.5rem 0; padding: 0.5rem 0.75rem; }
 main:not(#main) { background-color: var(--color-almond); }
 main:not(#main) h2 { color: var(--color-space); }
 main:not(#main) p { color: var(--color-rebecca); }

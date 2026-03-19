@@ -1,7 +1,5 @@
 # dependencies
 /node_modules
-/studio/node_modules
-/studio/.sanity
 /.pnp
 .pnp.js
 .yarn/install-state.gz

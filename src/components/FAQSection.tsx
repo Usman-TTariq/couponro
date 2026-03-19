@@ -7,24 +7,24 @@ const FAQ_ITEMS = [
   {
     question: "What is a promo code?",
     answer:
-      "A promo code is an alphanumeric phrase used during checkout to receive an online discount (or other benefit) on the purchase of e-commerce goods or services. It is used interchangeably with terms like coupon code, discount code, voucher code and sometimes is simply referred to as an online digital coupon. You can find promo codes for thousands of brands and learn more about couponing to maximize your savings by using the resources on the SeemPromo website.",
-    linkText: "SeemPromo website",
+      "A promo code is an alphanumeric phrase used during checkout to receive an online discount (or other benefit) on the purchase of e-commerce goods or services. It is used interchangeably with terms like coupon code, discount code, voucher code and sometimes is simply referred to as an online digital coupon. You can find promo codes for thousands of brands and learn more about couponing to maximize your savings by using the resources on the Couponro website.",
+    linkText: "Couponro website",
     linkHref: "/",
   },
   {
     question: "How can I get a discount or promo code every time I shop?",
     answer:
-      "Visit SeemPromo before you shop to browse the latest coupon codes and deals for your favorite stores. You can search by store name or category, and we update our listings regularly. Always check the merchant website to confirm the code is valid before checkout.",
+      "Visit Couponro before you shop to browse the latest coupon codes and deals for your favorite stores. You can search by store name or category, and we update our listings regularly. Always check the merchant website to confirm the code is valid before checkout.",
   },
   {
     question: "Do promo codes work?",
     answer:
-      "Yes. Promo codes from SeemPromo are verified and updated by our team. Some codes may expire or have usage limits, so we recommend trying the code at checkout and checking the merchant's terms. If one code doesn't work, try an alternative or contact the store's customer support.",
+      "Yes. Promo codes from Couponro are verified and updated by our team. Some codes may expire or have usage limits, so we recommend trying the code at checkout and checking the merchant's terms. If one code doesn't work, try an alternative or contact the store's customer support.",
   },
   {
     question: "Are your coupons free to use?",
     answer:
-      "Yes. All coupon codes and deals listed on SeemPromo are free for visitors to use. We may earn a commission when you use our links to make a purchase, at no extra cost to you. This helps us keep the site running and updated.",
+      "Yes. All coupon codes and deals listed on Couponro are free for visitors to use. We may earn a commission when you use our links to make a purchase, at no extra cost to you. This helps us keep the site running and updated.",
   },
 ];
 

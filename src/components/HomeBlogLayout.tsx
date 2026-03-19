@@ -92,7 +92,7 @@ export default function HomeBlogLayout() {
               <div className="absolute inset-0 opacity-80" style={{ backgroundImage: "radial-gradient(rgba(255,255,255,0.08) 1px, transparent 1px)", backgroundSize: "24px 24px" }} aria-hidden />
               <div className="relative z-10 max-w-2xl">
                 <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
-                  SeemPromo Blog
+                  Couponro Blog
                 </h1>
                 <p className="mt-4 text-lg text-white/90">
                   Saving tips, deal roundups, and guides to help you shop smarter. Layout ready - content coming soon.
@@ -276,7 +276,7 @@ export default function HomeBlogLayout() {
                   About
                 </h3>
                 <p className="text-sm text-rebecca">
-                  SeemPromo blog brings you the latest saving tips, deal roundups, and store guides. More content soon.
+                  Couponro blog brings you the latest saving tips, deal roundups, and store guides. More content soon.
                 </p>
               </div>
             </div>

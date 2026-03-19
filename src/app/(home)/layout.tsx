@@ -14,7 +14,7 @@ export default function HomeLayout({ children }: { children: ReactNode }) {
         <link rel="stylesheet" href="/theme/css/bootstrap.css" />
         <link rel="stylesheet" href="/theme/css/all.css" />
       </head>
-      <div className="w-full max-w-[100vw] min-w-0 overflow-x-hidden">{children}</div>
+      {children}
     </>
   );
 }
