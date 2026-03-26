@@ -98,7 +98,7 @@ export default async function StorePage({
     return (
       <div className="min-h-screen bg-almond flex flex-col">
         <Header />
-        <main className="flex-1 mx-auto max-w-4xl px-4 py-12 text-center">
+        <main className="flex-1 mx-auto max-w-7xl px-4 py-12 text-center">
           <h1 className="text-2xl font-bold text-space">Not found</h1>
           <p className="mt-2 text-rebecca">This store or coupon page does not exist.</p>
           <Link href="/" className="mt-4 inline-block text-lobster font-medium hover:underline">

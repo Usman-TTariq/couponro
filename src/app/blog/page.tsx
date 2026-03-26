@@ -46,7 +46,7 @@ export default async function BlogPage() {
   return (
     <div className="min-h-screen w-full min-w-0 bg-almond flex flex-col overflow-x-hidden">
       <Header />
-      <main className="flex-1 mx-auto w-full max-w-6xl px-4 sm:px-6 py-8">
+      <main className="flex-1 mx-auto w-full max-w-7xl px-4 sm:px-6 py-8">
         <h1 className="text-3xl md:text-4xl font-bold text-space mb-2 tracking-tight">
           SeemPromo Blog
         </h1>

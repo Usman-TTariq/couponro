@@ -172,7 +172,6 @@ export default function HomeNirvanaContent() {
             <div className="container-fluid">
               <div className="row">
                 <div className="col-xs-12">
-                  <div className="row">
                     <section className="hero-three" aria-label="Hero">
                       <div className="row">
                         <div className="col-sm-4 col-xs-12">
@@ -234,7 +233,6 @@ export default function HomeNirvanaContent() {
                         </div>
                       </div>
                     </section>
-                  </div>
                 </div>
               </div>
             </div>
@@ -243,6 +241,7 @@ export default function HomeNirvanaContent() {
               <div className="row">
                 <div className="col-sm-6 col-xs-12 two-cols">
                   <div className="row">
+                    <div className="col-xs-12">
                     <section className="main-gallery">
                       <div className="mask">
                         <div className="slideset">
@@ -268,10 +267,12 @@ export default function HomeNirvanaContent() {
                       <a className="btn-prev" href="#"><i className="fa fa-angle-left" /></a>
                       <a className="btn-next" href="#"><i className="fa fa-angle-right" /></a>
                     </section>
+                    </div>
                   </div>
                 </div>
                 <div className="col-sm-6 col-xs-12 two-cols">
                   <div className="row">
+                    <div className="col-xs-12">
                     <article className="banner-gallery trending">
                       <div className="bg-stretch">
                         <img src={IMG_950[1]} alt="Trending" loading="eager" decoding="async" />
@@ -290,6 +291,7 @@ export default function HomeNirvanaContent() {
                         </div>
                       </div>
                     </article>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -299,6 +301,7 @@ export default function HomeNirvanaContent() {
               <div className="row">
                 <div className="col-sm-4 col-xs-12 three-cols">
                   <div className="row">
+                    <div className="col-xs-12">
                     <div className="banner-gallery">
                       <div className="bg-stretch">
                         <img src={IMG_634[0]} alt="Quote" loading="eager" decoding="async" />
@@ -318,10 +321,12 @@ export default function HomeNirvanaContent() {
                         </div>
                       </div>
                     </div>
+                    </div>
                   </div>
                 </div>
                 <div className="col-sm-4 col-xs-12 three-cols">
                   <div className="row">
+                    <div className="col-xs-12">
                     <Link href={STORES_BLOG_POST_URL} className="banner-gallery">
                       <div className="bg-stretch">
                         <img src={IMG_950[0]} alt="Stores" loading="eager" decoding="async" />
@@ -339,10 +344,12 @@ export default function HomeNirvanaContent() {
                         </div>
                       </div>
                     </Link>
+                    </div>
                   </div>
                 </div>
                 <div className="col-sm-4 col-xs-12 three-cols">
                   <div className="row">
+                    <div className="col-xs-12">
                     <Link href={DEFAULT_BLOG_POST_URL} className="banner-gallery">
                       <div className="bg-stretch">
                         <img src={IMG_950[1]} alt="Coupons" loading="eager" decoding="async" />
@@ -360,6 +367,7 @@ export default function HomeNirvanaContent() {
                         </div>
                       </div>
                     </Link>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -369,6 +377,7 @@ export default function HomeNirvanaContent() {
               <div className="row">
                 <article className="col-xs-12 fullwidth-post">
                   <div className="row">
+                    <div className="col-xs-12">
                     <div className="banner-gallery parallax-holder">
                       <div className="parallax-frame">
                         <img src={IMG_FULLWIDTH} height={1333} width={2000} alt="Fullwidth" loading="eager" decoding="async" />
@@ -386,6 +395,7 @@ export default function HomeNirvanaContent() {
                         </div>
                       </div>
                     </div>
+                    </div>
                   </div>
                 </article>
               </div>
@@ -395,6 +405,7 @@ export default function HomeNirvanaContent() {
               <div className="row">
                 <div className="col-sm-6 col-xs-12 two-cols">
                   <div className="row">
+                    <div className="col-xs-12">
                     <article className="banner-gallery">
                       <div className="bg-stretch">
                         <img src={IMG_950[2]} alt="Free Shipping" />
@@ -412,10 +423,12 @@ export default function HomeNirvanaContent() {
                         </div>
                       </div>
                     </article>
+                    </div>
                   </div>
                 </div>
                 <div className="col-sm-6 col-xs-12 two-cols">
                   <div className="row">
+                    <div className="col-xs-12">
                     <article className="banner-gallery">
                       <div className="bg-stretch">
                         <img src={IMG_950[3]} alt="Deals" loading="eager" decoding="async" />
@@ -433,6 +446,7 @@ export default function HomeNirvanaContent() {
                         </div>
                       </div>
                     </article>
+                    </div>
                   </div>
                 </div>
               </div>

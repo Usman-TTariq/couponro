@@ -5,7 +5,7 @@ export default function StoresLoading() {
   return (
     <div className="min-h-screen w-full min-w-0 bg-almond flex flex-col overflow-x-hidden">
       <Header />
-      <main className="flex-1 mx-auto w-full max-w-6xl px-4 sm:px-6 py-8">
+      <main className="flex-1 mx-auto w-full max-w-7xl px-4 sm:px-6 py-8">
         <div className="h-10 w-64 bg-rebecca/10 rounded animate-pulse mx-auto mb-6" />
         <div className="flex flex-wrap justify-center gap-2 mb-8">
           {Array.from({ length: 12 }).map((_, i) => (

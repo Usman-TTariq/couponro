@@ -31,7 +31,7 @@ export default function CouponCodesSection({ coupons, storeByName }: Props) {
       className="bg-[#eef6fa] py-10 md:py-12"
       aria-labelledby="coupon-codes-heading"
     >
-      <div className="mx-auto max-w-4xl px-4 sm:px-6">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <h2
           id="coupon-codes-heading"
           className="text-2xl font-bold text-[#37474f] mb-6"

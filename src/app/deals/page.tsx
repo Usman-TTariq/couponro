@@ -99,7 +99,7 @@ function DealsPageContent() {
   return (
     <div className="min-h-screen w-full min-w-0 bg-white flex flex-col overflow-x-hidden">
       <Header />
-      <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 py-6 lg:py-8">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 lg:py-8">
         <nav className="text-sm text-gray-500 mb-1" aria-label="Breadcrumb">
           <Link href="/" className="hover:text-gray-700">{SITE_NAME}</Link>
           <span className="mx-1.5">›</span>
@@ -275,7 +275,7 @@ export default function DealsPage() {
       fallback={
         <div className="min-h-screen w-full min-w-0 bg-[#f0f5fa] flex flex-col overflow-x-hidden">
           <Header />
-          <main className="flex-1 mx-auto w-full max-w-4xl px-4 sm:px-6 py-8">
+          <main className="flex-1 mx-auto w-full max-w-7xl px-4 sm:px-6 py-8">
             <h1 className="text-2xl md:text-3xl font-bold text-[#37474f] mb-6">
               Deals &amp; Offers
             </h1>

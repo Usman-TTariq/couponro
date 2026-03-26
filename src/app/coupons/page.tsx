@@ -99,7 +99,7 @@ function CouponsPageContent() {
   return (
     <div className="min-h-screen w-full min-w-0 bg-[#f0f5fa] flex flex-col overflow-x-hidden">
       <Header />
-      <main className="flex-1 mx-auto w-full max-w-4xl px-4 sm:px-6 py-8">
+      <main className="flex-1 mx-auto w-full max-w-7xl px-4 sm:px-6 py-8">
         <h1 className="text-2xl md:text-3xl font-bold text-[#37474f] mb-6">
           Featured Coupon Codes
         </h1>
@@ -209,7 +209,7 @@ export default function CouponsPage() {
       fallback={
         <div className="min-h-screen w-full min-w-0 bg-[#f0f5fa] flex flex-col overflow-x-hidden">
           <Header />
-          <main className="flex-1 mx-auto w-full max-w-4xl px-4 sm:px-6 py-8">
+          <main className="flex-1 mx-auto w-full max-w-7xl px-4 sm:px-6 py-8">
             <h1 className="text-2xl md:text-3xl font-bold text-[#37474f] mb-6">
               Featured Coupon Codes
             </h1>

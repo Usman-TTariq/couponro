@@ -11,7 +11,7 @@ export default function Footer() {
     <footer className="mt-auto">
       {/* Upper section – same as navbar (Rebecca) */}
       <div className="bg-rebecca text-white">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10 lg:py-12">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10 lg:py-12">
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
             {/* Logo + Country */}
             <div className="lg:col-span-1">
@@ -95,7 +95,7 @@ export default function Footer() {
 
       {/* Bottom strip – copyright (pink) */}
       <div className="bg-lobster text-white">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-4 text-center text-xs sm:text-sm" suppressHydrationWarning>
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-4 text-center text-xs sm:text-sm" suppressHydrationWarning>
           Copyright © {currentYear} Couponro LLC, A System1 Company
         </div>
       </div>

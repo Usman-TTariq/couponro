@@ -209,6 +209,63 @@ main:not(#main) a[href*="admin"] { color: var(--color-lobster); }
   top: -75px;
 }
 
+/* Homepage tile grid: flush layout — remove Bootstrap gutters (white gaps between tiles) */
+#wrapper #main > .container-fluid {
+  padding-left: 0;
+  padding-right: 0;
+}
+#wrapper #main .row {
+  margin-left: 0;
+  margin-right: 0;
+}
+#wrapper #main [class*="col-xs-"],
+#wrapper #main [class*="col-sm-"],
+#wrapper #main [class*="col-md-"],
+#wrapper #main [class*="col-lg-"] {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* Homepage theme: footer Instagram grid — contain floats so column height / tiles don’t collapse on mid-width viewports */
+#wrapper .footer-aside .instagram-nav::after {
+  content: "";
+  display: table;
+  clear: both;
+}
+#wrapper .footer-aside .col-sm-6 {
+  min-width: 0;
+}
+
+/* Homepage theme: tame fixed banner heights on small / narrow tablets so boxes don’t look broken */
+@media (max-width: 767px) {
+  #wrapper .hero-three .banner-gallery {
+    height: min(72vw, 320px);
+    min-height: 220px;
+  }
+  #wrapper .two-cols .main-gallery .mask,
+  #wrapper .two-cols .main-gallery .slide {
+    min-height: 280px;
+  }
+  #wrapper .two-cols .banner-gallery {
+    min-height: 280px;
+    height: min(85vw, 380px);
+  }
+  #wrapper .three-cols .banner-gallery {
+    height: 300px;
+    min-height: 260px;
+  }
+  #wrapper .fullwidth-post .banner-gallery {
+    min-height: 260px;
+    height: min(65vw, 420px);
+  }
+}
+@media (min-width: 768px) and (max-width: 991px) {
+  #wrapper .three-cols .banner-gallery {
+    min-height: 300px;
+    height: 320px;
+  }
+}
+
 /* Footer: overlay behind content (replaces .post-over which was covering text) */
 #wrapper .footer-holder .footer-holder-overlay {
   position: absolute;

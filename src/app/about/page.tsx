@@ -14,7 +14,7 @@ export default function AboutPage() {
   return (
     <div className="min-h-screen bg-[#f0f5fa] flex flex-col">
       <Header />
-      <main className="flex-1 mx-auto w-full max-w-5xl px-4 sm:px-6 py-8">
+      <main className="flex-1 mx-auto w-full max-w-7xl px-4 sm:px-6 py-8">
         <nav className="text-sm text-slate-600 mb-6" aria-label="Breadcrumb">
           <Link href="/" className="hover:text-rebecca">
             SeemPromo

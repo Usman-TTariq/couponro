@@ -13,7 +13,7 @@ export default function ContactPage() {
   return (
     <div className="min-h-screen w-full min-w-0 bg-white flex flex-col overflow-x-hidden">
       <Header />
-      <main className="flex-1 mx-auto w-full max-w-4xl px-4 sm:px-6 py-6 lg:py-8">
+      <main className="flex-1 mx-auto w-full max-w-7xl px-4 sm:px-6 py-6 lg:py-8">
         <nav className="text-sm text-gray-500 mb-6" aria-label="Breadcrumb">
           <Link href="/" className="hover:text-gray-700">SeemPromo</Link>
           <span className="mx-1.5">›</span>

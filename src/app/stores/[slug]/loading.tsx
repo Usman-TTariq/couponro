@@ -5,7 +5,7 @@ export default function StorePageLoading() {
   return (
     <div className="min-h-screen w-full min-w-0 bg-almond flex flex-col overflow-x-hidden">
       <Header />
-      <main className="flex-1 mx-auto w-full max-w-4xl px-4 sm:px-6 py-8">
+      <main className="flex-1 mx-auto w-full max-w-7xl px-4 sm:px-6 py-8">
         <div className="flex gap-5 items-center mb-8 animate-pulse">
           <div className="w-24 h-24 rounded-2xl bg-rebecca/10 flex-shrink-0" />
           <div>

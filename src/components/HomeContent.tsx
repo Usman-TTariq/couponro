@@ -70,7 +70,7 @@ export default function HomeContent() {
 
   if (loading) {
     return (
-      <main className="flex-1 min-h-[50vh] mx-auto w-full max-w-6xl px-4 sm:px-6 py-8">
+      <main className="flex-1 min-h-[50vh] mx-auto w-full max-w-7xl px-4 sm:px-6 py-8">
         <div className="flex items-center justify-center py-16">
           <div className="h-10 w-10 animate-spin rounded-full border-2 border-rebecca border-t-transparent" />
           <span className="ml-3 text-rebecca">Loading…</span>
@@ -81,7 +81,7 @@ export default function HomeContent() {
 
   if (error) {
     return (
-      <main className="flex-1 min-h-[50vh] mx-auto w-full max-w-6xl px-4 sm:px-6 py-8">
+      <main className="flex-1 min-h-[50vh] mx-auto w-full max-w-7xl px-4 sm:px-6 py-8">
         <div className="rounded-xl bg-white p-6 text-center shadow-sm">
           <p className="text-lobster font-medium">{error}</p>
           <p className="mt-1 text-sm text-rebecca">Check .env.local for Supabase and refresh.</p>
@@ -98,7 +98,7 @@ export default function HomeContent() {
   }
 
   return (
-    <main className="flex-1 min-h-[50vh] mx-auto w-full max-w-6xl px-4 sm:px-6 py-8">
+    <main className="flex-1 min-h-[50vh] mx-auto w-full max-w-7xl px-4 sm:px-6 py-8">
       {/* Today's Top Coupons */}
       <section id="coupons" className="mb-12 relative overflow-hidden rounded-3xl bg-[#e0f4f8] px-4 sm:px-6 py-8 md:py-10">
         <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl">

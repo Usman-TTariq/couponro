@@ -5,7 +5,7 @@ export default function CouponsLoading() {
   return (
     <div className="min-h-screen w-full min-w-0 bg-[#f0f5fa] flex flex-col overflow-x-hidden">
       <Header />
-      <main className="flex-1 mx-auto w-full max-w-4xl px-4 sm:px-6 py-8">
+      <main className="flex-1 mx-auto w-full max-w-7xl px-4 sm:px-6 py-8">
         <div className="h-8 w-48 bg-slate-200 rounded animate-pulse mb-6" />
         <div className="h-5 w-full max-w-md bg-slate-100 rounded animate-pulse mb-8" />
         <ul className="space-y-0 bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">

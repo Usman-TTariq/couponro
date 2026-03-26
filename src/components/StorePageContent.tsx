@@ -76,7 +76,7 @@ export default function StorePageContent({
   const pageTitle = storePageHeading || defaultPageTitle;
 
   return (
-    <main className="flex-1 mx-auto w-full max-w-6xl px-3 sm:px-6 py-4 sm:py-8">
+    <main className="flex-1 mx-auto w-full max-w-7xl px-3 sm:px-6 py-4 sm:py-8">
       {/* Breadcrumbs */}
       <nav className="text-xs sm:text-sm text-rebecca mb-3 sm:mb-4" aria-label="Breadcrumb">
         <Link href="/" className="hover:text-lobster">Home</Link>
