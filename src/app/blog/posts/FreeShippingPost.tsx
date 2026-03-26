@@ -1,7 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
 
-const IMGS = ["/img10.jpg", "/img31.jpg", "/img05.jpg"];
+const IMGS = [
+  "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1600&q=80",
+  "https://images.unsplash.com/photo-1556742393-d75f468bfcb0?auto=format&fit=crop&w=1600&q=80",
+  "https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&fit=crop&w=1600&q=80",
+];
 
 export default function FreeShippingPost() {
   return (

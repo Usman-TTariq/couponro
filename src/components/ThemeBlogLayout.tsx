@@ -77,12 +77,25 @@ export default function ThemeBlogLayout({ children }: { children: ReactNode }) {
     <>
       <div id="wrapper">
         <div className="w1">
-          <header id="header" className="container-fluid">
+          <header
+            id="header"
+            className="container-fluid"
+            style={{
+              background: "rgba(20, 22, 36, 0.55)",
+              backdropFilter: "blur(6px)",
+              WebkitBackdropFilter: "blur(6px)",
+            }}
+          >
             <div className="row">
               <div className="col-xs-12">
-                <div className="logo">
+                <div className="logo" style={{ paddingTop: "18px", paddingBottom: "18px" }}>
                   <Link href="/">
-                    <img className="img-responsive" src="/seempromo-logo.svg" alt="SeemPromo" />
+                    <img
+                      className="img-responsive"
+                      src="/couponro-logo.svg"
+                      alt="Couponro"
+                      style={{ width: "180px", maxWidth: "44vw", height: "auto" }}
+                    />
                   </Link>
                 </div>
                 <div id="nav">
@@ -127,7 +140,7 @@ export default function ThemeBlogLayout({ children }: { children: ReactNode }) {
                             <div className="block">
                               <h3>Blog</h3>
                               <ul className="add-nav list-inline">
-                                <li>by SeemPromo</li>
+                                <li>by Couponro</li>
                                 <li><time dateTime="2026-03-06">Mar 6, 2026</time></li>
                                 <li>Blog</li>
                               </ul>
@@ -142,7 +155,7 @@ export default function ThemeBlogLayout({ children }: { children: ReactNode }) {
                             <div className="block">
                               <h3>TouchTunes Coupon Codes</h3>
                               <ul className="add-nav list-inline">
-                                <li>by SeemPromo</li>
+                                <li>by Couponro</li>
                                 <li><time dateTime="2026-03-06">Mar 6, 2026</time></li>
                                 <li>Blog</li>
                               </ul>
@@ -157,7 +170,7 @@ export default function ThemeBlogLayout({ children }: { children: ReactNode }) {
                             <div className="block">
                               <blockquote className="post-quotes">
                                 <p>&ldquo;Saving tips&rdquo;</p>
-                                <cite title="SeemPromo">SeemPromo</cite>
+                                <cite title="Couponro">Couponro</cite>
                               </blockquote>
                               <ul className="add-nav list-inline">
                                 <li><time dateTime="2026-03-06">Mar 6, 2026</time></li>
@@ -173,7 +186,7 @@ export default function ThemeBlogLayout({ children }: { children: ReactNode }) {
                       <li><a href="https://x.com" target="_blank" rel="noopener noreferrer"><i className="fa fa-twitter" /></a></li>
                       <li><a href="https://plus.google.com" target="_blank" rel="noopener noreferrer"><i className="fa fa-google-plus" /></a></li>
                     </ul>
-                    <span className="copyrights" suppressHydrationWarning>&copy; {new Date().getFullYear()} <Link href="/" onClick={closeNav}>SeemPromo</Link>. All rights reserved.</span>
+                    <span className="copyrights" suppressHydrationWarning>&copy; {new Date().getFullYear()} <Link href="/" onClick={closeNav}>Couponro</Link>. All rights reserved.</span>
                   </div>
                 </div>
               </div>
@@ -193,11 +206,11 @@ export default function ThemeBlogLayout({ children }: { children: ReactNode }) {
               <aside className="row footer-aside">
                 <div className="col-sm-3 col-xs-12 column social">
                   <div className="footer-logo mb-3">
-                    <Link href="/" aria-label="SeemPromo Home">
-                      <img className="img-responsive" src="/seempromo-logo.svg" alt="SeemPromo" style={{ maxHeight: "56px", width: "auto" }} />
+                    <Link href="/" aria-label="Couponro Home">
+                      <img className="img-responsive" src="/couponro-logo.svg" alt="Couponro" style={{ maxHeight: "56px", width: "auto" }} />
                     </Link>
                   </div>
-                  <p>SeemPromo helps you save with verified coupon codes, promo codes, and free shipping offers from top stores.</p>
+                  <p>Couponro helps you save with verified coupon codes, promo codes, and free shipping offers from top stores.</p>
                   <h3><span className="txt"><Link href={DEFAULT_BLOG_POST_URL}>Blog</Link></span></h3>
                   <ul className="social-networks list-inline">
                     <li><a href="#"><i className="fa fa-facebook" /></a></li>
@@ -227,7 +240,7 @@ export default function ThemeBlogLayout({ children }: { children: ReactNode }) {
                           <span className="btn-instagram"><i className="fa fa-instagram" /></span>
                           <div className="insta-over">
                             <span className="title">Blog</span>
-                            <h3>SeemPromo</h3>
+                            <h3>Couponro</h3>
                             <time dateTime="2026-03-06">Mar 6, 2026</time>
                           </div>
                         </Link>
@@ -238,7 +251,7 @@ export default function ThemeBlogLayout({ children }: { children: ReactNode }) {
               </aside>
               <footer id="footer" className="row">
                 <div className="col-xs-12">
-                  <span className="copyrights" suppressHydrationWarning>&copy; {new Date().getFullYear()} <Link href="/">SeemPromo</Link>. All rights reserved.</span>
+                  <span className="copyrights" suppressHydrationWarning>&copy; {new Date().getFullYear()} <Link href="/">Couponro</Link>. All rights reserved.</span>
                   <ul className="footer-nav list-inline">
                     <li><Link href="/">Home</Link></li>
                     <li><Link href="/coupons">Coupons</Link></li>

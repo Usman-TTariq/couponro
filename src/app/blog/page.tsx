@@ -4,7 +4,8 @@ import Footer from "@/components/Footer";
 import { getPosts, BLOG_CATEGORIES } from "@/lib/blog-posts";
 import { getSanityPosts } from "@/lib/sanity.blog";
 
-const SITE_NAME = "SeemPromo";
+const SITE_NAME = "Couponro";
+const BLOG_FALLBACK_IMAGE = "https://images.unsplash.com/photo-1464822759844-d150baec0494?auto=format&fit=crop&w=1600&q=80";
 
 export const metadata = {
   title: "Blog – Saving Tips & Guides | " + SITE_NAME,
@@ -30,6 +31,17 @@ function formatDate(iso: string) {
   }
 }
 
+function displayAuthor(author?: string) {
+  const a = (author ?? "").trim();
+  if (!a) return "Couponro";
+  return a.toLowerCase() === "seempromo" ? "Couponro" : a;
+}
+
+function displayImage(src?: string | null) {
+  const v = (src ?? "").trim();
+  return v || BLOG_FALLBACK_IMAGE;
+}
+
 export default async function BlogPage() {
   const sanityPosts = await getSanityPosts();
   const staticPosts = getPosts();
@@ -48,7 +60,7 @@ export default async function BlogPage() {
       <Header />
       <main className="flex-1 mx-auto w-full max-w-7xl px-4 sm:px-6 py-8">
         <h1 className="text-3xl md:text-4xl font-bold text-space mb-2 tracking-tight">
-          SeemPromo Blog
+          Couponro Blog
         </h1>
         <p className="text-rebecca/90 mb-8">
           Saving tips, store guides, and the latest deals.
@@ -65,29 +77,20 @@ export default async function BlogPage() {
               className="block rounded-2xl border-2 border-rebecca/15 bg-white shadow-md overflow-hidden hover:shadow-lg transition-shadow"
             >
               <div className="aspect-[1200/420] sm:aspect-[3/1] w-full bg-rebecca/10">
-                {featured.featuredImage ? (
-                  <img
-                    src={featured.featuredImage}
-                    alt=""
-                    className="w-full h-full object-cover"
-                    loading="eager"
-                    decoding="async"
-                  />
-                ) : (
-                  <div
-                    className="w-full h-full"
-                    style={{
-                      background: "linear-gradient(135deg, #593C8F 0%, #171738 100%)",
-                    }}
-                  />
-                )}
+                <img
+                  src={displayImage(featured.featuredImage)}
+                  alt=""
+                  className="w-full h-full object-cover"
+                  loading="eager"
+                  decoding="async"
+                />
               </div>
               <div className="p-5 sm:p-6">
                 <h3 className="text-xl sm:text-2xl font-bold text-space mb-2 line-clamp-2">
                   {featured.title}
                 </h3>
                 <p className="text-rebecca text-sm mb-3">
-                  by <Link href="/" className="hover:underline">{(featured as { author?: string })?.author ?? "SeemPromo"}</Link>
+                  by <Link href="/" className="hover:underline">{displayAuthor((featured as { author?: string })?.author)}</Link>
                   {" · "}
                   <time dateTime={featured.date}>{formatDate(featured.date)}</time>
                   {" · "}
@@ -115,27 +118,20 @@ export default async function BlogPage() {
                   className="block rounded-xl border-2 border-rebecca/15 bg-white shadow-sm overflow-hidden hover:shadow-md hover:border-rebecca/30 transition-all"
                 >
                   <div className="aspect-[4/3] w-full bg-rebecca/10">
-                    {post.featuredImage ? (
-                      <img
-                        src={post.featuredImage}
-                        alt=""
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                        decoding="async"
-                      />
-                    ) : (
-                      <div
-                        className="w-full h-full bg-rebecca/20"
-                        style={{ background: "var(--color-rebecca, #593C8F)", opacity: 0.2 }}
-                      />
-                    )}
+                    <img
+                      src={displayImage(post.featuredImage)}
+                      alt=""
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                      decoding="async"
+                    />
                   </div>
                   <div className="p-4">
                     <h3 className="font-bold text-space text-base line-clamp-2 mb-2">
                       {post.title}
                     </h3>
                     <p className="text-rebecca text-xs">
-                      by <Link href="/" className="hover:underline">{(post as { author?: string })?.author ?? "SeemPromo"}</Link>
+                      by <Link href="/" className="hover:underline">{displayAuthor((post as { author?: string })?.author)}</Link>
                       {" · "}
                       <time dateTime={post.date}>{formatDate(post.date)}</time>
                       {" · "}

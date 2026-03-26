@@ -69,7 +69,16 @@ export async function generateMetadata({ params }: Props) {
 export default async function BlogPostPage({ params }: Props) {
   const { slug } = await params;
   const sanityPost = await getSanityPostBySlug(slug);
-  let post: { slug: string; title: string; date: string; category: string; featuredImage: string | null; author?: string };
+  let post: {
+    slug: string;
+    title: string;
+    date: string;
+    category: string;
+    featuredImage: string | null;
+    author?: string;
+    excerpt?: string;
+    metaDescription?: string;
+  };
   let content: React.ReactNode;
 
   if (sanityPost) {
@@ -80,6 +89,8 @@ export default async function BlogPostPage({ params }: Props) {
       category: sanityPost.normalized.category,
       featuredImage: sanityPost.normalized.featuredImage,
       author: sanityPost.normalized.author,
+      excerpt: sanityPost.normalized.excerpt,
+      metaDescription: sanityPost.normalized.metaDescription,
     };
     content =
       sanityPost.body && sanityPost.body.length > 0 ? (
@@ -129,6 +140,9 @@ export default async function BlogPostPage({ params }: Props) {
     month: "long",
     day: "numeric",
   });
+  const displayAuthor = ((post.author ?? "").trim().toLowerCase() === "seempromo" || !(post.author ?? "").trim())
+    ? "Couponro"
+    : (post.author as string);
 
   return (
     <ThemeBlogLayout>
@@ -140,15 +154,41 @@ export default async function BlogPostPage({ params }: Props) {
               <div className="parallax-holder add-banner">
                 <div className="parallax-frame">
                   {post.featuredImage ? (
-                    <img
-                      src={post.featuredImage}
-                      alt=""
-                      height={660}
-                      width={1000}
-                      style={{ width: "100%", height: "auto", objectFit: "cover" }}
-                    />
+                    <div style={{ position: "relative", minHeight: "clamp(280px, 46vw, 620px)" }}>
+                      <img
+                        src={post.featuredImage}
+                        alt=""
+                        height={660}
+                        width={1400}
+                        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                      />
+                      <div
+                        aria-hidden
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          background: "linear-gradient(180deg, rgba(10,10,20,0.25) 0%, rgba(10,10,20,0.6) 60%, rgba(10,10,20,0.75) 100%)",
+                        }}
+                      />
+                    </div>
                   ) : (
-                    <div style={{ height: 280, background: "linear-gradient(135deg, #593C8F 0%, #171738 100%)" }} />
+                    <div style={{ position: "relative", minHeight: "clamp(280px, 46vw, 620px)" }}>
+                      <img
+                        src="/img05.jpg"
+                        alt=""
+                        height={660}
+                        width={1400}
+                        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                      />
+                      <div
+                        aria-hidden
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          background: "linear-gradient(180deg, rgba(10,10,20,0.25) 0%, rgba(10,10,20,0.6) 60%, rgba(10,10,20,0.75) 100%)",
+                        }}
+                      />
+                    </div>
                   )}
                 </div>
               </div>
@@ -157,7 +197,7 @@ export default async function BlogPostPage({ params }: Props) {
                   <div className="block">
                     <h1><Link href={`/blog/${post.slug}`}>{post.title}</Link></h1>
                     <ul className="add-nav list-inline">
-                      <li>by <Link href="/">{post.author ?? "SeemPromo"}</Link></li>
+                      <li>by <Link href="/">{displayAuthor}</Link></li>
                       <li><time dateTime={post.date}>{formattedDate}</time></li>
                       <li><Link href="/blog">{post.category}</Link></li>
                     </ul>
@@ -183,6 +223,13 @@ export default async function BlogPostPage({ params }: Props) {
                   <span>{post.title}</span>
                 </nav>
                 <div className="post-body">
+                  {(post.excerpt || post.metaDescription) ? (
+                    <div className="mb-6">
+                      <p className="text-space/90 leading-7 text-[16px]">
+                        {post.excerpt || post.metaDescription}
+                      </p>
+                    </div>
+                  ) : null}
                   {content}
                 </div>
               </article>

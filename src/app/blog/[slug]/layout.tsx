@@ -13,6 +13,7 @@ export default function BlogPostLayout({ children }: { children: ReactNode }) {
         <link rel="stylesheet" href={THEME_FONT_HREF} />
         <link rel="stylesheet" href="/theme/css/bootstrap.css" />
         <link rel="stylesheet" href="/theme/css/all.css" />
+        <link rel="stylesheet" href="/theme/css/fontawesome-cdn.css" />
       </head>
       {children}
     </>

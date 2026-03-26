@@ -61,7 +61,7 @@ function CardPlaceholder({
 export default function HomeBlogLayout() {
   return (
     <main className="flex-1 min-h-[50vh] bg-almond">
-      <div className="mx-auto w-full max-w-7xl px-3 sm:px-6 py-6 sm:py-10">
+      <div className="mx-auto w-full max-w-screen-2xl px-3 sm:px-6 py-6 sm:py-10">
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-10">
           {/* Left sidebar: categories / section nav (visible on xl) */}
           <aside className="hidden xl:block flex-shrink-0 w-56 order-3 lg:order-1">

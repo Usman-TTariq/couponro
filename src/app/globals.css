@@ -59,10 +59,11 @@ header:not(#header) a:hover { color: white; }
 header:not(#header) input[type="search"] { background-color: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.4); border-radius: 0.5rem 0 0 0.5rem; padding: 0.5rem 0.75rem; }
 header:not(#header) input[type="search"]::placeholder { color: rgba(142, 249, 243, 0.8); }
 header:not(#header) button[type="submit"] { background-color: var(--color-lobster); color: white; border: 0; border-radius: 0 0.5rem 0.5rem 0; padding: 0.5rem 0.75rem; }
-main:not(#main) { background-color: var(--color-almond); }
-main:not(#main) h2 { color: var(--color-space); }
-main:not(#main) p { color: var(--color-rebecca); }
-main:not(#main) a[href*="admin"] { color: var(--color-lobster); }
+/* Exclude dark home magazine — otherwise p/h2 get rebecca/space and disappear on dark tiles */
+main:not(#main):not(.home-magazine-main) { background-color: var(--color-almond); }
+main:not(#main):not(.home-magazine-main) h2 { color: var(--color-space); }
+main:not(#main):not(.home-magazine-main) p { color: var(--color-rebecca); }
+main:not(#main):not(.home-magazine-main) a[href*="admin"] { color: var(--color-lobster); }
 /* Footer upper section (Rebecca) – white text (only site footer after #wrapper, not theme footer) */
 #wrapper ~ footer > div:first-child { background-color: var(--color-rebecca); color: #fff; }
 #wrapper ~ footer > div:first-child a { color: #fff; }
@@ -207,23 +208,6 @@ main:not(#main) a[href*="admin"] { color: var(--color-lobster); }
 }
 #wrapper .hero-three .post-over:hover .add-nav:after {
   top: -75px;
-}
-
-/* Homepage tile grid: flush layout — remove Bootstrap gutters (white gaps between tiles) */
-#wrapper #main > .container-fluid {
-  padding-left: 0;
-  padding-right: 0;
-}
-#wrapper #main .row {
-  margin-left: 0;
-  margin-right: 0;
-}
-#wrapper #main [class*="col-xs-"],
-#wrapper #main [class*="col-sm-"],
-#wrapper #main [class*="col-md-"],
-#wrapper #main [class*="col-lg-"] {
-  padding-left: 0;
-  padding-right: 0;
 }
 
 /* Homepage theme: footer Instagram grid — contain floats so column height / tiles don’t collapse on mid-width viewports */

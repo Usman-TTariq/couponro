@@ -31,7 +31,7 @@ export default function Header() {
   return (
     <header className="bg-rebecca text-white">
       <HeaderPromoStrip />
-      <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 py-3 sm:py-0 sm:h-24 flex items-center justify-between md:justify-start border-t border-white/10 gap-2 md:gap-4">
+      <div className="mx-auto max-w-screen-2xl px-3 sm:px-6 lg:px-8 py-3 sm:py-0 sm:h-24 flex items-center justify-between md:justify-start border-t border-white/10 gap-2 md:gap-4">
         <Link href="/" className="flex items-center h-14 sm:h-24 py-1 flex-shrink-0" aria-label="Couponro Home">
           <img
             src="/couponro-logo.svg"

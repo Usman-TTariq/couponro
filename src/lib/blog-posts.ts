@@ -56,7 +56,7 @@ export const BLOG_CATEGORIES = [
   "Home & Garden",
 ] as const;
 
-const FEATURED_IMG = "/undefined-8.png";
+const FEATURED_IMG = "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1600&q=80";
 
 function storePost(
   slug: string,

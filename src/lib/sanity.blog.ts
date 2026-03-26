@@ -22,7 +22,7 @@ function normalizeListing(post: SanityPostListing | null): SanityPostNormalized 
     date,
     category: categoryTitle,
     featuredImage: sanityImageUrl(post.mainImage) ?? null,
-    author: post.author?.trim() || "SeemPromo",
+    author: post.author?.trim() || "Couponro",
   };
 }
 
