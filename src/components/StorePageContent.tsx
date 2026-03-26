@@ -7,11 +7,10 @@ import CouponPopup from "@/components/CouponPopup";
 import { getShowCodeButtonLabel } from "@/lib/coupon-button-labels";
 
 function getCouponBadge(c: Store): string {
-  const label = (c.badgeLabel ?? c.couponTitle ?? "").trim();
-  const match = label.match(/(\d+%|\$\d+|FREE|free)/i);
-  if (match) return match[1].toUpperCase();
-  if (label.length > 0) return label.slice(0, 12);
-  return c.couponCode ? "CODE" : "DEAL";
+  const text = [c.badgeLabel ?? "", c.couponTitle ?? ""].join(" ").trim();
+  const match = text.match(/(\$\d+(?:\.\d{1,2})?|\d+\s*%|%\s*off)/i);
+  if (match) return match[1].replace(/\s+/g, "").toUpperCase();
+  return (c.couponCode ?? "").toString().trim() ? "CODE" : "DEAL";
 }
 
 function hasActualCode(c: Store): boolean {
@@ -394,20 +393,21 @@ function StoreCouponCard({
   const title = coupon.couponTitle?.trim() || coupon.badgeLabel?.trim() || `${displayName} offer`;
   const logoUrl = storeLogoUrl || coupon.logoUrl || "";
   const showCodeLabel = getShowCodeButtonLabel(coupon);
+  const isVerified = coupon.verified !== false;
 
   return (
     <li className="group rounded-xl border-2 border-rebecca/20 bg-white p-3 sm:p-5 hover:border-rebecca/50 hover:shadow-md transition-all duration-200 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
       <div className="flex gap-3 sm:gap-4 flex-1 min-w-0">
-        <div className="flex-shrink-0 w-12 h-12 sm:w-16 sm:h-16 rounded-lg sm:rounded-xl bg-almond flex items-center justify-center overflow-hidden p-1">
-          {logoUrl ? (
-            <img src={logoUrl} alt={displayName} className="w-full h-full object-contain" />
-          ) : (
-            <span className="text-lobster font-bold text-xs sm:text-sm text-center leading-tight px-0.5 sm:px-1">
-              {badge}
-            </span>
-          )}
+        <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-lobster text-white flex flex-col items-center justify-center overflow-hidden shadow-sm">
+          <span className={`font-extrabold leading-none tracking-wide ${badge === "DEAL" ? "text-lg sm:text-xl" : "text-sm sm:text-base"}`}>{badge}</span>
+          {badge !== "DEAL" ? <span className="text-[9px] font-semibold uppercase mt-1 opacity-95">Coupon</span> : null}
         </div>
         <div className="min-w-0">
+          {isVerified && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700 border border-emerald-200 mb-1">
+              <span aria-hidden>✓</span> Verified
+            </span>
+          )}
           <h4 className="font-bold text-space text-sm sm:text-base">{title}</h4>
           {coupon.description?.trim() && (
             <p className="text-xs sm:text-sm text-rebecca mt-0.5 line-clamp-2 sm:line-clamp-none">{coupon.description.trim().slice(0, 120)}</p>
@@ -452,3 +452,4 @@ function StoreCouponCard({
     </li>
   );
 }
+

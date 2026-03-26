@@ -21,6 +21,7 @@ export default function AdminCouponsPage() {
     couponType: "deal",
     priority: 0,
     active: true,
+    verified: true,
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -86,6 +87,7 @@ export default function AdminCouponsPage() {
       couponType: "deal",
       priority: 0,
       active: true,
+      verified: true,
       selectedStoreId: "",
     });
     setEditingId(null);
@@ -224,6 +226,8 @@ export default function AdminCouponsPage() {
       const link = linkRaw || undefined;
       const priorityRaw = r["Priority"] ?? r["priority"];
       const priority = typeof priorityRaw === "number" ? priorityRaw : Math.max(0, parseInt(String(priorityRaw ?? "0").trim(), 10) || 0);
+      const verifiedRaw = r["Verified"] ?? r["verified"] ?? r["Is Verified"] ?? r["is verified"] ?? "true";
+      const verifiedStr = String(verifiedRaw).trim().toLowerCase();
       const payload = {
         name: store.name,
         slug: (store.slug ?? slugify(store.name)).trim(),
@@ -236,6 +240,7 @@ export default function AdminCouponsPage() {
         couponTitle: title || code || "Deal",
         priority,
         active: (r["Status"] ?? r["status"] ?? "Active").trim().toLowerCase() === "active",
+        verified: !["0", "false", "off", "no", "unverified", "not verified"].includes(verifiedStr),
         ...(link ? { link } : {}),
       };
       batch.push(payload);
@@ -331,6 +336,7 @@ export default function AdminCouponsPage() {
         badgeLabel: form.badgeLabel?.trim() || undefined,
         priority: typeof form.priority === "number" ? form.priority : 0,
         active: form.active !== false,
+        verified: form.verified !== false,
       };
       if (editingId) {
         const res = await fetch("/api/coupons", {
@@ -493,7 +499,7 @@ export default function AdminCouponsPage() {
             type="button"
             onClick={() => {
               setEditingId(null);
-              setForm({ couponType: "deal", priority: 0, active: true, selectedStoreId: "" });
+              setForm({ couponType: "deal", priority: 0, active: true, verified: true, selectedStoreId: "" });
               setShowCreateForm(true);
             }}
             className="rounded-lg bg-blue-600 px-3 py-2 text-xs sm:text-sm font-medium text-white hover:bg-blue-500 transition-colors"
@@ -819,6 +825,19 @@ export default function AdminCouponsPage() {
           </div>
         </div>
 
+        {/* Verified Symbol */}
+        <div>
+          <label className="flex cursor-pointer items-center gap-2">
+            <input
+              type="checkbox"
+              checked={form.verified !== false}
+              onChange={(e) => setForm((f) => ({ ...f, verified: e.target.checked }))}
+              className="h-4 w-4 rounded border-stone-300 text-emerald-600 focus:ring-emerald-500"
+            />
+            <span className="text-sm font-medium text-stone-700">Show Verified Symbol</span>
+          </label>
+        </div>
+
         {/* Active */}
         <div>
           <label className="flex cursor-pointer items-center gap-2">
@@ -978,6 +997,7 @@ export default function AdminCouponsPage() {
                               badgeLabel: c.badgeLabel,
                               priority: c.priority ?? 0,
                               active: c.status !== "disable",
+                              verified: c.verified !== false,
                             });
                             setEditingId(c.id);
                           }}

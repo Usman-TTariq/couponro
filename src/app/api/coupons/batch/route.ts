@@ -15,6 +15,13 @@ function parsePriority(b: unknown): number {
   return Number.isNaN(n) ? 0 : Math.max(0, n);
 }
 
+function parseVerifiedFlag(v: unknown): boolean {
+  if (typeof v === "boolean") return v;
+  const s = String(v ?? "").trim().toLowerCase();
+  if (!s) return true;
+  return !["0", "false", "off", "no", "unverified", "not verified"].includes(s);
+}
+
 const MAX_BATCH = 50;
 
 export async function POST(request: NextRequest) {
@@ -63,6 +70,7 @@ export async function POST(request: NextRequest) {
       const priority = parsePriority(b?.priority);
       const status = b?.status === "disable" ? "disable" : "enable";
       const active = b?.active !== false;
+      const verified = parseVerifiedFlag(b?.verified);
 
       const candidate: Pick<
         Store,
@@ -102,6 +110,7 @@ export async function POST(request: NextRequest) {
             typeof b?.badgeLabel === "string" ? b.badgeLabel || undefined : existing.badgeLabel,
           priority,
           active,
+          verified,
           id: existing.id,
           createdAt: existing.createdAt,
         };
@@ -130,6 +139,7 @@ export async function POST(request: NextRequest) {
           badgeLabel: typeof b?.badgeLabel === "string" ? b.badgeLabel || undefined : undefined,
           priority,
           active,
+          verified,
         };
         await insertCoupon(c);
         byKey.set(key, c);

@@ -22,6 +22,18 @@ function parseDiscount(text: string): string {
   return match ? match[1].trim() : "";
 }
 
+function getDiscountLabel(coupon: Store): string {
+  const haystack = [
+    coupon.badgeLabel ?? "",
+    coupon.couponTitle ?? "",
+  ]
+    .join(" ")
+    .trim();
+  const parsed = parseDiscount(haystack);
+  if (parsed) return parsed.replace(/\s+/g, " ").toUpperCase();
+  return getCouponCode(coupon).length > 0 ? "CODE" : "DEAL";
+}
+
 function CouponsPageContent() {
   const [stores, setStores] = useState<Store[]>([]);
   const [coupons, setCoupons] = useState<Store[]>([]);
@@ -239,33 +251,35 @@ function FeaturedCouponCard({
   const code = getCouponCode(coupon);
   const hasCode = code.length > 0;
   const codeDisplay = code.toUpperCase();
-  const logoUrl = storeLogoUrl || coupon.logoUrl || "";
   const slug = coupon.slug || coupon.name?.toLowerCase().replace(/\s+/g, "-") || "";
   const offerTitle = coupon.couponTitle?.trim() || coupon.badgeLabel?.trim() || `${coupon.name} offer`;
   const description = coupon.description?.trim() || offerTitle;
-  const discountStr = parseDiscount(coupon.badgeLabel ?? coupon.couponTitle ?? "");
-  const offCodeLabel = discountStr ? `${discountStr} OFF CODE` : "CODE";
+  const discountLabel = getDiscountLabel(coupon);
   const showCodeLabel = getShowCodeButtonLabel(coupon);
+  const isVerified = coupon.verified !== false;
 
   return (
     <li className="group bg-white border-b border-slate-200 last:border-b transition-colors hover:bg-slate-50/80">
       <div className="flex flex-col sm:flex-row gap-4 p-4 sm:p-5 items-start sm:items-center">
-        {/* Left: logo + discount text (black, e.g. "20% OFF CODE") */}
-        <div className="flex flex-col items-center sm:items-start gap-2 flex-shrink-0 sm:w-28">
-          <Link href={`/stores/${encodeURIComponent(slug)}`} className="block rounded-lg transition-transform hover:opacity-90">
-            <div className="w-16 h-16 rounded-lg bg-slate-100 flex items-center justify-center overflow-hidden">
-              {logoUrl ? (
-                <img src={logoUrl} alt={coupon.name ?? ""} className="w-full h-full object-contain" />
-              ) : (
-                <span className="text-xl font-bold text-slate-500">{coupon.name?.charAt(0) ?? "?"}</span>
-              )}
-            </div>
-          </Link>
-          <span className="text-sm font-medium text-black">{offCodeLabel}</span>
+        {/* Left: discount badge (logo replaced) */}
+        <div className="flex flex-col items-center sm:items-start gap-2 flex-shrink-0 sm:w-32">
+          <div className="w-24 h-24 rounded-full bg-lobster text-white flex flex-col items-center justify-center overflow-hidden shadow-sm">
+            <span className={`font-extrabold leading-none tracking-wide ${discountLabel === "DEAL" ? "text-2xl" : "text-xl"}`}>
+              {discountLabel}
+            </span>
+            {discountLabel !== "DEAL" ? (
+              <span className="text-[10px] font-semibold uppercase mt-1 opacity-95">Coupon</span>
+            ) : null}
+          </div>
         </div>
 
         {/* Middle: bold blue title + black description */}
         <div className="flex-1 min-w-0">
+          {isVerified && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700 border border-emerald-200 mb-1">
+              <span aria-hidden>✓</span> Verified
+            </span>
+          )}
           <p className="font-bold text-[#1e88e5] text-base leading-snug">
             {coupon.name && `${coupon.name}: `}{offerTitle}
           </p>
@@ -313,3 +327,4 @@ function FeaturedCouponCard({
     </li>
   );
 }
+

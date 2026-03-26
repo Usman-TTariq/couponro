@@ -106,6 +106,7 @@ export async function POST(request: NextRequest) {
       badgeLabel: body?.badgeLabel ?? undefined,
       priority: typeof body?.priority === "number" ? body.priority : 0,
       active: body?.active !== false,
+      verified: body?.verified !== false,
     };
     await insertCoupon(coupon);
     revalidateTag("coupons");
@@ -151,6 +152,7 @@ export async function PUT(request: NextRequest) {
       badgeLabel: body?.badgeLabel ?? undefined,
       priority: typeof body?.priority === "number" ? body.priority : 0,
       active: body?.active !== false,
+      verified: body?.verified !== false,
     };
     await updateCoupon(id, coupon);
     revalidateTag("coupons");

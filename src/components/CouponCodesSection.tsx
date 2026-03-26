@@ -67,11 +67,11 @@ function CouponCodeCard({
   const [revealed, setRevealed] = useState(false);
   const [copied, setCopied] = useState(false);
   const code = getCouponCode(coupon);
-  const logoUrl = storeLogoUrl || coupon.logoUrl || "";
   const slug = coupon.slug || coupon.name?.toLowerCase().replace(/\s+/g, "-") || "";
   const title = coupon.couponTitle?.trim() || coupon.badgeLabel?.trim() || `${coupon.name} discount`;
   const description = coupon.description?.trim() || `Use this code at checkout for ${coupon.name}.`;
   const discountStr = parseDiscount(coupon.badgeLabel ?? coupon.couponTitle ?? "") || "CODE";
+  const isVerified = coupon.verified !== false;
 
   const handleClick = () => {
     if (!revealed) {
@@ -90,12 +90,9 @@ function CouponCodeCard({
       <div className="flex flex-col sm:flex-row gap-4 p-4 sm:p-5">
         {/* Left: logo + discount */}
         <div className="flex sm:flex-col items-center sm:items-start gap-3 sm:w-28 flex-shrink-0">
-          <div className="w-14 h-14 rounded-lg bg-slate-100 flex items-center justify-center overflow-hidden shrink-0">
-            {logoUrl ? (
-              <img src={logoUrl} alt={coupon.name ?? ""} className="w-full h-full object-contain" />
-            ) : (
-              <span className="text-lg font-bold text-slate-500">{coupon.name?.charAt(0) ?? "?"}</span>
-            )}
+          <div className="w-16 h-16 rounded-full bg-lobster text-white flex flex-col items-center justify-center overflow-hidden shrink-0 shadow-sm">
+            <span className={`font-extrabold leading-none tracking-wide ${discountStr === "DEAL" ? "text-lg" : "text-sm"}`}>{discountStr}</span>
+            {discountStr !== "DEAL" ? <span className="text-[9px] font-semibold uppercase mt-1 opacity-95">Coupon</span> : null}
           </div>
           <div>
             <p className="text-xl font-bold text-[#1e88e5] leading-tight">{discountStr}</p>
@@ -106,6 +103,11 @@ function CouponCodeCard({
 
         {/* Middle: title + description */}
         <div className="flex-1 min-w-0">
+          {isVerified && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700 border border-emerald-200 mb-1">
+              <span aria-hidden>✓</span> Verified
+            </span>
+          )}
           <h3 className="font-bold text-[#1e88e5] text-base sm:text-lg leading-snug">
             {coupon.name && `${coupon.name}: `}{title}
           </h3>
@@ -142,3 +144,4 @@ function CouponCodeCard({
     </li>
   );
 }
+

@@ -53,6 +53,7 @@ export default function CouponPopup({ coupon, onClose, storeLogoUrl, fallbackUrl
   const storeName = coupon.name?.trim() || "Store";
   const logoUrl = storeLogoUrl || coupon.logoUrl || "";
   const isExclusive = (coupon.badgeLabel ?? coupon.couponTitle ?? "").toLowerCase().includes("exclusive");
+  const isVerified = coupon.verified !== false;
   const dateStr = coupon.expiry?.trim() || coupon.createdAt?.trim() || "";
 
   const handleCopy = () => {
@@ -109,6 +110,11 @@ export default function CouponPopup({ coupon, onClose, storeLogoUrl, fallbackUrl
         <div className="p-5 sm:p-6">
           {/* Top: Exclusive pill + date */}
           <div className="flex flex-wrap items-center gap-2 mb-2">
+            {isVerified && (
+              <span className="inline-flex items-center rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+                ✓ Verified
+              </span>
+            )}
             {isExclusive && (
               <span className="inline-flex items-center rounded-full bg-red-500 px-2.5 py-0.5 text-xs font-medium text-white">
                 Exclusive

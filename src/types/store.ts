@@ -48,4 +48,6 @@ export type Store = {
   badgeLabel?: string;
   priority?: number;
   active?: boolean;
+  /** Show green "Verified" badge on coupon cards/popups. Defaults to true. */
+  verified?: boolean;
 };

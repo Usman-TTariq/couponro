@@ -31,12 +31,12 @@ export default function Header() {
   return (
     <header className="bg-rebecca text-white">
       <HeaderPromoStrip />
-      <div className="mx-auto max-w-screen-2xl px-3 sm:px-6 lg:px-8 py-3 sm:py-0 sm:h-24 flex items-center justify-between md:justify-start border-t border-white/10 gap-2 md:gap-4">
-        <Link href="/" className="flex items-center h-14 sm:h-24 py-1 flex-shrink-0" aria-label="Couponro Home">
+      <div className="mx-auto max-w-screen-2xl px-3 sm:px-6 lg:px-8 py-2 sm:py-0 sm:h-16 flex items-center justify-between md:justify-start border-t border-white/10 gap-2 md:gap-4">
+        <Link href="/" className="flex items-center h-12 sm:h-16 py-1 flex-shrink-0" aria-label="Couponro Home">
           <img
             src="/couponro-logo.svg"
             alt="Couponro"
-            className="h-12 sm:h-full sm:max-h-24 w-auto object-contain object-left max-w-[200px] sm:max-w-none"
+            className="h-10 sm:h-full sm:max-h-16 w-auto object-contain object-left max-w-[180px] sm:max-w-none"
           />
         </Link>
 

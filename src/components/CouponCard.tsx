@@ -39,6 +39,7 @@ export default function CouponCard({ coupon, variant = "compact", storeLogoUrl }
     coupon.couponTitle?.trim() ||
     (hasCode ? "Get Code" : "Get Deal");
   const slug = coupon.slug || coupon.name?.toLowerCase().replace(/\s+/g, "-") || "";
+  const isVerified = coupon.verified !== false;
 
   if (variant === "featured") {
     return (
@@ -46,6 +47,11 @@ export default function CouponCard({ coupon, variant = "compact", storeLogoUrl }
         href={`/stores/${encodeURIComponent(slug)}`}
         className="group rounded-2xl border-0 bg-white p-6 shadow-md hover:shadow-lg transition-all flex flex-col items-center text-center min-h-[200px] justify-between"
       >
+        {isVerified && (
+          <span className="self-end inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700 border border-emerald-200">
+            <span aria-hidden>✓</span> Verified
+          </span>
+        )}
         <div className="w-20 h-20 rounded-xl bg-almond flex items-center justify-center overflow-hidden shrink-0">
           {logoUrl ? (
             <img src={logoUrl} alt={coupon.name} className="w-full h-full object-contain" />
@@ -61,6 +67,13 @@ export default function CouponCard({ coupon, variant = "compact", storeLogoUrl }
 
   return (
     <div className="rounded-2xl border-0 bg-white shadow-md hover:shadow-lg transition-all flex flex-col overflow-hidden min-h-[180px]">
+      {isVerified && (
+        <div className="px-3 pt-3">
+          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700 border border-emerald-200">
+            <span aria-hidden>✓</span> Verified
+          </span>
+        </div>
+      )}
       <Link
         href={`/stores/${encodeURIComponent(slug)}`}
         className="flex flex-col flex-1 p-4 items-center text-center"
