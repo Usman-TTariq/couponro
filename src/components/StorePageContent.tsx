@@ -60,6 +60,12 @@ export default function StorePageContent({
   }, [storeCoupons]);
 
   const description = store?.description || storeCoupons[0]?.description || "";
+  const sidebarLogoUrl = useMemo(() => {
+    const direct = (store?.logoUrl ?? "").trim();
+    if (direct) return direct;
+    const fromCoupons = storeCoupons.find((c) => (c.logoUrl ?? "").trim())?.logoUrl?.trim() ?? "";
+    return fromCoupons;
+  }, [store?.logoUrl, storeCoupons]);
   const aboutText = store?.moreAboutStore || store?.description || description;
   const shoppingTips = store?.shoppingTipsTitle && (store.shoppingTipsBullets?.length ?? 0) > 0;
   const faqs = store?.faqs && store.faqs.length > 0 ? store.faqs : [];
@@ -221,11 +227,11 @@ export default function StorePageContent({
           <div className="lg:sticky lg:top-6 space-y-5">
             {/* Store logo, title, description */}
             <div className="rounded-2xl border-2 border-rebecca/20 bg-white p-5 shadow-md">
-              {store?.logoUrl ? (
+              {sidebarLogoUrl ? (
                 <div className="w-full flex justify-center mb-4">
                   <div className="w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center bg-almond/50 rounded-xl p-2">
                     <img
-                      src={store.logoUrl}
+                      src={sidebarLogoUrl}
                       alt={displayName}
                       className="w-full h-full object-contain"
                     />
@@ -256,7 +262,7 @@ export default function StorePageContent({
                   {storeCoupons.slice(0, 5).map((c) => {
                     const isCode = isCodeCoupon(c);
                     const title = c.couponTitle?.trim() || c.badgeLabel?.trim() || "Offer";
-                    const logoUrl = store?.logoUrl || c.logoUrl || "";
+                    const logoUrl = sidebarLogoUrl || c.logoUrl || "";
                     return (
                       <li key={c.id} className="flex items-center gap-3 rounded-xl bg-almond/50 p-3">
                         <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-almond flex items-center justify-center overflow-hidden p-0.5">

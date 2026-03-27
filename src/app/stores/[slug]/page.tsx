@@ -62,12 +62,20 @@ async function getStoreData(slug: string): Promise<{
   const raw = slug.toLowerCase().trim();
   const [stores, coupons] = await Promise.all([getStores(), getCoupons()]);
   const enabledStores = stores.filter((s) => s.status !== "disable");
-  const store = enabledStores.find(
+  const matchedStore = enabledStores.find(
     (s) =>
       (s.slug || slugify(s.name)).toLowerCase() === raw ||
       normalizeSlug(s.slug || s.name) === normalizeSlug(raw)
   );
-  const storeNameKey = (store?.name ?? "").trim().toLowerCase();
+  const matchedNameKey = (matchedStore?.name ?? "").trim().toLowerCase();
+  const bestStoreForName =
+    matchedNameKey.length > 0
+      ? enabledStores
+          .filter((s) => (s.name ?? "").trim().toLowerCase() === matchedNameKey)
+          .sort((a, b) => ((b.logoUrl ?? "").trim() ? 1 : 0) - ((a.logoUrl ?? "").trim() ? 1 : 0))[0]
+      : undefined;
+  const store = bestStoreForName ?? matchedStore ?? null;
+  const storeNameKey = (store?.name ?? matchedStore?.name ?? "").trim().toLowerCase();
   const storeCoupons = coupons.filter((c) => {
     if (c.status === "disable") return false;
     const slugMatch =
@@ -77,9 +85,16 @@ async function getStoreData(slug: string): Promise<{
     if (storeNameKey && (c.name ?? "").trim().toLowerCase() === storeNameKey) return true;
     return false;
   });
-  const displayName = store?.name ?? storeCoupons[0]?.name ?? "Store";
-  const otherStores = enabledStores.filter((s) => s.id !== store?.id).slice(0, 6);
-  return { store: store ?? null, storeCoupons, displayName, otherStores };
+  const displayName = store?.name ?? matchedStore?.name ?? storeCoupons[0]?.name ?? "Store";
+  const withDisplayNameLogo =
+    displayName.trim().length > 0
+      ? enabledStores
+          .filter((s) => (s.name ?? "").trim().toLowerCase() === displayName.trim().toLowerCase())
+          .sort((a, b) => ((b.logoUrl ?? "").trim() ? 1 : 0) - ((a.logoUrl ?? "").trim() ? 1 : 0))[0]
+      : undefined;
+  const effectiveStore = withDisplayNameLogo ?? store ?? matchedStore ?? null;
+  const otherStores = enabledStores.filter((s) => s.id !== effectiveStore?.id).slice(0, 6);
+  return { store: effectiveStore, storeCoupons, displayName, otherStores };
 }
 
 export default async function StorePage({
