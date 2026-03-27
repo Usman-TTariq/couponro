@@ -2,13 +2,14 @@
 
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { DEFAULT_BLOG_POST_URL } from "@/lib/blog-posts";
 import { useSearchParams } from "next/navigation";
+import { DEFAULT_BLOG_POST_URL } from "@/lib/blog-posts";
 import type { Store } from "@/types/store";
 import { getShowCodeButtonLabel } from "@/lib/coupon-button-labels";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CouponPopup from "@/components/CouponPopup";
+import { getCouponDetailPath } from "@/lib/coupon-slug";
 
 const PER_PAGE = 12;
 
@@ -32,6 +33,12 @@ function getDiscountLabel(coupon: Store): string {
   const parsed = parseDiscount(haystack);
   if (parsed) return parsed.replace(/\s+/g, " ").toUpperCase();
   return getCouponCode(coupon).length > 0 ? "CODE" : "DEAL";
+}
+
+function newCopyId(): string {
+  return typeof crypto !== "undefined" && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `c_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 }
 
 function CouponsPageContent() {
@@ -74,7 +81,6 @@ function CouponsPageContent() {
     return () => { cancelled = true; };
   }, [page]);
 
-  // New tab with ?popup=id: load that coupon and show overlay so site is blurred behind
   useEffect(() => {
     const popupId = searchParams.get("popup");
     if (!popupId?.trim()) return;
@@ -140,27 +146,67 @@ function CouponsPageContent() {
                   key={coupon.id}
                   coupon={coupon}
                   storeLogoUrl={storeByName[(coupon.name ?? "").trim()]?.logoUrl}
+                  onOpenDetail={() => {
+                    const detailUrl = getCouponDetailPath(coupon);
+                    const storeInfo = storeByName[(coupon.name ?? "").trim()];
+                    const trackingUrl = (
+                      coupon.trackingUrl ??
+                      coupon.storeWebsiteUrl ??
+                      coupon.link ??
+                      storeInfo?.trackingUrl ??
+                      storeInfo?.storeWebsiteUrl ??
+                      ""
+                    )
+                      .toString()
+                      .trim();
+                    if (trackingUrl && trackingUrl !== "#") {
+                      window.open(trackingUrl, "_blank", "noopener,noreferrer");
+                    }
+                    window.location.href = detailUrl;
+                  }}
                   onOpenPopup={() => {
-                const copyId = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `c_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
-                const storeInfo = storeByName[(coupon.name ?? "").trim()];
-                const trackingUrl = (coupon.trackingUrl ?? coupon.storeWebsiteUrl ?? coupon.link ?? storeInfo?.trackingUrl ?? storeInfo?.storeWebsiteUrl ?? "").toString().trim();
-                window.open(`/coupons?popup=${encodeURIComponent(coupon.id)}&copy=${encodeURIComponent(copyId)}`, "_blank", "noopener,noreferrer");
-                if (trackingUrl && trackingUrl !== "#") window.location.href = trackingUrl;
-              }}
+                    const storeInfo = storeByName[(coupon.name ?? "").trim()];
+                    const trackingUrl = (
+                      coupon.trackingUrl ??
+                      coupon.storeWebsiteUrl ??
+                      coupon.link ??
+                      storeInfo?.trackingUrl ??
+                      storeInfo?.storeWebsiteUrl ??
+                      ""
+                    )
+                      .toString()
+                      .trim();
+                    window.open(
+                      `/coupons?popup=${encodeURIComponent(coupon.id)}&copy=${encodeURIComponent(newCopyId())}`,
+                      "_blank",
+                      "noopener,noreferrer"
+                    );
+                    if (trackingUrl && trackingUrl !== "#") {
+                      window.location.href = trackingUrl;
+                    }
+                  }}
                 />
               ))}
             </ul>
 
             {(() => {
-              const popupStore = popupCoupon ? storesForPopup.find((s) => (s.name ?? "").trim() === (popupCoupon.name ?? "").trim()) : null;
+              const popupStore = popupCoupon
+                ? storesForPopup.find((s) => (s.name ?? "").trim() === (popupCoupon.name ?? "").trim())
+                : null;
               return (
                 <CouponPopup
                   coupon={popupCoupon}
                   onClose={() => setPopupCoupon(null)}
-                  storeLogoUrl={popupStore?.logoUrl ?? (popupCoupon ? storeByName[(popupCoupon.name ?? "").trim()]?.logoUrl : undefined)}
+                  storeLogoUrl={
+                    popupStore?.logoUrl ?? (popupCoupon ? storeByName[(popupCoupon.name ?? "").trim()]?.logoUrl : undefined)
+                  }
                   fallbackUrl={
                     popupCoupon
-                      ? popupStore?.trackingUrl?.trim() || popupStore?.storeWebsiteUrl?.trim() || storeByName[(popupCoupon.name ?? "").trim()]?.trackingUrl || storeByName[(popupCoupon.name ?? "").trim()]?.storeWebsiteUrl || ""
+                      ? popupStore?.trackingUrl?.trim() ||
+                        popupStore?.storeWebsiteUrl?.trim() ||
+                        storeByName[(popupCoupon.name ?? "").trim()]?.trackingUrl ||
+                        storeByName[(popupCoupon.name ?? "").trim()]?.storeWebsiteUrl ||
+                        ""
                       : undefined
                   }
                 />
@@ -242,10 +288,12 @@ export default function CouponsPage() {
 function FeaturedCouponCard({
   coupon,
   storeLogoUrl,
+  onOpenDetail,
   onOpenPopup,
 }: {
   coupon: Store;
   storeLogoUrl?: string;
+  onOpenDetail: () => void;
   onOpenPopup: () => void;
 }) {
   const code = getCouponCode(coupon);
@@ -280,9 +328,13 @@ function FeaturedCouponCard({
               <span aria-hidden>✓</span> Verified
             </span>
           )}
-          <p className="font-bold text-[#1e88e5] text-base leading-snug">
+          <button
+            type="button"
+            onClick={onOpenDetail}
+            className="font-bold text-[#1e88e5] text-base leading-snug text-left w-full hover:underline cursor-pointer bg-transparent border-0 p-0"
+          >
             {coupon.name && `${coupon.name}: `}{offerTitle}
-          </p>
+          </button>
           <p className="text-sm text-black mt-1">{description}</p>
         </div>
 

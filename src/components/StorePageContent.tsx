@@ -1,10 +1,17 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import type { Store } from "@/types/store";
-import CouponPopup from "@/components/CouponPopup";
 import { getShowCodeButtonLabel } from "@/lib/coupon-button-labels";
+import { getCouponDetailPath } from "@/lib/coupon-slug";
+import CouponPopup from "@/components/CouponPopup";
+
+function newCopyId(): string {
+  return typeof crypto !== "undefined" && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `c_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+}
 
 function getCouponBadge(c: Store): string {
   const text = [c.badgeLabel ?? "", c.couponTitle ?? ""].join(" ").trim();
@@ -42,6 +49,7 @@ export default function StorePageContent({
   displayName: string;
   otherStores: Store[];
   slug?: string;
+  /** When URL has ?popup=couponId, show overlay on load */
   initialPopupId?: string;
   /** When set, show a link to this blog post (store page does not redirect). */
   relatedBlogSlug?: string;
@@ -53,7 +61,6 @@ export default function StorePageContent({
     const c = storeCoupons.find((x) => (x.id ?? "").trim() === initialPopupId.trim());
     if (c) setPopupCoupon(c);
   }, [initialPopupId, storeCoupons]);
-
   /* Single list: all coupons, codes first then deals (no tabs/search on inner store page) */
   const filtered = useMemo(() => {
     return [...storeCoupons].sort((a, b) => (hasActualCode(b) ? 1 : 0) - (hasActualCode(a) ? 1 : 0));
@@ -118,13 +125,26 @@ export default function StorePageContent({
                 coupon={c}
                 displayName={displayName}
                 storeLogoUrl={store?.logoUrl}
+                onOpenDetail={() => {
+                  const detailUrl = getCouponDetailPath(c);
+                  const trackingUrl = (c.trackingUrl ?? c.storeWebsiteUrl ?? c.link ?? store?.trackingUrl ?? store?.storeWebsiteUrl ?? "").toString().trim();
+                  if (trackingUrl && trackingUrl !== "#") {
+                    window.open(trackingUrl, "_blank", "noopener,noreferrer");
+                  }
+                  window.location.href = detailUrl;
+                }}
                 onOpenPopup={() => {
-              const copyId = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `c_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
-              const base = slug ? `/stores/${encodeURIComponent(slug)}` : "/coupons";
-              const trackingUrl = (c.trackingUrl ?? c.storeWebsiteUrl ?? c.link ?? store?.trackingUrl ?? store?.storeWebsiteUrl ?? "").toString().trim();
-              window.open(`${base}?popup=${encodeURIComponent(c.id)}&copy=${encodeURIComponent(copyId)}`, "_blank", "noopener,noreferrer");
-              if (trackingUrl && trackingUrl !== "#") window.location.href = trackingUrl;
-            }}
+                  const base = slug ? `/stores/${encodeURIComponent(slug)}` : "/coupons";
+                  const trackingUrl = (c.trackingUrl ?? c.storeWebsiteUrl ?? c.link ?? store?.trackingUrl ?? store?.storeWebsiteUrl ?? "").toString().trim();
+                  window.open(
+                    `${base}?popup=${encodeURIComponent(c.id)}&copy=${encodeURIComponent(newCopyId())}`,
+                    "_blank",
+                    "noopener,noreferrer"
+                  );
+                  if (trackingUrl && trackingUrl !== "#") {
+                    window.location.href = trackingUrl;
+                  }
+                }}
               />
             ))}
           </ul>
@@ -280,11 +300,16 @@ export default function StorePageContent({
                         <button
                           type="button"
                           onClick={() => {
-                    const copyId = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `c_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
                     const base = slug ? `/stores/${encodeURIComponent(slug)}` : "/coupons";
                     const trackingUrl = (c.trackingUrl ?? c.storeWebsiteUrl ?? c.link ?? store?.trackingUrl ?? store?.storeWebsiteUrl ?? "").toString().trim();
-                    window.open(`${base}?popup=${encodeURIComponent(c.id)}&copy=${encodeURIComponent(copyId)}`, "_blank", "noopener,noreferrer");
-                    if (trackingUrl && trackingUrl !== "#") window.location.href = trackingUrl;
+                    window.open(
+                      `${base}?popup=${encodeURIComponent(c.id)}&copy=${encodeURIComponent(newCopyId())}`,
+                      "_blank",
+                      "noopener,noreferrer"
+                    );
+                    if (trackingUrl && trackingUrl !== "#") {
+                      window.location.href = trackingUrl;
+                    }
                   }}
                           className="flex-shrink-0 rounded-lg bg-lobster text-white text-xs font-semibold uppercase tracking-wide px-3 py-1.5 hover:bg-lobster/90 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
                         >
@@ -385,11 +410,13 @@ function StoreCouponCard({
   coupon,
   displayName,
   storeLogoUrl,
+  onOpenDetail,
   onOpenPopup,
 }: {
   coupon: Store;
   displayName: string;
   storeLogoUrl?: string;
+  onOpenDetail: () => void;
   onOpenPopup: () => void;
 }) {
   const badge = getCouponBadge(coupon);
@@ -414,7 +441,13 @@ function StoreCouponCard({
               <span aria-hidden>✓</span> Verified
             </span>
           )}
-          <h4 className="font-bold text-space text-sm sm:text-base">{title}</h4>
+          <button
+            type="button"
+            onClick={onOpenDetail}
+            className="font-bold text-space text-sm sm:text-base text-left w-full hover:underline cursor-pointer bg-transparent border-0 p-0"
+          >
+            {title}
+          </button>
           {coupon.description?.trim() && (
             <p className="text-xs sm:text-sm text-rebecca mt-0.5 line-clamp-2 sm:line-clamp-none">{coupon.description.trim().slice(0, 120)}</p>
           )}

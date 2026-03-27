@@ -3,6 +3,7 @@ import { getStores, getCoupons } from "@/lib/stores";
 import { slugify } from "@/lib/slugify";
 import { getAllSlugs } from "@/lib/blog-posts";
 import { getSanityPostSlugs } from "@/lib/sanity.blog";
+import { getCouponDetailPath } from "@/lib/coupon-slug";
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || "https://seempromo.com";
 const baseUrl = BASE.replace(/\/$/, "");
@@ -62,15 +63,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Supabase not configured
   }
 
-  // --- Dynamic: coupon pages (HTML – /coupon/[id]) ---
+  // --- Dynamic: coupon pages (HTML – /coupon/[store]/[title]) ---
   try {
     const coupons = await getCoupons();
     const enabledCoupons = coupons.filter((c) => (c.status ?? "enable") !== "disable");
     for (const c of enabledCoupons) {
-      const id = (c.id ?? "").trim();
-      if (!id) continue;
+      const path = getCouponDetailPath(c);
+      if (!path.startsWith("/coupon/")) continue;
       entries.push({
-        url: `${baseUrl}/coupon/${encodeURIComponent(id)}`,
+        url: `${baseUrl}${path}`,
         lastModified: c.createdAt ? new Date(c.createdAt) : new Date(),
         changeFrequency: "weekly",
         priority: 0.7,

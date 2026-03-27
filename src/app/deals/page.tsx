@@ -7,6 +7,7 @@ import type { Store } from "@/types/store";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CouponPopup from "@/components/CouponPopup";
+import { getCouponDetailPath } from "@/lib/coupon-slug";
 
 const SITE_NAME = "SeemPromo";
 const PER_PAGE = 12;
@@ -22,15 +23,21 @@ function parseDiscount(text: string): string {
   return match ? match[1].trim() : "";
 }
 
+function newCopyId(): string {
+  return typeof crypto !== "undefined" && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `d_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+}
+
 function DealsPageContent() {
   const [stores, setStores] = useState<Store[]>([]);
   const [deals, setDeals] = useState<Store[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [sortBy, setSortBy] = useState<SortBy>("newest");
   const [popupDeal, setPopupDeal] = useState<Store | null>(null);
   const [storesForPopup, setStoresForPopup] = useState<Store[]>([]);
-  const [sortBy, setSortBy] = useState<SortBy>("newest");
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -192,27 +199,67 @@ function DealsPageContent() {
                       key={deal.id}
                       deal={deal}
                       storeLogoUrl={storeByName[(deal.name ?? "").trim()]?.logoUrl}
-                      onOpenPopup={() => {
-                        const copyId = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `d_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+                      onOpenDetail={() => {
+                        const detailUrl = getCouponDetailPath(deal);
                         const storeInfo = storeByName[(deal.name ?? "").trim()];
-                        const trackingUrl = (deal.trackingUrl ?? deal.storeWebsiteUrl ?? deal.link ?? storeInfo?.trackingUrl ?? storeInfo?.storeWebsiteUrl ?? "").toString().trim();
-                        window.open(`/deals?popup=${encodeURIComponent(deal.id)}&copy=${encodeURIComponent(copyId)}`, "_blank", "noopener,noreferrer");
-                        if (trackingUrl && trackingUrl !== "#") window.location.href = trackingUrl;
+                        const trackingUrl = (
+                          deal.trackingUrl ??
+                          deal.storeWebsiteUrl ??
+                          deal.link ??
+                          storeInfo?.trackingUrl ??
+                          storeInfo?.storeWebsiteUrl ??
+                          ""
+                        )
+                          .toString()
+                          .trim();
+                        if (trackingUrl && trackingUrl !== "#") {
+                          window.open(trackingUrl, "_blank", "noopener,noreferrer");
+                        }
+                        window.location.href = detailUrl;
+                      }}
+                      onOpenPopup={() => {
+                        const storeInfo = storeByName[(deal.name ?? "").trim()];
+                        const trackingUrl = (
+                          deal.trackingUrl ??
+                          deal.storeWebsiteUrl ??
+                          deal.link ??
+                          storeInfo?.trackingUrl ??
+                          storeInfo?.storeWebsiteUrl ??
+                          ""
+                        )
+                          .toString()
+                          .trim();
+                        window.open(
+                          `/deals?popup=${encodeURIComponent(deal.id)}&copy=${encodeURIComponent(newCopyId())}`,
+                          "_blank",
+                          "noopener,noreferrer"
+                        );
+                        if (trackingUrl && trackingUrl !== "#") {
+                          window.location.href = trackingUrl;
+                        }
                       }}
                     />
                   ))}
                 </ul>
 
                 {(() => {
-                  const popupStore = popupDeal ? storesForPopup.find((s) => (s.name ?? "").trim() === (popupDeal.name ?? "").trim()) : null;
+                  const popupStore = popupDeal
+                    ? storesForPopup.find((s) => (s.name ?? "").trim() === (popupDeal.name ?? "").trim())
+                    : null;
                   return (
                     <CouponPopup
                       coupon={popupDeal}
                       onClose={() => setPopupDeal(null)}
-                      storeLogoUrl={popupStore?.logoUrl ?? (popupDeal ? storeByName[(popupDeal.name ?? "").trim()]?.logoUrl : undefined)}
+                      storeLogoUrl={
+                        popupStore?.logoUrl ?? (popupDeal ? storeByName[(popupDeal.name ?? "").trim()]?.logoUrl : undefined)
+                      }
                       fallbackUrl={
                         popupDeal
-                          ? popupStore?.trackingUrl?.trim() || popupStore?.storeWebsiteUrl?.trim() || storeByName[(popupDeal.name ?? "").trim()]?.trackingUrl || storeByName[(popupDeal.name ?? "").trim()]?.storeWebsiteUrl || ""
+                          ? popupStore?.trackingUrl?.trim() ||
+                            popupStore?.storeWebsiteUrl?.trim() ||
+                            storeByName[(popupDeal.name ?? "").trim()]?.trackingUrl ||
+                            storeByName[(popupDeal.name ?? "").trim()]?.storeWebsiteUrl ||
+                            ""
                           : undefined
                       }
                     />
@@ -296,10 +343,12 @@ export default function DealsPage() {
 function FeaturedDealCard({
   deal,
   storeLogoUrl,
+  onOpenDetail,
   onOpenPopup,
 }: {
   deal: Store;
   storeLogoUrl?: string;
+  onOpenDetail: () => void;
   onOpenPopup: () => void;
 }) {
   const code = getCouponCode(deal);
@@ -330,9 +379,13 @@ function FeaturedDealCard({
 
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="font-bold text-[#1e88e5] text-base leading-snug">
+            <button
+              type="button"
+              onClick={onOpenDetail}
+              className="font-bold text-[#1e88e5] text-base leading-snug text-left hover:underline cursor-pointer bg-transparent border-0 p-0"
+            >
               {deal.name && `${deal.name}: `}{offerTitle}
-            </p>
+            </button>
             <span className="inline-flex items-center gap-1.5 text-[#34C759] text-xs font-medium shrink-0" title="Verified">
               <span className="flex items-center justify-center w-4 h-4 rounded-full border-2 border-[#34C759] shrink-0">
                 <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
