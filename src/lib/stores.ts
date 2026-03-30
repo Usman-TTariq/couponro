@@ -10,6 +10,30 @@ import { slugify } from "./slugify";
 
 const CACHE_REVALIDATE = 15; // seconds – balance freshness (after delete/add) vs Supabase load
 
+/** Delays between attempts (ms). Third attempt has no extra delay before throw. */
+const FETCH_RETRY_DELAYS_MS = [120, 350] as const;
+
+/**
+ * Retries transient Supabase failures so we don't cache empty lists or show "not found"
+ * when the DB briefly errored. On final failure, rethrows (not cached as success).
+ */
+async function withRetry<T>(tag: string, fn: () => Promise<T>, maxAttempts = 3): Promise<T> {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await fn();
+    } catch (e) {
+      lastError = e;
+      if (attempt < maxAttempts) {
+        const delay = FETCH_RETRY_DELAYS_MS[attempt - 1] ?? 400;
+        await new Promise((r) => setTimeout(r, delay));
+        console.warn(`[${tag}] attempt ${attempt}/${maxAttempts} failed, retrying in ${delay}ms`, e);
+      }
+    }
+  }
+  throw lastError;
+}
+
 function requireSupabase() {
   const supabase = getSupabase();
   if (!supabase) {
@@ -21,22 +45,24 @@ function requireSupabase() {
 }
 
 async function getStoresRaw(): Promise<Store[]> {
-  const supabase = getSupabase();
-  if (!supabase) return [];
-  const { data: rows, error } = await supabase
-    .from(SUPABASE_STORES_TABLE)
-    .select("data");
-  if (error) {
-    console.error("[stores] Supabase error:", error.message);
-    return [];
-  }
-  const stores = (rows ?? [])
-    .map((r: { data: Store }) => r.data)
-    .filter(Boolean) as Store[];
-  stores.sort((a, b) =>
-    (b.createdAt ?? "").localeCompare(a.createdAt ?? "")
-  );
-  return stores;
+  return withRetry("stores", async () => {
+    const supabase = getSupabase();
+    if (!supabase) return [];
+    const { data: rows, error } = await supabase
+      .from(SUPABASE_STORES_TABLE)
+      .select("data");
+    if (error) {
+      console.error("[stores] Supabase error:", error.message);
+      throw new Error(`Supabase stores: ${error.message}`);
+    }
+    const stores = (rows ?? [])
+      .map((r: { data: Store }) => r.data)
+      .filter(Boolean) as Store[];
+    stores.sort((a, b) =>
+      (b.createdAt ?? "").localeCompare(a.createdAt ?? "")
+    );
+    return stores;
+  });
 }
 
 export const getStores = unstable_cache(
@@ -70,29 +96,31 @@ export async function getCouponsCountFromDb(): Promise<number> {
 }
 
 export async function getCouponsRaw(): Promise<Store[]> {
-  const supabase = getSupabaseCoupons();
-  if (!supabase) return [];
-  const { data: rows, error } = await supabase
-    .from(SUPABASE_COUPONS_TABLE)
-    .select("id, data");
-  if (error) {
-    console.error("[coupons] Supabase error:", error.message);
-    return [];
-  }
-  const coupons = (rows ?? []).map((r: { id: string; data: Store | null }) => {
-    const d = r?.data;
-    const id = r?.id;
-    if (!d || typeof d !== "object")
-      return { id: id ?? "", name: "", logoUrl: "", description: "", expiry: "" } as Store;
-    return { ...d, id: d.id ?? id };
-  }) as Store[];
-  coupons.sort((a, b) => {
-    const pa = a.priority ?? 999;
-    const pb = b.priority ?? 999;
-    if (pa !== pb) return pa - pb;
-    return (b.createdAt ?? "").localeCompare(a.createdAt ?? "");
+  return withRetry("coupons", async () => {
+    const supabase = getSupabaseCoupons();
+    if (!supabase) return [];
+    const { data: rows, error } = await supabase
+      .from(SUPABASE_COUPONS_TABLE)
+      .select("id, data");
+    if (error) {
+      console.error("[coupons] Supabase error:", error.message);
+      throw new Error(`Supabase coupons: ${error.message}`);
+    }
+    const coupons = (rows ?? []).map((r: { id: string; data: Store | null }) => {
+      const d = r?.data;
+      const id = r?.id;
+      if (!d || typeof d !== "object")
+        return { id: id ?? "", name: "", logoUrl: "", description: "", expiry: "" } as Store;
+      return { ...d, id: d.id ?? id };
+    }) as Store[];
+    coupons.sort((a, b) => {
+      const pa = a.priority ?? 999;
+      const pb = b.priority ?? 999;
+      if (pa !== pb) return pa - pb;
+      return (b.createdAt ?? "").localeCompare(a.createdAt ?? "");
+    });
+    return coupons;
   });
-  return coupons;
 }
 
 export const getCoupons = unstable_cache(

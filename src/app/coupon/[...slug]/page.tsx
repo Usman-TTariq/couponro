@@ -65,16 +65,23 @@ function toListItems(text: string): string[] {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   if (!slug?.length) return { title: "Coupon not found" };
-  let coupon: Store | null = null;
-  if (slug.length === 2) {
-    coupon = await resolveCouponPair(slug[0], slug[1]);
-  } else if (slug.length === 1) {
-    coupon = await resolveLegacySingle(slug[0]);
+  try {
+    let coupon: Store | null = null;
+    if (slug.length === 2) {
+      coupon = await resolveCouponPair(slug[0], slug[1]);
+    } else if (slug.length === 1) {
+      coupon = await resolveLegacySingle(slug[0]);
+    }
+    if (!coupon) return { title: "Coupon not found" };
+    const title = getCouponDisplayTitle(coupon);
+    const description = coupon.description?.trim() || `${coupon.name} coupon details and usage guide.`;
+    return { title: `${title} | Coupon Details`, description };
+  } catch {
+    return {
+      title: "Coupon | Couponro",
+      description: "Coupon details and usage.",
+    };
   }
-  if (!coupon) return { title: "Coupon not found" };
-  const title = getCouponDisplayTitle(coupon);
-  const description = coupon.description?.trim() || `${coupon.name} coupon details and usage guide.`;
-  return { title: `${title} | Coupon Details`, description };
 }
 
 export default async function CouponPage({ params }: Props) {

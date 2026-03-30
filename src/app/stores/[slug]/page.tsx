@@ -31,26 +31,33 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const { store, storeCoupons, displayName } = await getStoreData(slug);
-  const activeCoupons = storeCoupons.length;
-  const replacer = (s: string) =>
-    replaceSeoPlaceholders(s, { storeName: displayName, activeCoupons });
+  try {
+    const { store, storeCoupons, displayName } = await getStoreData(slug);
+    const activeCoupons = storeCoupons.length;
+    const replacer = (s: string) =>
+      replaceSeoPlaceholders(s, { storeName: displayName, activeCoupons });
 
-  const title =
-    store?.seoPageTitle?.trim()
-      ? replacer(store.seoPageTitle.trim()).slice(0, 100)
-      : `${displayName} Coupons & Deals`;
-  const description =
-    store?.seoMetaDescription?.trim()
-      ? replacer(store.seoMetaDescription.trim()).slice(0, 160)
-      : store?.description ||
-        storeCoupons[0]?.description ||
-        `Find the latest ${displayName} coupon codes, promo codes, and deals. Save with Couponro.`;
+    const title =
+      store?.seoPageTitle?.trim()
+        ? replacer(store.seoPageTitle.trim()).slice(0, 100)
+        : `${displayName} Coupons & Deals`;
+    const description =
+      store?.seoMetaDescription?.trim()
+        ? replacer(store.seoMetaDescription.trim()).slice(0, 160)
+        : store?.description ||
+          storeCoupons[0]?.description ||
+          `Find the latest ${displayName} coupon codes, promo codes, and deals. Save with Couponro.`;
 
-  return {
-    title,
-    description,
-  };
+    return {
+      title,
+      description,
+    };
+  } catch {
+    return {
+      title: "Store | Couponro",
+      description: "Coupon codes, promo codes, and deals.",
+    };
+  }
 }
 
 async function getStoreData(slug: string): Promise<{
