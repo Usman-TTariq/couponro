@@ -176,14 +176,10 @@ function CouponsPageContent() {
                     )
                       .toString()
                       .trim();
-                    window.open(
-                      `/coupons?popup=${encodeURIComponent(coupon.id)}&copy=${encodeURIComponent(newCopyId())}`,
-                      "_blank",
-                      "noopener,noreferrer"
-                    );
                     if (trackingUrl && trackingUrl !== "#") {
-                      window.location.href = trackingUrl;
+                      window.open(trackingUrl, "_blank", "noopener,noreferrer");
                     }
+                    window.location.href = `/coupons?popup=${encodeURIComponent(coupon.id)}&copy=${encodeURIComponent(newCopyId())}`;
                   }}
                 />
               ))}

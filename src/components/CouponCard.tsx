@@ -11,7 +11,6 @@ type Props = {
 };
 
 export default function CouponCard({ coupon, variant = "compact", storeLogoUrl }: Props) {
-  const [revealed, setRevealed] = useState(false);
   const [copied, setCopied] = useState(false);
   const isCode = coupon.couponType === "code";
   const hasCode = Boolean(coupon.couponCode?.trim());
@@ -22,13 +21,9 @@ export default function CouponCard({ coupon, variant = "compact", storeLogoUrl }
     e.preventDefault();
     e.stopPropagation();
     if (isCode && hasCode) {
-      if (revealed) {
-        navigator.clipboard.writeText(coupon.couponCode ?? "");
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      } else {
-        setRevealed(true);
-      }
+      navigator.clipboard.writeText(coupon.couponCode ?? "");
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     } else if (link) {
       window.open(link, "_blank");
     }
@@ -92,15 +87,11 @@ export default function CouponCard({ coupon, variant = "compact", storeLogoUrl }
         onClick={handleAction}
         className="w-full rounded-b-2xl bg-soft-cyan py-3 px-4 text-sm font-semibold text-space hover:bg-soft-cyan/90 transition-colors"
       >
-        {isCode && hasCode
-          ? revealed
-            ? (copied ? "Copied!" : coupon.couponCode)
-            : offerText
-          : offerText}
+        {isCode && hasCode ? (copied ? "Copied!" : offerText) : offerText}
       </button>
-      {revealed && hasCode && (
+      {copied && hasCode && (
         <p className="sr-only" aria-live="polite">
-          Code: {coupon.couponCode}
+          Code copied to clipboard.
         </p>
       )}
     </div>

@@ -64,7 +64,6 @@ function CouponCodeCard({
   coupon: Store;
   storeLogoUrl?: string;
 }) {
-  const [revealed, setRevealed] = useState(false);
   const [copied, setCopied] = useState(false);
   const code = getCouponCode(coupon);
   const slug = coupon.slug || coupon.name?.toLowerCase().replace(/\s+/g, "-") || "";
@@ -74,16 +73,10 @@ function CouponCodeCard({
   const isVerified = coupon.verified !== false;
 
   const handleClick = () => {
-    if (!revealed) {
-      setRevealed(true);
-    } else {
-      navigator.clipboard.writeText(code);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
+    navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
-
-  const codeDisplay = code.toUpperCase();
 
   return (
     <li className="bg-white">
@@ -122,15 +115,15 @@ function CouponCodeCard({
               onClick={handleClick}
               className="rounded bg-[#1e88e5] hover:bg-[#1565c0] text-white font-semibold text-xs uppercase tracking-wide px-4 py-2.5 whitespace-nowrap transition-colors"
             >
-              {revealed ? (copied ? "Copied!" : "Copy Code") : "Coupon Code"}
+              {copied ? "Copied!" : "Get Code"}
             </button>
             <div
               className="w-fit min-w-[4ch] max-w-[10rem] h-10 px-1.5 flex items-center justify-center bg-white border-2 border-dashed border-slate-400 font-mono text-sm font-semibold text-slate-900 select-all uppercase"
               style={{ borderStyle: "dashed" }}
               role="textbox"
-              aria-label="Coupon code"
+              aria-label="Coupon code hidden"
             >
-              {codeDisplay}
+              ••••
             </div>
           </div>
           <Link

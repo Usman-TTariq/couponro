@@ -136,14 +136,10 @@ export default function StorePageContent({
                 onOpenPopup={() => {
                   const base = slug ? `/stores/${encodeURIComponent(slug)}` : "/coupons";
                   const trackingUrl = (c.trackingUrl ?? c.storeWebsiteUrl ?? c.link ?? store?.trackingUrl ?? store?.storeWebsiteUrl ?? "").toString().trim();
-                  window.open(
-                    `${base}?popup=${encodeURIComponent(c.id)}&copy=${encodeURIComponent(newCopyId())}`,
-                    "_blank",
-                    "noopener,noreferrer"
-                  );
                   if (trackingUrl && trackingUrl !== "#") {
-                    window.location.href = trackingUrl;
+                    window.open(trackingUrl, "_blank", "noopener,noreferrer");
                   }
+                  window.location.href = `${base}?popup=${encodeURIComponent(c.id)}&copy=${encodeURIComponent(newCopyId())}`;
                 }}
               />
             ))}
@@ -302,14 +298,10 @@ export default function StorePageContent({
                           onClick={() => {
                     const base = slug ? `/stores/${encodeURIComponent(slug)}` : "/coupons";
                     const trackingUrl = (c.trackingUrl ?? c.storeWebsiteUrl ?? c.link ?? store?.trackingUrl ?? store?.storeWebsiteUrl ?? "").toString().trim();
-                    window.open(
-                      `${base}?popup=${encodeURIComponent(c.id)}&copy=${encodeURIComponent(newCopyId())}`,
-                      "_blank",
-                      "noopener,noreferrer"
-                    );
                     if (trackingUrl && trackingUrl !== "#") {
-                      window.location.href = trackingUrl;
+                      window.open(trackingUrl, "_blank", "noopener,noreferrer");
                     }
+                    window.location.href = `${base}?popup=${encodeURIComponent(c.id)}&copy=${encodeURIComponent(newCopyId())}`;
                   }}
                           className="flex-shrink-0 rounded-lg bg-lobster text-white text-xs font-semibold uppercase tracking-wide px-3 py-1.5 hover:bg-lobster/90 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
                         >

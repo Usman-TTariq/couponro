@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { getCoupons, getStores } from "@/lib/stores";
 import type { Store } from "@/types/store";
+import CopyCouponCode from "@/components/CopyCouponCode";
 import {
   getCouponDetailPath,
   getCouponDisplayTitle,
@@ -177,11 +178,15 @@ export default async function CouponPage({ params }: Props) {
                 </div>
               </div>
 
-              <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-3">
+              <div className="mt-4 flex flex-col sm:flex-row sm:items-start gap-3">
                 {hasCode ? (
-                  <div className="flex-1 rounded border border-dashed border-slate-300 bg-slate-50 px-3 py-2">
-                    <p className="text-[10px] uppercase tracking-wide text-slate-500">Coupon Code</p>
-                    <p className="font-mono text-lg font-bold text-gray-900">{code.toUpperCase()}</p>
+                  <div className="flex-1">
+                    <CopyCouponCode
+                      code={code}
+                      buttonText="GET CODE"
+                      showViewTermsHint
+                      hiddenText="CLICK GET CODE"
+                    />
                   </div>
                 ) : (
                   <div className="flex-1 rounded border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700">

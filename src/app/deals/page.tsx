@@ -229,14 +229,10 @@ function DealsPageContent() {
                         )
                           .toString()
                           .trim();
-                        window.open(
-                          `/deals?popup=${encodeURIComponent(deal.id)}&copy=${encodeURIComponent(newCopyId())}`,
-                          "_blank",
-                          "noopener,noreferrer"
-                        );
                         if (trackingUrl && trackingUrl !== "#") {
-                          window.location.href = trackingUrl;
+                          window.open(trackingUrl, "_blank", "noopener,noreferrer");
                         }
+                        window.location.href = `/deals?popup=${encodeURIComponent(deal.id)}&copy=${encodeURIComponent(newCopyId())}`;
                       }}
                     />
                   ))}
