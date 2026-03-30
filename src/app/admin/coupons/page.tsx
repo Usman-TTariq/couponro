@@ -717,19 +717,18 @@ export default function AdminCouponsPage() {
         {/* Custom reveal-code button (screenshot-style: multilingual examples) */}
         <div>
           <label className="mb-1 block text-sm font-semibold text-slate-800">
-            Custom &quot;Get Code&quot; Button Text (Optional)
+            Custom button text (Optional)
           </label>
           <input
             type="text"
             value={form.showCodeButtonText ?? ""}
             onChange={(e) => setForm((f) => ({ ...f, showCodeButtonText: e.target.value }))}
-            placeholder='e.g., "Obtenir le code", "Obtener código", "कोड प्राप्त करें"'
+            placeholder='e.g., "Obtenir le code", "Ver oferta", "कोड प्राप्त करें"'
             className={inputClass}
-            disabled={form.couponType !== "code"}
           />
           <p className="mt-1 text-xs text-stone-500">
-            Leave empty to use default &quot;Get Code&quot;. Set custom text for any language. Only applies when type
-            is Code.
+            Overrides the main action label on coupon cards for both Code and Deal. Leave empty for defaults:
+            &quot;Get Code&quot; (code, or deal with an optional code) or &quot;Get Deal&quot; (deal with no code).
           </p>
         </div>
 

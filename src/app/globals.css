@@ -53,7 +53,8 @@ header:not(#header) { background-color: var(--color-rebecca); color: white; }
   header:not(#header) form[action="/"],
   header:not(#header) form[action="/coupons"] { display: flex !important; }
 }
-header:not(#header) > div:first-child { background-color: var(--color-lobster); color: white; }
+/* Main nav row: purple (was lobster when promo strip was first child) */
+header:not(#header) > div:first-child { background-color: var(--color-rebecca); color: white; }
 header:not(#header) a { color: var(--color-soft-cyan); }
 header:not(#header) a:hover { color: white; }
 header:not(#header) input[type="search"] { background-color: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.4); border-radius: 0.5rem 0 0 0.5rem; padding: 0.5rem 0.75rem; }

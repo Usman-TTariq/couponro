@@ -8,6 +8,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CouponPopup from "@/components/CouponPopup";
 import { getCouponDetailPath } from "@/lib/coupon-slug";
+import { getShowCodeButtonLabel } from "@/lib/coupon-button-labels";
 
 const SITE_NAME = "SeemPromo";
 const PER_PAGE = 12;
@@ -356,6 +357,7 @@ function FeaturedDealCard({
   const description = deal.description?.trim() || offerTitle;
   const discountStr = parseDiscount(deal.badgeLabel ?? deal.couponTitle ?? "");
   const dealLabel = discountStr ? `${discountStr} OFF` : "DEAL";
+  const actionLabel = getShowCodeButtonLabel(deal);
 
   return (
     <li className="group bg-white border-b border-slate-200 last:border-b transition-colors hover:bg-slate-50/80">
@@ -409,8 +411,9 @@ function FeaturedDealCard({
                   onClick={onOpenPopup}
                   className="absolute left-0 top-0 bottom-0 z-10 w-[calc(100%-3ch)] rounded-none bg-[#34C759] text-white font-semibold text-xs uppercase tracking-wide pl-3 pr-4 transition-all duration-200 flex items-center justify-center hover:bg-[#2db34d] hover:-translate-x-3 hover:shadow-md"
                   style={{ clipPath: "polygon(0 0, 100% 0, calc(100% - 10px) 100%, 0 100%)" }}
+                  title={actionLabel}
                 >
-                  Show Coupon Code
+                  {actionLabel}
                 </button>
               </>
             ) : (
@@ -418,8 +421,9 @@ function FeaturedDealCard({
                 type="button"
                 onClick={onOpenPopup}
                 className="w-full h-full rounded-none bg-[#34C759] text-white font-semibold text-xs uppercase tracking-wide hover:bg-[#2db34d] transition-colors flex items-center justify-center"
+                title={actionLabel}
               >
-                Get Deal
+                {actionLabel}
               </button>
             )}
           </div>
