@@ -140,8 +140,8 @@ export default function HomeMagazineGrid() {
             navOpen ? "translate-x-0" : "translate-x-full"
           }`}
         >
-            <div className="flex items-start justify-between gap-4 px-5 pt-6 pb-2 sm:px-6">
-              <form action="/coupons" method="get" className="min-w-0 flex-1 max-w-md" onSubmit={() => setNavOpen(false)}>
+          <div className="flex items-start justify-between gap-4 px-5 pt-6 pb-2 sm:px-6">
+            <form action="/coupons" method="get" className="min-w-0 flex-1 max-w-md" onSubmit={() => setNavOpen(false)}>
               <label htmlFor="sidebar-search" className="sr-only">
                 Search store or brand
               </label>
@@ -164,19 +164,19 @@ export default function HomeMagazineGrid() {
                   </svg>
                 </button>
               </div>
-              </form>
-              <button
-                type="button"
-                className="shrink-0 p-2 text-2xl font-light leading-none text-white hover:text-[#FFD700]"
-                aria-label="Close menu"
-                onClick={() => setNavOpen(false)}
-              >
-                ×
-              </button>
-            </div>
+            </form>
+            <button
+              type="button"
+              className="shrink-0 p-2 text-2xl font-light leading-none text-white hover:text-[#FFD700]"
+              aria-label="Close menu"
+              onClick={() => setNavOpen(false)}
+            >
+              ×
+            </button>
+          </div>
 
-            <nav className="flex flex-1 flex-col items-center px-6 pb-12 pt-8 sm:px-8">
-              <ul className="flex w-full max-w-sm flex-col items-center gap-1">
+          <nav className="flex flex-1 flex-col items-center px-6 pb-12 pt-8 sm:px-8">
+            <ul className="flex w-full max-w-sm flex-col items-center gap-1">
               {NAV_PRIMARY.map(({ href, label }) => (
                 <li key={href} className="w-full text-center">
                   <Link
@@ -188,9 +188,9 @@ export default function HomeMagazineGrid() {
                   </Link>
                 </li>
               ))}
-              </ul>
+            </ul>
 
-              <ul className="mt-10 flex w-full max-w-sm flex-col items-center gap-1 border-t border-white/10 pt-10">
+            <ul className="mt-10 flex w-full max-w-sm flex-col items-center gap-1 border-t border-white/10 pt-10">
               {NAV_SECONDARY.map(({ href, label }) => (
                 <li key={href} className="w-full text-center">
                   <Link
@@ -202,9 +202,9 @@ export default function HomeMagazineGrid() {
                   </Link>
                 </li>
               ))}
-              </ul>
+            </ul>
 
-              <div className="mt-12 w-full max-w-sm">
+            <div className="mt-12 w-full max-w-sm">
               <p className="text-center text-sm font-bold uppercase tracking-[0.25em] text-[#FFD700]">Popular posts</p>
               <Link
                 href={DEFAULT_BLOG_POST_URL}
@@ -222,8 +222,8 @@ export default function HomeMagazineGrid() {
                   </p>
                 </div>
               </Link>
-              </div>
-            </nav>
+            </div>
+          </nav>
         </aside>
       </div>
 
