@@ -9,16 +9,24 @@ type Props = {
   showViewTermsHint?: boolean;
   /** Placeholder text shown instead of the real code. */
   hiddenText?: string;
+  /** Optional store/affiliate URL to open on click. */
+  urlToOpen?: string;
+  /** Called after click (use to open a popup/modal on current tab). */
+  onAfterClick?: () => void;
 };
 
-export default function CopyCouponCode({ code, buttonText, showViewTermsHint, hiddenText }: Props) {
+export default function CopyCouponCode({ code, buttonText, showViewTermsHint, hiddenText, urlToOpen, onAfterClick }: Props) {
   const [copied, setCopied] = useState(false);
   const safeCode = String(code ?? "").trim();
   const hasCode = safeCode.length > 0;
   const hiddenLabel = (hiddenText ?? "CODE HIDDEN").trim() || "CODE HIDDEN";
+  const safeUrl = String(urlToOpen ?? "").trim();
 
   const handleCopy = async () => {
     if (!hasCode) return;
+    if (safeUrl && safeUrl !== "#") {
+      window.open(safeUrl, "_blank", "noopener,noreferrer");
+    }
     try {
       await navigator.clipboard.writeText(safeCode);
       setCopied(true);
@@ -26,6 +34,7 @@ export default function CopyCouponCode({ code, buttonText, showViewTermsHint, hi
     } catch {
       // noop: if clipboard blocked, user can still open store and paste manually
     }
+    onAfterClick?.();
   };
 
   return (

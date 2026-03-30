@@ -5,7 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { getCoupons, getStores } from "@/lib/stores";
 import type { Store } from "@/types/store";
-import CopyCouponCode from "@/components/CopyCouponCode";
+import CouponCodeAction from "@/components/CouponCodeAction";
 import {
   getCouponDetailPath,
   getCouponDisplayTitle,
@@ -181,28 +181,13 @@ export default async function CouponPage({ params }: Props) {
               <div className="mt-4 flex flex-col sm:flex-row sm:items-start gap-3">
                 {hasCode ? (
                   <div className="flex-1">
-                    <CopyCouponCode
-                      code={code}
-                      buttonText="GET CODE"
-                      showViewTermsHint
-                      hiddenText="CLICK GET CODE"
-                    />
+                    <CouponCodeAction coupon={coupon} trackingUrl={link} storeLogoUrl={logoUrl} />
                   </div>
                 ) : (
                   <div className="flex-1 rounded border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700">
                     This is a direct deal. No code required.
                   </div>
                 )}
-                {link ? (
-                  <a
-                    href={link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex h-11 items-center justify-center rounded bg-[#f9b400] px-5 text-xs sm:text-sm font-bold uppercase tracking-wide text-gray-900 hover:bg-[#e8a700] transition-colors"
-                  >
-                    {hasCode ? "Buy it now" : "Get deal"}
-                  </a>
-                ) : null}
               </div>
 
               <div className="mt-5 border-t border-gray-100 pt-4">

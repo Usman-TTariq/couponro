@@ -26,9 +26,11 @@ type Props = {
   fallbackUrl?: string;
   /** When true, render as full page in new tab (no overlay); Continue to Store uses same tab */
   standalone?: boolean;
+  /** When true, do not display the raw coupon code text (still allows copy). */
+  hideCode?: boolean;
 };
 
-export default function CouponPopup({ coupon, onClose, storeLogoUrl, fallbackUrl, standalone }: Props) {
+export default function CouponPopup({ coupon, onClose, storeLogoUrl, fallbackUrl, standalone, hideCode }: Props) {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -150,7 +152,7 @@ export default function CouponPopup({ coupon, onClose, storeLogoUrl, fallbackUrl
               className="w-full rounded-xl border-2 border-dashed border-amber-400 bg-amber-50/80 py-4 px-4 mb-4 text-center hover:bg-amber-100/80 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2"
             >
               <span className="block text-xl font-bold text-slate-900 font-mono tracking-wide">
-                {code}
+                {hideCode ? "CODE HIDDEN" : code}
               </span>
               <span className="block text-sm text-slate-600 mt-1">
                 {copied ? "Copied!" : "Click to copy"}
