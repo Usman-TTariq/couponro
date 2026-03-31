@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { Store } from "@/types/store";
 import { getShowCodeButtonLabel } from "@/lib/coupon-button-labels";
 import { getCouponDetailPath } from "@/lib/coupon-slug";
+import { copyToClipboardIfNonEmpty } from "@/lib/copy-to-clipboard";
 import CouponPopup from "@/components/CouponPopup";
 
 function newCopyId(): string {
@@ -134,6 +135,7 @@ export default function StorePageContent({
                   window.location.href = detailUrl;
                 }}
                 onOpenPopup={() => {
+                  copyToClipboardIfNonEmpty(getCouponCode(c));
                   const base = slug ? `/stores/${encodeURIComponent(slug)}` : "/coupons";
                   const trackingUrl = (c.trackingUrl ?? c.storeWebsiteUrl ?? c.link ?? store?.trackingUrl ?? store?.storeWebsiteUrl ?? "").toString().trim();
                   if (trackingUrl && trackingUrl !== "#") {
@@ -296,6 +298,7 @@ export default function StorePageContent({
                         <button
                           type="button"
                           onClick={() => {
+                    copyToClipboardIfNonEmpty(getCouponCode(c));
                     const base = slug ? `/stores/${encodeURIComponent(slug)}` : "/coupons";
                     const trackingUrl = (c.trackingUrl ?? c.storeWebsiteUrl ?? c.link ?? store?.trackingUrl ?? store?.storeWebsiteUrl ?? "").toString().trim();
                     if (trackingUrl && trackingUrl !== "#") {
@@ -473,8 +476,9 @@ function StoreCouponCard({
               type="button"
               onClick={onOpenPopup}
               className="w-full h-full rounded-none bg-rebecca text-white font-semibold text-xs uppercase tracking-wide hover:bg-rebecca/90 transition-colors flex items-center justify-center"
+              title={showCodeLabel}
             >
-              Get Deal
+              {showCodeLabel}
             </button>
           )}
         </div>

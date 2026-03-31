@@ -10,6 +10,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CouponPopup from "@/components/CouponPopup";
 import { getCouponDetailPath } from "@/lib/coupon-slug";
+import { copyToClipboardIfNonEmpty } from "@/lib/copy-to-clipboard";
 
 const PER_PAGE = 12;
 
@@ -165,6 +166,7 @@ function CouponsPageContent() {
                     window.location.href = detailUrl;
                   }}
                   onOpenPopup={() => {
+                    copyToClipboardIfNonEmpty(getCouponCode(coupon));
                     const storeInfo = storeByName[(coupon.name ?? "").trim()];
                     const trackingUrl = (
                       coupon.trackingUrl ??
@@ -359,8 +361,9 @@ function FeaturedCouponCard({
                 type="button"
                 onClick={onOpenPopup}
                 className="w-full h-full rounded-none bg-rebecca text-white font-semibold text-xs uppercase tracking-wide hover:bg-rebecca/90 transition-colors flex items-center justify-center"
+                title={showCodeLabel}
               >
-                Get Deal
+                {showCodeLabel}
               </button>
             )}
           </div>

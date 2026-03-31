@@ -9,6 +9,7 @@ import Footer from "@/components/Footer";
 import CouponPopup from "@/components/CouponPopup";
 import { getCouponDetailPath } from "@/lib/coupon-slug";
 import { getShowCodeButtonLabel } from "@/lib/coupon-button-labels";
+import { copyToClipboardIfNonEmpty } from "@/lib/copy-to-clipboard";
 
 const SITE_NAME = "SeemPromo";
 const PER_PAGE = 12;
@@ -219,6 +220,7 @@ function DealsPageContent() {
                         window.location.href = detailUrl;
                       }}
                       onOpenPopup={() => {
+                        copyToClipboardIfNonEmpty(getCouponCode(deal));
                         const storeInfo = storeByName[(deal.name ?? "").trim()];
                         const trackingUrl = (
                           deal.trackingUrl ??
