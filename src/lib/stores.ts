@@ -95,37 +95,99 @@ export async function getCouponsCountFromDb(): Promise<number> {
   return typeof count === "number" ? count : 0;
 }
 
-export async function getCouponsRaw(): Promise<Store[]> {
-  return withRetry("coupons", async () => {
-    const supabase = getSupabaseCoupons();
-    if (!supabase) return [];
+const COUPONS_PAGE_SIZE = 1000;
+
+/** Parse JSON strings up to `maxDepth` times (double-encoded exports / legacy rows). */
+function tryParseJsonDeep(raw: unknown, maxDepth: number): unknown {
+  let d = raw;
+  for (let i = 0; i < maxDepth && typeof d === "string"; i++) {
+    const s = d.trim();
+    if (!s) return null;
+    try {
+      d = JSON.parse(s);
+    } catch {
+      return null;
+    }
+  }
+  return d;
+}
+
+function pickStr(o: Record<string, unknown>, keys: string[]): string | undefined {
+  for (const k of keys) {
+    const v = o[k];
+    if (typeof v === "string" && v.trim()) return v.trim();
+  }
+  return undefined;
+}
+
+/** Map one `coupons` table row (id + jsonb data) to Store. */
+function couponRowToStore(rowId: string, raw: unknown): Store {
+  const empty = { id: rowId, name: "", logoUrl: "", description: "", expiry: "" } as Store;
+  let d = tryParseJsonDeep(raw, 6);
+  if (!d || typeof d !== "object" || Array.isArray(d)) return empty;
+
+  let o = { ...(d as Record<string, unknown>) };
+
+  // Nested: { id, data: "<json>" | { ...coupon } } when top-level lacks coupon fields
+  const nest = o["data"];
+  const hasTopCoupon =
+    pickStr(o, ["name", "store_name", "storeName"]) ||
+    pickStr(o, ["couponTitle", "coupon_title"]) ||
+    pickStr(o, ["couponCode", "coupon_code"]);
+  if (!hasTopCoupon && nest != null) {
+    const inner = tryParseJsonDeep(nest, 4);
+    if (inner && typeof inner === "object" && !Array.isArray(inner)) {
+      o = { ...o, ...(inner as Record<string, unknown>) };
+    }
+  }
+
+  const base = o as unknown as Store;
+  const name = pickStr(o, ["name", "store_name", "storeName"]) ?? (base.name ?? "");
+  const couponCode = pickStr(o, ["couponCode", "coupon_code"]) ?? (base.couponCode ?? "");
+  const couponTitle = pickStr(o, ["couponTitle", "coupon_title"]) ?? (base.couponTitle ?? "");
+  const linkPick = pickStr(o, ["link", "url"]);
+  const trackingPick = pickStr(o, ["trackingUrl", "tracking_url"]);
+  const link = linkPick ?? trackingPick ?? base.link;
+  const trackingUrl = trackingPick ?? linkPick ?? base.trackingUrl ?? base.link;
+
+  return {
+    ...base,
+    id: pickStr(o, ["id"]) || rowId,
+    name,
+    couponCode,
+    couponTitle,
+    ...(link ? { link } : {}),
+    ...(trackingUrl ? { trackingUrl } : {}),
+  };
+}
+
+/** Fetch all coupon rows (PostgREST default max ~1000 per request — paginate). */
+async function fetchAllCouponRows(): Promise<{ id: string; data: unknown }[]> {
+  const supabase = getSupabaseCoupons();
+  if (!supabase) return [];
+  const out: { id: string; data: unknown }[] = [];
+  let from = 0;
+  for (;;) {
     const { data: rows, error } = await supabase
       .from(SUPABASE_COUPONS_TABLE)
-      .select("id, data");
+      .select("id, data")
+      .range(from, from + COUPONS_PAGE_SIZE - 1);
     if (error) {
       console.error("[coupons] Supabase error:", error.message);
       throw new Error(`Supabase coupons: ${error.message}`);
     }
-    const coupons = (rows ?? []).map((r: { id: string; data: unknown }) => {
-      const id = r?.id;
-      const raw = r?.data;
+    const batch = rows ?? [];
+    out.push(...batch);
+    if (batch.length < COUPONS_PAGE_SIZE) break;
+    from += COUPONS_PAGE_SIZE;
+  }
+  return out;
+}
 
-      // Some older rows may have `data` stored as a JSON string. Parse it so they show in admin/frontend.
-      let d: unknown = raw;
-      if (typeof d === "string") {
-        try {
-          d = JSON.parse(d);
-        } catch {
-          d = null;
-        }
-      }
-
-      if (!d || typeof d !== "object") {
-        return { id: id ?? "", name: "", logoUrl: "", description: "", expiry: "" } as Store;
-      }
-      const obj = d as Store;
-      return { ...obj, id: (obj.id ?? id) as string };
-    }) as Store[];
+export async function getCouponsRaw(): Promise<Store[]> {
+  return withRetry("coupons", async () => {
+    const rows = await fetchAllCouponRows();
+    const coupons = rows.map((r) => couponRowToStore(r.id ?? "", r.data)) as Store[];
     coupons.sort((a, b) => {
       const pa = a.priority ?? 999;
       const pb = b.priority ?? 999;
@@ -177,20 +239,18 @@ export async function getCouponsPaginated(
         (c.name ?? "").toLowerCase().includes(q) ||
         (c.id ?? "").toLowerCase().includes(q) ||
         (c.couponTitle ?? "").toLowerCase().includes(q) ||
-        (c.couponCode ?? "").toLowerCase().includes(q)
+        (c.couponCode ?? "").toLowerCase().includes(q) ||
+        (c.link ?? "").toLowerCase().includes(q) ||
+        (c.trackingUrl ?? "").toLowerCase().includes(q)
     );
   }
   if (options.codesFirst) {
     list = [...list].sort((a, b) => (hasCode(b) ? 1 : 0) - (hasCode(a) ? 1 : 0));
   }
   const totalFromList = list.length;
-  const useDbCount =
-    useFreshData &&
-    !options.search?.trim() &&
-    options.status !== "enable" &&
-    options.status !== "disable";
-  const total = useDbCount ? await getCouponsCountFromDb() : totalFromList;
-  const totalToUse = typeof total === "number" && total >= 0 ? total : totalFromList;
+  // Always use list length for pagination total. DB head-count can exceed rows returned (PostgREST limits)
+  // or diverge from parsed/filtered list — that made coupons look "missing" on admin pages.
+  const totalToUse = totalFromList;
   if (options.limit <= 0) return { coupons: list, total: totalToUse };
   const start = (options.page - 1) * options.limit;
   const coupons = list.slice(start, start + options.limit);

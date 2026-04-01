@@ -67,6 +67,12 @@ export async function POST(request: NextRequest) {
       const description = typeof b?.description === "string" ? b.description : "";
       const link =
         typeof b?.link === "string" && b.link.trim() ? b.link.trim() : undefined;
+      const trackingFromBody =
+        typeof b?.trackingUrl === "string" && b.trackingUrl.trim()
+          ? b.trackingUrl.trim()
+          : "";
+      const trackingUrl =
+        trackingFromBody || link || undefined;
       const priority = parsePriority(b?.priority);
       const status = b?.status === "disable" ? "disable" : "enable";
       const active = b?.active !== false;
@@ -98,6 +104,7 @@ export async function POST(request: NextRequest) {
           description,
           expiry: typeof b?.expiry === "string" ? b.expiry : existing.expiry ?? "Dec 31, 2026",
           link,
+          trackingUrl: trackingUrl ?? existing.trackingUrl,
           status,
           couponType,
           couponCode,
@@ -127,6 +134,7 @@ export async function POST(request: NextRequest) {
           description,
           expiry: typeof b?.expiry === "string" ? b.expiry : "Dec 31, 2026",
           link,
+          trackingUrl,
           createdAt: new Date().toISOString(),
           status,
           couponType,

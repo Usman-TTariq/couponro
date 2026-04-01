@@ -88,6 +88,12 @@ export async function POST(request: NextRequest) {
     }
     const slug = body?.slug?.trim() || slugify(name);
     const id = body?.id?.trim() || newId();
+    const linkTrim =
+      typeof body?.link === "string" ? body.link.trim() : "";
+    const link = linkTrim || undefined;
+    const trackingTrim =
+      typeof body?.trackingUrl === "string" ? body.trackingUrl.trim() : "";
+    const trackingUrl = trackingTrim || linkTrim || undefined;
     const coupon: Store = {
       id,
       name,
@@ -95,7 +101,8 @@ export async function POST(request: NextRequest) {
       logoUrl: body?.logoUrl ?? "",
       description: body?.description ?? "",
       expiry: body?.expiry ?? "Dec 31, 2026",
-      link: body?.link ?? undefined,
+      link,
+      trackingUrl,
       createdAt: new Date().toISOString(),
       status: body?.status ?? "enable",
       couponType: body?.couponType ?? "code",
@@ -134,6 +141,12 @@ export async function PUT(request: NextRequest) {
     }
     const name = typeof body?.name === "string" ? body.name.trim() : "";
     const slug = body?.slug?.trim() || (name ? slugify(name) : "");
+    const linkTrim =
+      typeof body?.link === "string" ? body.link.trim() : "";
+    const link = linkTrim || undefined;
+    const trackingTrim =
+      typeof body?.trackingUrl === "string" ? body.trackingUrl.trim() : "";
+    const trackingUrl = trackingTrim || linkTrim || undefined;
     const coupon: Store = {
       id,
       name: (name || body?.name) ?? "",
@@ -141,7 +154,8 @@ export async function PUT(request: NextRequest) {
       logoUrl: body?.logoUrl ?? "",
       description: body?.description ?? "",
       expiry: body?.expiry ?? "Dec 31, 2026",
-      link: body?.link ?? undefined,
+      link,
+      trackingUrl,
       createdAt: body?.createdAt,
       status: body?.status ?? "enable",
       couponType: body?.couponType ?? "code",

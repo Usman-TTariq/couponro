@@ -604,6 +604,7 @@ export default function AdminCouponsPage() {
 
       {showForm && (
       <form
+        noValidate
         onSubmit={handleSave}
         className="rounded-xl border-2 border-stone-200 bg-white p-4 sm:p-6 shadow-md space-y-4"
       >
@@ -751,13 +752,16 @@ export default function AdminCouponsPage() {
           </p>
         </div>
 
-        {/* Logo URL (Optional) */}
+        {/* Logo URL (Optional) — type="text": same as coupon URL; native type="url" blocks submit for many real-world URLs */}
         <div>
           <label className="mb-1 block text-sm font-medium text-stone-700">
             Logo URL (Optional)
           </label>
           <input
-            type="url"
+            type="text"
+            inputMode="url"
+            autoComplete="off"
+            spellCheck={false}
             value={form.logoUrl ?? ""}
             onChange={(e) => setForm((f) => ({ ...f, logoUrl: e.target.value }))}
             placeholder="https://..."
@@ -779,13 +783,16 @@ export default function AdminCouponsPage() {
           />
         </div>
 
-        {/* Coupon URL */}
+        {/* Coupon URL — use type="text": affiliate/tracking URLs often fail native type="url" validation */}
         <div>
           <label className="mb-1 block text-sm font-medium text-stone-700">
             Coupon URL (Where user goes when clicking &quot;Get Deal&quot; / &quot;Get Code&quot;)
           </label>
           <input
-            type="url"
+            type="text"
+            inputMode="url"
+            autoComplete="off"
+            spellCheck={false}
             value={form.link ?? ""}
             onChange={(e) => setForm((f) => ({ ...f, link: e.target.value }))}
             placeholder="https://example.com/coupon-page"
