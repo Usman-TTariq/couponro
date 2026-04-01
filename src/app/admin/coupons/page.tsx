@@ -362,6 +362,8 @@ export default function AdminCouponsPage() {
         showMsg("ok", "Coupon created successfully.");
       }
       resetForm();
+      // New/updated coupons usually appear on page 1; if user is on page 2+, they won't see it.
+      setPage(1);
       load();
     } catch (err) {
       showMsg("err", err instanceof Error ? err.message : "Request failed");

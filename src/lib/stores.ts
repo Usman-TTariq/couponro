@@ -106,12 +106,25 @@ export async function getCouponsRaw(): Promise<Store[]> {
       console.error("[coupons] Supabase error:", error.message);
       throw new Error(`Supabase coupons: ${error.message}`);
     }
-    const coupons = (rows ?? []).map((r: { id: string; data: Store | null }) => {
-      const d = r?.data;
+    const coupons = (rows ?? []).map((r: { id: string; data: unknown }) => {
       const id = r?.id;
-      if (!d || typeof d !== "object")
+      const raw = r?.data;
+
+      // Some older rows may have `data` stored as a JSON string. Parse it so they show in admin/frontend.
+      let d: unknown = raw;
+      if (typeof d === "string") {
+        try {
+          d = JSON.parse(d);
+        } catch {
+          d = null;
+        }
+      }
+
+      if (!d || typeof d !== "object") {
         return { id: id ?? "", name: "", logoUrl: "", description: "", expiry: "" } as Store;
-      return { ...d, id: d.id ?? id };
+      }
+      const obj = d as Store;
+      return { ...obj, id: (obj.id ?? id) as string };
     }) as Store[];
     coupons.sort((a, b) => {
       const pa = a.priority ?? 999;
