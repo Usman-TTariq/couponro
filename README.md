@@ -1,5 +1,5 @@
 # Store – Coupons & Stores (Next.js + Supabase)
-h
+hh
 Next.js app withss an admin panhel. Stores and coupons are ..stored in **Supabase**.
 ss
 - **Supabase URL:** `https://xpazoabxehvsldzgvbrr.supabase.co`
