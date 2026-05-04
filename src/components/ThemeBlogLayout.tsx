@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { DEFAULT_BLOG_POST_URL } from "@/lib/blog-posts";
 
@@ -89,12 +90,15 @@ export default function ThemeBlogLayout({ children }: { children: ReactNode }) {
             <div className="row">
               <div className="col-xs-12">
                 <div className="logo" style={{ paddingTop: "18px", paddingBottom: "18px" }}>
-                  <Link href="/">
-                    <img
-                      className="img-responsive"
+                  <Link href="/" className="relative inline-block" style={{ width: "180px", maxWidth: "44vw", height: "40px" }}>
+                    <Image
+                      className="object-contain object-left"
                       src="/couponro-logo.svg"
                       alt="Couponro"
-                      style={{ width: "180px", maxWidth: "44vw", height: "auto" }}
+                      fill
+                      sizes="180px"
+                      unoptimized
+                      priority
                     />
                   </Link>
                 </div>
@@ -134,7 +138,7 @@ export default function ThemeBlogLayout({ children }: { children: ReactNode }) {
                     <div className="nav-posts">
                       <strong className="title"><Link href={DEFAULT_BLOG_POST_URL} onClick={closeNav}>POPULAR POSTS</Link></strong>
                       <Link href={DEFAULT_BLOG_POST_URL} className="banner-gallery" onClick={closeNav}>
-                        <img src={IMG_NAV[0]} alt="" loading="eager" decoding="async" />
+                        <Image src={IMG_NAV[0]} alt="" fill className="object-cover" sizes="420px" quality={80} />
                         <div className="post-over">
                           <div className="box">
                             <div className="block">
@@ -149,7 +153,7 @@ export default function ThemeBlogLayout({ children }: { children: ReactNode }) {
                         </div>
                       </Link>
                       <Link href={DEFAULT_BLOG_POST_URL} className="banner-gallery" onClick={closeNav}>
-                        <img src={IMG_NAV[1]} alt="" loading="eager" decoding="async" />
+                        <Image src={IMG_NAV[1]} alt="" fill className="object-cover" sizes="420px" quality={80} />
                         <div className="post-over">
                           <div className="box">
                             <div className="block">
@@ -164,7 +168,7 @@ export default function ThemeBlogLayout({ children }: { children: ReactNode }) {
                         </div>
                       </Link>
                       <Link href="/coupons" className="banner-gallery" onClick={closeNav}>
-                        <img src={IMG_NAV[2]} alt="" loading="eager" decoding="async" />
+                        <Image src={IMG_NAV[2]} alt="" fill className="object-cover" sizes="420px" quality={80} />
                         <div className="post-over quotes">
                           <div className="box">
                             <div className="block">
@@ -199,15 +203,30 @@ export default function ThemeBlogLayout({ children }: { children: ReactNode }) {
 
           <div className="footer-holder parallax-holder">
             <div className="parallax-frame">
-              <img src={IMG_FOOTER_BG} height={541} width={1920} alt="" />
+              <Image
+                src={IMG_FOOTER_BG}
+                width={1920}
+                height={541}
+                alt=""
+                className="h-auto w-full max-w-none"
+                sizes="100vw"
+                quality={78}
+              />
             </div>
             <div className="footer-holder-overlay" aria-hidden />
             <div className="container">
               <aside className="row footer-aside">
                 <div className="col-sm-3 col-xs-12 column social">
                   <div className="footer-logo mb-3">
-                    <Link href="/" aria-label="Couponro Home">
-                      <img className="img-responsive" src="/couponro-logo.svg" alt="Couponro" style={{ maxHeight: "56px", width: "auto" }} />
+                    <Link href="/" aria-label="Couponro Home" className="relative inline-block h-12 w-[180px]">
+                      <Image
+                        className="object-contain object-left"
+                        src="/couponro-logo.svg"
+                        alt="Couponro"
+                        fill
+                        sizes="180px"
+                        unoptimized
+                      />
                     </Link>
                   </div>
                   <p>Couponro helps you save with verified coupon codes, promo codes, and free shipping offers from top stores.</p>
@@ -236,7 +255,15 @@ export default function ThemeBlogLayout({ children }: { children: ReactNode }) {
                     {[1, 2, 3, 4, 5, 6].map((i) => (
                       <li key={i}>
                         <Link href={DEFAULT_BLOG_POST_URL}>
-                          <img className="img-responsive" src={IMG_190[i - 1]} alt="" loading="eager" decoding="async" />
+                          <Image
+                            className="h-auto w-full"
+                            src={IMG_190[i - 1]}
+                            alt=""
+                            width={190}
+                            height={190}
+                            sizes="(max-width: 768px) 33vw, 200px"
+                            quality={80}
+                          />
                           <span className="btn-instagram"><i className="fa fa-instagram" /></span>
                           <div className="insta-over">
                             <span className="title">Blog</span>
