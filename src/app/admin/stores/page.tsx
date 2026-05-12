@@ -37,6 +37,8 @@ export default function AdminStoresPage() {
   const [uploadingStores, setUploadingStores] = useState(false);
   const [uploadStoresProgress, setUploadStoresProgress] = useState<string | null>(null);
   const [removingDuplicates, setRemovingDuplicates] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
   const uploadStoresInputRef = useRef<HTMLInputElement>(null);
 
   const load = async () => {
@@ -101,6 +103,62 @@ export default function AdminStoresPage() {
       load();
     } catch {
       showMsg("err", "Failed to delete all");
+    }
+  };
+
+  const filteredStores = stores.filter((s) => {
+    if (statusFilter !== "all" && s.status !== statusFilter) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      return (
+        (s.name ?? "").toLowerCase().includes(q) ||
+        (s.slug ?? "").toLowerCase().includes(q) ||
+        (s.subStoreName ?? "").toLowerCase().includes(q)
+      );
+    }
+    return true;
+  });
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredStores.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredStores.map((s) => s.id)));
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`Delete ${selectedIds.size} selected store(s)? This cannot be undone.`)) return;
+    setBulkDeleting(true);
+    let deleted = 0;
+    let failed = 0;
+    for (const id of selectedIds) {
+      try {
+        const res = await fetch(`/api/stores?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+        if (res.ok) deleted++;
+        else failed++;
+      } catch {
+        failed++;
+      }
+    }
+    setBulkDeleting(false);
+    setSelectedIds(new Set());
+    if (deleted > 0) {
+      showMsg("ok", `Deleted ${deleted} store(s)${failed > 0 ? `, ${failed} failed` : ""}`);
+      if (editingId && selectedIds.has(editingId)) resetForm();
+      load();
+    } else {
+      showMsg("err", "Failed to delete selected stores");
     }
   };
 
@@ -290,19 +348,6 @@ export default function AdminStoresPage() {
       e.target.value = "";
     }
   };
-
-  const filteredStores = stores.filter((s) => {
-    if (statusFilter !== "all" && s.status !== statusFilter) return false;
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      return (
-        (s.name ?? "").toLowerCase().includes(q) ||
-        (s.slug ?? "").toLowerCase().includes(q) ||
-        (s.subStoreName ?? "").toLowerCase().includes(q)
-      );
-    }
-    return true;
-  });
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -562,6 +607,16 @@ export default function AdminStoresPage() {
           >
             {removingDuplicates ? "Removing…" : "Remove duplicate stores"}
           </button>
+          {selectedIds.size > 0 && (
+            <button
+              type="button"
+              onClick={handleDeleteSelected}
+              disabled={bulkDeleting}
+              className="rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-500 transition-colors disabled:opacity-70 animate-pulse"
+            >
+              {bulkDeleting ? "Deleting…" : `Delete Selected (${selectedIds.size})`}
+            </button>
+          )}
           <button
             type="button"
             onClick={handleDeleteAll}
@@ -961,6 +1016,15 @@ export default function AdminStoresPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50/80">
+                  <th className="px-4 py-3 w-10">
+                    <input
+                      type="checkbox"
+                      checked={filteredStores.length > 0 && selectedIds.size === filteredStores.length}
+                      onChange={toggleSelectAll}
+                      className="h-4 w-4 rounded border-slate-300 text-blue-600 cursor-pointer"
+                      title="Select all"
+                    />
+                  </th>
                   <th className="text-left font-semibold text-slate-700 px-4 py-3">Store ID</th>
                   <th className="text-left font-semibold text-slate-700 px-4 py-3">Logo</th>
                   <th className="text-left font-semibold text-slate-700 px-4 py-3">Store Name</th>
@@ -984,6 +1048,14 @@ export default function AdminStoresPage() {
                         i % 2 === 0 ? "bg-white" : "bg-slate-50/30"
                       }`}
                     >
+                      <td className="px-4 py-3">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(s.id)}
+                          onChange={() => toggleSelect(s.id)}
+                          className="h-4 w-4 rounded border-slate-300 text-blue-600 cursor-pointer"
+                        />
+                      </td>
                       <td className="px-4 py-3 font-mono text-sm text-slate-700">{i + 1}</td>
                       <td className="px-4 py-2">
                         {s.logoUrl ? (
