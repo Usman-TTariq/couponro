@@ -13,6 +13,20 @@ const CACHE_REVALIDATE = 15; // seconds – balance freshness (after delete/add)
 /** Delays between attempts (ms). Third attempt has no extra delay before throw. */
 const FETCH_RETRY_DELAYS_MS = [120, 350] as const;
 
+/** PostgREST sometimes returns Cloudflare HTML (5xx) as `error.message` — keep logs readable. */
+function summarizeSupabaseErrorMessage(raw: string): string {
+  const s = (raw ?? "").trim();
+  if (!s) return "Unknown error";
+  if (s.includes("522") || /connection timed out/i.test(s)) {
+    return "Cloudflare 522 / connection timed out (Supabase origin slow or unreachable). See https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-5xx-errors/error-522/";
+  }
+  if (s.startsWith("<!DOCTYPE") || s.startsWith("<html") || (s.includes("<span>") && s.includes("Error 52"))) {
+    return "Upstream returned HTML instead of JSON (often Cloudflare 5xx in front of Supabase). Check https://status.supabase.com and that the project is not paused.";
+  }
+  if (s.length > 500) return `${s.slice(0, 200)}… [truncated, length ${s.length}]`;
+  return s;
+}
+
 /**
  * Retries transient Supabase failures so we don't cache empty lists or show "not found"
  * when the DB briefly errored. On final failure, rethrows (not cached as success).
@@ -52,8 +66,9 @@ async function getStoresRaw(): Promise<Store[]> {
       .from(SUPABASE_STORES_TABLE)
       .select("data");
     if (error) {
-      console.error("[stores] Supabase error:", error.message);
-      throw new Error(`Supabase stores: ${error.message}`);
+      const msg = summarizeSupabaseErrorMessage(error.message);
+      console.error("[stores] Supabase error:", msg);
+      throw new Error(`Supabase stores: ${msg}`);
     }
     const stores = (rows ?? [])
       .map((r: { data: Store }) => r.data)
@@ -173,8 +188,9 @@ async function fetchAllCouponRows(): Promise<{ id: string; data: unknown }[]> {
       .select("id, data")
       .range(from, from + COUPONS_PAGE_SIZE - 1);
     if (error) {
-      console.error("[coupons] Supabase error:", error.message);
-      throw new Error(`Supabase coupons: ${error.message}`);
+      const msg = summarizeSupabaseErrorMessage(error.message);
+      console.error("[coupons] Supabase error:", msg);
+      throw new Error(`Supabase coupons: ${msg}`);
     }
     const batch = rows ?? [];
     out.push(...batch);
