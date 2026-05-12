@@ -263,59 +263,24 @@ export default function StorePageContent({
                 </div>
               )}
               <h2 className="text-lg font-bold text-space text-center">{displayName}</h2>
+              {(store?.storeWebsiteUrl || store?.trackingUrl || store?.link) && (
+                <div className="mt-4 flex justify-center">
+                  <a
+                    href={(store.storeWebsiteUrl || store.trackingUrl || store.link || "").toString().trim()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block rounded-lg bg-rebecca px-6 py-2.5 text-sm font-bold uppercase tracking-wider text-white shadow-md hover:bg-rebecca/90 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+                  >
+                    Visit Store
+                  </a>
+                </div>
+              )}
               {description && (
-                <p className="mt-2 text-rebecca text-sm leading-relaxed text-center">
+                <p className="mt-3 text-rebecca text-sm leading-relaxed text-center">
                   {description}
                 </p>
               )}
             </div>
-
-            {/* Top Deals Right Now – always show when there are coupons */}
-            {storeCoupons.length > 0 && (
-              <div className="rounded-2xl border-2 border-rebecca/20 bg-white p-5 shadow-md">
-                <h3 className="text-base font-bold text-space mb-4">
-                  Top {displayName} Deals Right Now
-                </h3>
-                <ul className="space-y-3">
-                  {storeCoupons.slice(0, 5).map((c) => {
-                    const isCode = isCodeCoupon(c);
-                    const title = c.couponTitle?.trim() || c.badgeLabel?.trim() || "Offer";
-                    const logoUrl = sidebarLogoUrl || c.logoUrl || "";
-                    return (
-                      <li key={c.id} className="flex items-center gap-3 rounded-xl bg-almond/50 p-3">
-                        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-almond flex items-center justify-center overflow-hidden p-0.5">
-                          {logoUrl ? (
-                            <img src={logoUrl} alt={displayName} className="w-full h-full object-contain" />
-                          ) : (
-                            <span className="text-lobster font-bold text-xs text-center leading-tight">
-                              {getCouponBadge(c)}
-                            </span>
-                          )}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="font-semibold text-space text-sm line-clamp-2">{title}</p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                    copyToClipboardIfNonEmpty(getCouponCode(c));
-                    const base = slug ? `/stores/${encodeURIComponent(slug)}` : "/coupons";
-                    const trackingUrl = (c.trackingUrl ?? c.storeWebsiteUrl ?? c.link ?? store?.trackingUrl ?? store?.storeWebsiteUrl ?? "").toString().trim();
-                    if (trackingUrl && trackingUrl !== "#") {
-                      window.open(trackingUrl, "_blank", "noopener,noreferrer");
-                    }
-                    window.location.href = `${base}?popup=${encodeURIComponent(c.id)}&copy=${encodeURIComponent(newCopyId())}`;
-                  }}
-                          className="flex-shrink-0 rounded-lg bg-lobster text-white text-xs font-semibold uppercase tracking-wide px-3 py-1.5 hover:bg-lobster/90 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
-                        >
-                          {isCode ? "GET CODE" : "GET DEAL"}
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            )}
 
             {/* Sidebar HTML from admin */}
             {store?.sidebarContent?.trim() && (
