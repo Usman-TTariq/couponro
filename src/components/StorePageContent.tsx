@@ -263,10 +263,10 @@ export default function StorePageContent({
                 </div>
               )}
               <h2 className="text-lg font-bold text-space text-center">{displayName}</h2>
-              {(store?.storeWebsiteUrl || store?.trackingUrl || store?.link) && (
+              {(store?.trackingUrl || store?.link || store?.storeWebsiteUrl) && (
                 <div className="mt-4 flex justify-center">
                   <a
-                    href={(store.storeWebsiteUrl || store.trackingUrl || store.link || "").toString().trim()}
+                    href={(store.trackingUrl || store.link || store.storeWebsiteUrl || "").toString().trim()}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-block rounded-lg bg-rebecca px-6 py-2.5 text-sm font-bold uppercase tracking-wider text-white shadow-md hover:bg-rebecca/90 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
