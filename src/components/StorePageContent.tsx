@@ -243,7 +243,7 @@ export default function StorePageContent({
         {/* Sidebar: store info + deals + admin content */}
         <aside className="lg:w-96 flex-shrink-0">
           <div className="lg:sticky lg:top-6 space-y-5">
-            {/* Store logo, title, description */}
+            {/* Store logo, title, Visit Store */}
             <div className="rounded-2xl border-2 border-rebecca/20 bg-white p-5 shadow-md">
               {sidebarLogoUrl ? (
                 <div className="w-full flex justify-center mb-4">
@@ -274,11 +274,6 @@ export default function StorePageContent({
                     Visit Store
                   </a>
                 </div>
-              )}
-              {description && (
-                <p className="mt-3 text-rebecca text-sm leading-relaxed text-center">
-                  {description}
-                </p>
               )}
             </div>
 
