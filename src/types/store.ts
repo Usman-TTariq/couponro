@@ -50,4 +50,6 @@ export type Store = {
   active?: boolean;
   /** Show green "Verified" badge on coupon cards/popups. Defaults to true. */
   verified?: boolean;
+  /** Show "Free Shipping" in the circle badge and label on coupon cards. */
+  freeShipping?: boolean;
 };

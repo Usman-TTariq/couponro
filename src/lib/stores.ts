@@ -157,6 +157,15 @@ function tryParseJsonDeep(raw: unknown, maxDepth: number): unknown {
   return d;
 }
 
+function pickBool(o: Record<string, unknown>, keys: string[]): boolean | undefined {
+  for (const k of keys) {
+    const v = o[k];
+    if (v === true || v === 1 || v === "1" || v === "true") return true;
+    if (v === false || v === 0 || v === "0" || v === "false") return false;
+  }
+  return undefined;
+}
+
 function pickStr(o: Record<string, unknown>, keys: string[]): string | undefined {
   for (const k of keys) {
     const v = o[k];
@@ -190,6 +199,16 @@ function couponRowToStore(rowId: string, raw: unknown): Store {
   const name = pickStr(o, ["name", "store_name", "storeName"]) ?? (base.name ?? "");
   const couponCode = pickStr(o, ["couponCode", "coupon_code"]) ?? (base.couponCode ?? "");
   const couponTitle = pickStr(o, ["couponTitle", "coupon_title"]) ?? (base.couponTitle ?? "");
+  const badgeLabel =
+    pickStr(o, ["badgeLabel", "badge_label", "badge"]) ?? base.badgeLabel;
+  const showCodeButtonText =
+    pickStr(o, ["showCodeButtonText", "show_code_button_text"]) ??
+    base.showCodeButtonText;
+  const freeShippingPick = pickBool(o, ["freeShipping", "free_shipping"]);
+  const freeShipping =
+    freeShippingPick !== undefined
+      ? freeShippingPick
+      : base.freeShipping === true;
   const linkPick = pickStr(o, ["link", "url"]);
   const trackingPick = pickStr(o, ["trackingUrl", "tracking_url"]);
   const link = linkPick ?? trackingPick ?? base.link;
@@ -201,6 +220,9 @@ function couponRowToStore(rowId: string, raw: unknown): Store {
     name,
     couponCode,
     couponTitle,
+    badgeLabel,
+    showCodeButtonText,
+    freeShipping,
     ...(link ? { link } : {}),
     ...(trackingUrl ? { trackingUrl } : {}),
   });
@@ -263,10 +285,28 @@ function hasCode(c: Store): boolean {
   return code.length > 0;
 }
 
+/** Load one coupon row from DB (no list cache). */
+export async function getCouponByIdRaw(id: string): Promise<Store | null> {
+  const trimmed = (id ?? "").trim();
+  if (!trimmed) return null;
+  const supabase = getSupabaseCoupons();
+  if (!supabase) return null;
+  const { data: row, error } = await supabase
+    .from(SUPABASE_COUPONS_TABLE)
+    .select("id, data")
+    .eq("id", trimmed)
+    .maybeSingle();
+  if (error) {
+    const msg = summarizeSupabaseErrorMessage(error.message);
+    throw new Error(`Supabase coupon: ${msg}`);
+  }
+  if (!row?.data) return null;
+  const r = row as { id: string; data: unknown };
+  return couponRowToStore(r.id, r.data);
+}
+
 export async function getCouponById(id: string): Promise<Store | null> {
-  if (!id?.trim()) return null;
-  const all = await getCoupons();
-  return all.find((c) => (c.id ?? "").trim() === id.trim()) ?? null;
+  return getCouponByIdRaw(id);
 }
 
 export async function getCouponsPaginated(

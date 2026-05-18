@@ -119,6 +119,12 @@ export async function POST(request: NextRequest) {
           priority,
           active,
           verified,
+          freeShipping:
+            b?.freeShipping === true
+              ? true
+              : b?.freeShipping === false
+                ? false
+                : existing.freeShipping === true,
           id: existing.id,
           createdAt: existing.createdAt,
         };
@@ -150,6 +156,7 @@ export async function POST(request: NextRequest) {
           priority,
           active,
           verified,
+          freeShipping: b?.freeShipping === true,
         };
         const fixed = repairCouponTextFields(c);
         await insertCoupon(fixed);

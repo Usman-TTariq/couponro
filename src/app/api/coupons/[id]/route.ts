@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCouponById } from "@/lib/stores";
+import { getCouponByIdRaw } from "@/lib/stores";
 
 export async function GET(
   _request: NextRequest,
@@ -7,7 +7,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const coupon = await getCouponById(id ?? "");
+    const coupon = await getCouponByIdRaw(id ?? "");
     if (!coupon) {
       return NextResponse.json({ error: "Coupon not found" }, { status: 404 });
     }

@@ -10,6 +10,7 @@ import CouponPopup from "@/components/CouponPopup";
 import {
   getCouponCircleBadge,
   isDefaultCircleBadge,
+  couponHasFreeShipping,
 } from "@/lib/coupon-circle-badge";
 
 function newCopyId(): string {
@@ -408,11 +409,18 @@ function StoreCouponCard({
           ) : null}
         </div>
         <div className="min-w-0">
-          {isVerified && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700 border border-emerald-200 mb-1">
-              <span aria-hidden>✓</span> Verified
-            </span>
-          )}
+          <div className="flex flex-wrap items-center gap-1.5 mb-1">
+            {isVerified && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700 border border-emerald-200">
+                <span aria-hidden>✓</span> Verified
+              </span>
+            )}
+            {couponHasFreeShipping(coupon) && (
+              <span className="inline-flex items-center rounded-full bg-sky-50 px-2 py-1 text-[11px] font-semibold text-sky-800 border border-sky-200">
+                Free Shipping
+              </span>
+            )}
+          </div>
           <button
             type="button"
             onClick={onOpenDetail}

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidateTag } from "next/cache";
+import { revalidateTag, revalidatePath } from "next/cache";
 
 const CACHE_HEADERS = {
   "Cache-Control": "private, max-age=0, must-revalidate",
@@ -7,6 +7,7 @@ const CACHE_HEADERS = {
 import {
   getCoupons,
   getCouponsPaginated,
+  getCouponByIdRaw,
   insertCoupon,
   updateCoupon,
   deleteCoupon,
@@ -111,10 +112,14 @@ export async function POST(request: NextRequest) {
       couponTitle: body?.couponTitle ?? "",
       showCodeButtonText:
         typeof body?.showCodeButtonText === "string" ? body.showCodeButtonText.trim() || undefined : undefined,
-      badgeLabel: body?.badgeLabel ?? undefined,
+      badgeLabel:
+        typeof body?.badgeLabel === "string"
+          ? body.badgeLabel.trim() || undefined
+          : undefined,
       priority: typeof body?.priority === "number" ? body.priority : 0,
       active: body?.active !== false,
       verified: body?.verified !== false,
+      freeShipping: body?.freeShipping === true,
     };
     const saved = repairCouponTextFields(coupon);
     await insertCoupon(saved);
@@ -141,38 +146,75 @@ export async function PUT(request: NextRequest) {
         { status: 400 }
       );
     }
-    const name = typeof body?.name === "string" ? body.name.trim() : "";
-    const slug = body?.slug?.trim() || (name ? slugify(name) : "");
+    const existing = await getCouponByIdRaw(id);
+    if (!existing) {
+      return NextResponse.json({ error: "Coupon not found" }, { status: 404 });
+    }
+    const name =
+      typeof body?.name === "string" ? body.name.trim() : existing.name ?? "";
+    const slug =
+      (typeof body?.slug === "string" ? body.slug.trim() : "") ||
+      existing.slug ||
+      (name ? slugify(name) : "");
     const linkTrim =
-      typeof body?.link === "string" ? body.link.trim() : "";
+      typeof body?.link === "string" ? body.link.trim() : existing.link ?? "";
     const link = linkTrim || undefined;
     const trackingTrim =
-      typeof body?.trackingUrl === "string" ? body.trackingUrl.trim() : "";
+      typeof body?.trackingUrl === "string"
+        ? body.trackingUrl.trim()
+        : existing.trackingUrl ?? "";
     const trackingUrl = trackingTrim || linkTrim || undefined;
+    const badgeLabel =
+      "badgeLabel" in body && body.badgeLabel != null
+        ? String(body.badgeLabel).trim() || undefined
+        : existing.badgeLabel;
     const coupon: Store = {
+      ...existing,
       id,
-      name: (name || body?.name) ?? "",
-      slug: (slug || body?.slug) ?? "",
-      logoUrl: body?.logoUrl ?? "",
-      description: body?.description ?? "",
-      expiry: body?.expiry ?? "Dec 31, 2026",
+      name,
+      slug,
+      logoUrl:
+        typeof body?.logoUrl === "string" ? body.logoUrl : existing.logoUrl ?? "",
+      description:
+        typeof body?.description === "string"
+          ? body.description
+          : existing.description ?? "",
+      expiry:
+        typeof body?.expiry === "string"
+          ? body.expiry
+          : existing.expiry ?? "Dec 31, 2026",
       link,
       trackingUrl,
-      createdAt: body?.createdAt,
-      status: body?.status ?? "enable",
-      couponType: body?.couponType ?? "code",
-      couponCode: body?.couponCode ?? "",
-      couponTitle: body?.couponTitle ?? "",
+      status: body?.status ?? existing.status ?? "enable",
+      couponType: body?.couponType ?? existing.couponType ?? "code",
+      couponCode:
+        typeof body?.couponCode === "string"
+          ? body.couponCode
+          : existing.couponCode ?? "",
+      couponTitle:
+        typeof body?.couponTitle === "string"
+          ? body.couponTitle
+          : existing.couponTitle ?? "",
       showCodeButtonText:
-        typeof body?.showCodeButtonText === "string" ? body.showCodeButtonText.trim() || undefined : undefined,
-      badgeLabel: body?.badgeLabel ?? undefined,
-      priority: typeof body?.priority === "number" ? body.priority : 0,
-      active: body?.active !== false,
-      verified: body?.verified !== false,
+        typeof body?.showCodeButtonText === "string"
+          ? body.showCodeButtonText.trim() || undefined
+          : existing.showCodeButtonText,
+      badgeLabel,
+      priority:
+        typeof body?.priority === "number" ? body.priority : existing.priority ?? 0,
+      active: body?.active !== undefined ? body.active !== false : existing.active !== false,
+      verified:
+        body?.verified !== undefined ? body.verified !== false : existing.verified !== false,
+      freeShipping:
+        "freeShipping" in body
+          ? body.freeShipping === true
+          : existing.freeShipping === true,
     };
     const saved = repairCouponTextFields(coupon);
     await updateCoupon(id, saved);
     revalidateTag("coupons");
+    const storeSlug = (saved.slug ?? slugify(saved.name ?? "")).trim();
+    if (storeSlug) revalidatePath(`/stores/${storeSlug}`);
     return NextResponse.json(saved);
   } catch (e) {
     console.error("[api/coupons] PUT:", e);

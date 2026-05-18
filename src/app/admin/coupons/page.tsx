@@ -31,6 +31,7 @@ function AdminCouponsPageContent() {
     priority: 0,
     active: true,
     verified: true,
+    freeShipping: false,
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -119,6 +120,7 @@ function AdminCouponsPageContent() {
       priority: 0,
       active: true,
       verified: true,
+      freeShipping: false,
       selectedStoreId: "",
     });
     setEditingId(null);
@@ -365,10 +367,11 @@ function AdminCouponsPageContent() {
         couponCode: form.couponCode?.trim() ?? "",
         couponTitle: form.couponTitle?.trim() ?? "",
         showCodeButtonText: form.showCodeButtonText?.trim() || undefined,
-        badgeLabel: form.badgeLabel?.trim() || undefined,
+        badgeLabel: (form.badgeLabel ?? "").trim(),
         priority: typeof form.priority === "number" ? form.priority : 0,
         active: form.active !== false,
         verified: form.verified !== false,
+        freeShipping: form.freeShipping === true,
       };
       if (editingId) {
         const res = await fetch("/api/coupons", {
@@ -518,6 +521,7 @@ function AdminCouponsPageContent() {
       priority: c.priority ?? 0,
       active: c.status !== "disable",
       verified: c.verified !== false,
+      freeShipping: c.freeShipping === true,
     });
     setEditingId(c.id);
   };
@@ -588,7 +592,7 @@ function AdminCouponsPageContent() {
             onClick={() => {
               clearEditFromUrl();
               setEditingId(null);
-              setForm({ couponType: "deal", priority: 0, active: true, verified: true, selectedStoreId: "" });
+              setForm({ couponType: "deal", priority: 0, active: true, verified: true, freeShipping: false, selectedStoreId: "" });
               setShowCreateForm(true);
             }}
             className="rounded-lg bg-blue-600 px-3 py-2 text-xs sm:text-sm font-medium text-white hover:bg-blue-500 transition-colors"
@@ -955,6 +959,22 @@ function AdminCouponsPageContent() {
             />
             <span className="text-sm font-medium text-stone-700">Active</span>
           </label>
+        </div>
+
+        {/* Free Shipping */}
+        <div>
+          <label className="flex cursor-pointer items-center gap-2">
+            <input
+              type="checkbox"
+              checked={form.freeShipping === true}
+              onChange={(e) => setForm((f) => ({ ...f, freeShipping: e.target.checked }))}
+              className="h-4 w-4 rounded border-stone-300 text-sky-600 focus:ring-sky-500"
+            />
+            <span className="text-sm font-medium text-stone-700">Free Shipping</span>
+          </label>
+          <p className="mt-1 ml-6 text-xs text-stone-500">
+            Shows &quot;FREE SHIPPING&quot; in the circle badge on the store page.
+          </p>
         </div>
 
         {/* Submit */}

@@ -14,6 +14,7 @@ import { copyToClipboardIfNonEmpty } from "@/lib/copy-to-clipboard";
 import {
   getCouponCircleBadge,
   isDefaultCircleBadge,
+  couponHasFreeShipping,
 } from "@/lib/coupon-circle-badge";
 
 const PER_PAGE = 12;
@@ -319,11 +320,18 @@ function FeaturedCouponCard({
 
         {/* Middle: bold blue title + black description */}
         <div className="flex-1 min-w-0">
-          {isVerified && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700 border border-emerald-200 mb-1">
-              <span aria-hidden>✓</span> Verified
-            </span>
-          )}
+          <div className="flex flex-wrap items-center gap-1.5 mb-1">
+            {isVerified && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700 border border-emerald-200">
+                <span aria-hidden>✓</span> Verified
+              </span>
+            )}
+            {couponHasFreeShipping(coupon) && (
+              <span className="inline-flex items-center rounded-full bg-sky-50 px-2 py-1 text-[11px] font-semibold text-sky-800 border border-sky-200">
+                Free Shipping
+              </span>
+            )}
+          </div>
           <button
             type="button"
             onClick={onOpenDetail}
