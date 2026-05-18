@@ -64,14 +64,17 @@ async function getStoresRaw(): Promise<Store[]> {
     if (!supabase) return [];
     const { data: rows, error } = await supabase
       .from(SUPABASE_STORES_TABLE)
-      .select("data");
+      .select("id, data");
     if (error) {
       const msg = summarizeSupabaseErrorMessage(error.message);
       console.error("[stores] Supabase error:", msg);
       throw new Error(`Supabase stores: ${msg}`);
     }
     const stores = (rows ?? [])
-      .map((r: { data: Store }) => r.data)
+      .map((r: { id: string; data: Store }) => {
+        if (!r.data) return null;
+        return { ...r.data, id: r.id || r.data.id || "" } as Store;
+      })
       .filter(Boolean) as Store[];
     stores.sort((a, b) =>
       (b.createdAt ?? "").localeCompare(a.createdAt ?? "")
@@ -85,6 +88,26 @@ export const getStores = unstable_cache(
   ["stores-list"],
   { revalidate: CACHE_REVALIDATE, tags: ["stores"] }
 );
+
+/** Single store by row id — avoids loading the full stores list on update. */
+export async function getStoreById(id: string): Promise<Store | null> {
+  const trimmed = (id ?? "").trim();
+  if (!trimmed) return null;
+  const supabase = getSupabase();
+  if (!supabase) return null;
+  const { data: row, error } = await supabase
+    .from(SUPABASE_STORES_TABLE)
+    .select("id, data")
+    .eq("id", trimmed)
+    .maybeSingle();
+  if (error) {
+    const msg = summarizeSupabaseErrorMessage(error.message);
+    throw new Error(`Supabase store: ${msg}`);
+  }
+  if (!row?.data) return null;
+  const r = row as { id: string; data: Store };
+  return { ...r.data, id: r.id || r.data.id || "" } as Store;
+}
 
 function requireSupabaseCoupons() {
   const supabase = getSupabaseCoupons();
@@ -337,28 +360,85 @@ export async function deleteCoupon(id: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
+const COUPON_UPDATE_BATCH = 10;
+
 /**
- * Update all coupons that belong to a store (by name match) to use the given slug.
- * Call after updating a store's slug so store page continues to show those coupons.
+ * After store update: one coupon fetch, parallel updates. Skips work when name/slug unchanged.
  */
+export async function syncCouponsAfterStoreUpdate(opts: {
+  oldName: string;
+  newName: string;
+  newSlug: string;
+}): Promise<{ renamed: number; slugSynced: number }> {
+  const oldKey = (opts.oldName ?? "").trim().toLowerCase();
+  const newNameTrim = (opts.newName ?? "").trim();
+  const newSlug = (opts.newSlug ?? "").trim();
+  const nameChanged =
+    !!oldKey && !!newNameTrim && oldKey !== newNameTrim.toLowerCase();
+  const nameKeyForMatch = nameChanged ? oldKey : newNameTrim.toLowerCase();
+  if (!nameKeyForMatch) return { renamed: 0, slugSynced: 0 };
+
+  const coupons = await getCouponsRaw();
+  const matching = coupons.filter(
+    (c) => (c.name ?? "").trim().toLowerCase() === nameKeyForMatch
+  );
+  if (matching.length === 0) return { renamed: 0, slugSynced: 0 };
+
+  const pending: Array<{ id: string; coupon: Store }> = [];
+  let renamed = 0;
+  let slugSynced = 0;
+
+  for (const c of matching) {
+    const next = { ...c };
+    let changed = false;
+    if (nameChanged) {
+      next.name = newNameTrim;
+      changed = true;
+      renamed++;
+    }
+    if (newSlug) {
+      const currentSlug = (next.slug ?? slugify(next.name ?? "")).trim();
+      if (currentSlug !== newSlug) {
+        next.slug = newSlug;
+        changed = true;
+        slugSynced++;
+      }
+    }
+    if (changed) pending.push({ id: c.id, coupon: next });
+  }
+
+  for (let i = 0; i < pending.length; i += COUPON_UPDATE_BATCH) {
+    const batch = pending.slice(i, i + COUPON_UPDATE_BATCH);
+    await Promise.all(batch.map(({ id, coupon }) => updateCoupon(id, coupon)));
+  }
+
+  return { renamed, slugSynced };
+}
+
+/** @deprecated Use syncCouponsAfterStoreUpdate */
+export async function updateCouponsNameForStoreRename(
+  oldName: string,
+  newName: string
+): Promise<number> {
+  const { renamed } = await syncCouponsAfterStoreUpdate({
+    oldName,
+    newName,
+    newSlug: "",
+  });
+  return renamed;
+}
+
+/** @deprecated Use syncCouponsAfterStoreUpdate */
 export async function updateCouponSlugsForStoreName(
   storeName: string,
   newSlug: string
 ): Promise<number> {
-  const slug = (newSlug ?? "").trim();
-  if (!slug) return 0;
-  const nameKey = (storeName ?? "").trim().toLowerCase();
-  if (!nameKey) return 0;
-  const coupons = await getCouponsRaw();
-  let updated = 0;
-  for (const c of coupons) {
-    if ((c.name ?? "").trim().toLowerCase() !== nameKey) continue;
-    const currentSlug = (c.slug ?? slugify(c.name ?? "")).trim();
-    if (currentSlug === slug) continue;
-    await updateCoupon(c.id, { ...c, slug });
-    updated++;
-  }
-  return updated;
+  const { slugSynced } = await syncCouponsAfterStoreUpdate({
+    oldName: storeName,
+    newName: storeName,
+    newSlug,
+  });
+  return slugSynced;
 }
 
 /**

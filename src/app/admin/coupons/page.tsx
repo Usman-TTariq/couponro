@@ -1,15 +1,22 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { Store } from "@/types/store";
 import { slugify } from "@/lib/slugify";
 import { parseCSV } from "@/lib/parse-csv";
 import { fetchWithTimeout } from "@/lib/fetch-with-timeout";
+import StoreSearchSelect from "@/components/admin/StoreSearchSelect";
 
 const UPLOAD_TIMEOUT_MS = 45000;
 const LOAD_TIMEOUT_MS = 25000;
 
-export default function AdminCouponsPage() {
+function AdminCouponsPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const editIdFromUrl = searchParams.get("edit");
+
   const [stores, setStores] = useState<Store[]>([]);
   const [coupons, setCoupons] = useState<Store[]>([]);
   const [loading, setLoading] = useState(true);
@@ -82,6 +89,20 @@ export default function AdminCouponsPage() {
     setTimeout(() => setMessage(null), 4000);
   };
 
+  const clearEditFromUrl = () => {
+    const sp = new URLSearchParams(searchParams.toString());
+    if (!sp.has("edit")) return;
+    sp.delete("edit");
+    const q = sp.toString();
+    router.replace(q ? `/admin/coupons?${q}` : "/admin/coupons");
+  };
+
+  const editHref = (id: string) => {
+    const sp = new URLSearchParams(searchParams.toString());
+    sp.set("edit", id);
+    return `/admin/coupons?${sp.toString()}`;
+  };
+
   const resetForm = () => {
     setForm({
       couponType: "deal",
@@ -92,6 +113,7 @@ export default function AdminCouponsPage() {
     });
     setEditingId(null);
     setShowCreateForm(false);
+    clearEditFromUrl();
   };
 
   const handleDeleteAll = async () => {
@@ -465,6 +487,60 @@ export default function AdminCouponsPage() {
     return withLogo ?? same[0];
   };
 
+  const openEditFromCoupon = (c: Store) => {
+    const store = getBestStoreForName(c.name ?? "");
+    setShowCreateForm(true);
+    setForm({
+      id: c.id,
+      name: c.name,
+      slug: store?.slug ?? c.slug ?? (c.name ? slugify(c.name) : ""),
+      selectedStoreId: store?.id ?? "",
+      description: c.description,
+      logoUrl: c.logoUrl,
+      expiry: c.expiry,
+      link: c.link,
+      status: c.status,
+      couponType: c.couponType ?? "deal",
+      couponCode: c.couponCode,
+      couponTitle: c.couponTitle,
+      showCodeButtonText: c.showCodeButtonText,
+      badgeLabel: c.badgeLabel,
+      priority: c.priority ?? 0,
+      active: c.status !== "disable",
+      verified: c.verified !== false,
+    });
+    setEditingId(c.id);
+  };
+
+  useEffect(() => {
+    if (!editIdFromUrl) return;
+    if (editingId === editIdFromUrl && showCreateForm) return;
+
+    const inList = coupons.find((c) => c.id === editIdFromUrl);
+    if (inList) {
+      openEditFromCoupon(inList);
+      return;
+    }
+    if (loading) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/coupons/${encodeURIComponent(editIdFromUrl)}`, {
+          cache: "no-store",
+        });
+        const c = await res.json().catch(() => null);
+        if (!cancelled && res.ok && c?.id) openEditFromCoupon(c as Store);
+      } catch {
+        /* ignore */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- open when ?edit= changes
+  }, [editIdFromUrl, loading, coupons]);
+
   const showForm = showCreateForm || !!editingId;
 
   return (
@@ -500,6 +576,7 @@ export default function AdminCouponsPage() {
           <button
             type="button"
             onClick={() => {
+              clearEditFromUrl();
               setEditingId(null);
               setForm({ couponType: "deal", priority: 0, active: true, verified: true, selectedStoreId: "" });
               setShowCreateForm(true);
@@ -617,11 +694,11 @@ export default function AdminCouponsPage() {
           <label className="mb-1 block text-sm font-medium text-stone-700">
             Select Store (Optional)
           </label>
-          <select
+          <StoreSearchSelect
+            id="coupon-store-select"
+            stores={stores}
             value={form.selectedStoreId ?? ""}
-            onChange={(e) => {
-              const id = e.target.value;
-              const store = id ? stores.find((s) => s.id === id) : null;
+            onChange={(id, store) => {
               setForm((f) => ({
                 ...f,
                 selectedStoreId: id,
@@ -629,15 +706,7 @@ export default function AdminCouponsPage() {
                 slug: store?.slug ?? (store ? slugify(store.name) : f.slug),
               }));
             }}
-            className="max-w-xs rounded border-2 border-stone-300 bg-white px-3 py-2 text-stone-900 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30 text-sm"
-          >
-            <option value="">— Add new store —</option>
-            {stores.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
+          />
         </div>
 
         {/* Coupon Type */}
@@ -983,36 +1052,12 @@ export default function AdminCouponsPage() {
                     </td>
                     <td className="px-2 sm:px-4 py-2 sm:py-3">
                       <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const store = getBestStoreForName(c.name ?? "");
-                            setShowCreateForm(true);
-                            setForm({
-                              id: c.id,
-                              name: c.name,
-                              slug: store?.slug ?? c.slug ?? (c.name ? slugify(c.name) : ""),
-                              selectedStoreId: store?.id ?? "",
-                              description: c.description,
-                              logoUrl: c.logoUrl,
-                              expiry: c.expiry,
-                              link: c.link,
-                              status: c.status,
-                              couponType: c.couponType ?? "deal",
-                              couponCode: c.couponCode,
-                              couponTitle: c.couponTitle,
-                              showCodeButtonText: c.showCodeButtonText,
-                              badgeLabel: c.badgeLabel,
-                              priority: c.priority ?? 0,
-                              active: c.status !== "disable",
-                              verified: c.verified !== false,
-                            });
-                            setEditingId(c.id);
-                          }}
-                          className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-500"
+                        <Link
+                          href={editHref(c.id)}
+                          className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-500 inline-block"
                         >
                           Edit
-                        </button>
+                        </Link>
                         <button
                           type="button"
                           onClick={() => handleDelete(c.id)}
@@ -1060,5 +1105,17 @@ export default function AdminCouponsPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function AdminCouponsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="p-8 text-center text-slate-500 text-sm">Loading…</div>
+      }
+    >
+      <AdminCouponsPageContent />
+    </Suspense>
   );
 }

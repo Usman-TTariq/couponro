@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidateTag, revalidatePath } from "next/cache";
 import {
   getStores,
+  getStoreById,
   insertStore,
   updateStore,
   deleteStore,
-  updateCouponSlugsForStoreName,
+  syncCouponsAfterStoreUpdate,
 } from "@/lib/stores";
 import type { Store } from "@/types/store";
 import { slugify } from "@/lib/slugify";
@@ -123,8 +124,7 @@ export async function PUT(request: NextRequest) {
         { status: 400 }
       );
     }
-    const stores = await getStores();
-    const existing = stores.find((s) => s.id === id) ?? null;
+    const existing = await getStoreById(id);
     const store = pickStoreFromBody(body, existing ?? undefined);
     store.id = id;
     if (existing?.createdAt) store.createdAt = existing.createdAt;
@@ -134,12 +134,23 @@ export async function PUT(request: NextRequest) {
     if (newSlug) revalidatePath(`/stores/${newSlug}`);
     const oldSlug = (existing?.slug ?? slugify(existing?.name ?? "")).trim();
     if (oldSlug && oldSlug !== newSlug) revalidatePath(`/stores/${oldSlug}`);
-    if (newSlug) {
+
+    const oldName = (existing?.name ?? "").trim();
+    const newName = (store.name ?? "").trim();
+    const nameChanged =
+      oldName.toLowerCase() !== newName.toLowerCase();
+    const slugChanged = oldSlug !== newSlug;
+
+    if (nameChanged || slugChanged) {
       try {
-        const synced = await updateCouponSlugsForStoreName(store.name ?? "", newSlug);
-        if (synced > 0) revalidateTag("coupons");
+        const { renamed, slugSynced } = await syncCouponsAfterStoreUpdate({
+          oldName,
+          newName,
+          newSlug,
+        });
+        if (renamed > 0 || slugSynced > 0) revalidateTag("coupons");
       } catch (e) {
-        console.error("[api/stores] PUT: sync coupon slugs:", e);
+        console.error("[api/stores] PUT: sync coupons after store update:", e);
       }
     }
     return NextResponse.json(store);

@@ -62,9 +62,14 @@ export default function StorePageContent({
     const c = storeCoupons.find((x) => (x.id ?? "").trim() === initialPopupId.trim());
     if (c) setPopupCoupon(c);
   }, [initialPopupId, storeCoupons]);
-  /* Single list: all coupons, codes first then deals (no tabs/search on inner store page) */
+  /* Priority first (lower = higher), then codes before deals */
   const filtered = useMemo(() => {
-    return [...storeCoupons].sort((a, b) => (hasActualCode(b) ? 1 : 0) - (hasActualCode(a) ? 1 : 0));
+    return [...storeCoupons].sort((a, b) => {
+      const pa = a.priority ?? 999;
+      const pb = b.priority ?? 999;
+      if (pa !== pb) return pa - pb;
+      return (hasActualCode(b) ? 1 : 0) - (hasActualCode(a) ? 1 : 0);
+    });
   }, [storeCoupons]);
 
   const description = store?.description || storeCoupons[0]?.description || "";
@@ -247,7 +252,7 @@ export default function StorePageContent({
             <div className="rounded-2xl border-2 border-rebecca/20 bg-white p-5 shadow-md">
               {sidebarLogoUrl ? (
                 <div className="w-full flex justify-center mb-4">
-                  <div className="w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center bg-almond/50 rounded-xl p-2">
+                  <div className="w-36 h-36 sm:w-44 sm:h-44 flex items-center justify-center bg-almond/50 rounded-xl p-1.5">
                     <img
                       src={sidebarLogoUrl}
                       alt={displayName}
@@ -257,8 +262,8 @@ export default function StorePageContent({
                 </div>
               ) : (
                 <div className="w-full flex justify-center mb-4">
-                  <div className="w-24 h-24 rounded-xl bg-almond flex items-center justify-center">
-                    <span className="text-4xl font-bold text-rebecca">{displayName?.charAt(0) ?? "?"}</span>
+                  <div className="w-36 h-36 sm:w-44 sm:h-44 rounded-xl bg-almond flex items-center justify-center">
+                    <span className="text-5xl font-bold text-rebecca">{displayName?.charAt(0) ?? "?"}</span>
                   </div>
                 </div>
               )}

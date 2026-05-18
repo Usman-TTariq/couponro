@@ -17,6 +17,15 @@ type FormState = Partial<Store> & {
   faqItems?: { question: string; answer: string }[];
 };
 
+function sortCouponsByPriority(list: Store[]): Store[] {
+  return [...list].sort((a, b) => {
+    const pa = a.priority ?? 999;
+    const pb = b.priority ?? 999;
+    if (pa !== pb) return pa - pb;
+    return (a.couponTitle ?? "").localeCompare(b.couponTitle ?? "");
+  });
+}
+
 export default function AdminStoresPage() {
   const [stores, setStores] = useState<Store[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,7 +48,19 @@ export default function AdminStoresPage() {
   const [removingDuplicates, setRemovingDuplicates] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [couponsModalStore, setCouponsModalStore] = useState<Store | null>(null);
+  const [modalCouponOrder, setModalCouponOrder] = useState<Store[]>([]);
+  const [dragCouponId, setDragCouponId] = useState<string | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [savingCouponOrder, setSavingCouponOrder] = useState(false);
+  const [initialEditName, setInitialEditName] = useState<string | null>(null);
   const uploadStoresInputRef = useRef<HTMLInputElement>(null);
+
+  const loadStoresOnly = async () => {
+    const storesRes = await fetchWithTimeout("/api/stores", { cache: "no-store" }, 30000);
+    const storesData = await storesRes.json();
+    setStores(Array.isArray(storesData) ? storesData : []);
+  };
 
   const load = async () => {
     setLoading(true);
@@ -72,6 +93,70 @@ export default function AdminStoresPage() {
     else couponCountByStore[name].inactive += 1;
   }
 
+  const storeNameKey = (name: string) => (name ?? "").trim().toLowerCase();
+
+  const getCouponsForStore = (storeName: string) =>
+    coupons.filter((c) => storeNameKey(c.name ?? "") === storeNameKey(storeName));
+
+  const openCouponsModal = (store: Store) => {
+    const list = sortCouponsByPriority(getCouponsForStore(store.name ?? ""));
+    setModalCouponOrder(list);
+    setCouponsModalStore(store);
+    setDragCouponId(null);
+    setDragOverIndex(null);
+  };
+
+  const closeCouponsModal = () => {
+    setCouponsModalStore(null);
+    setModalCouponOrder([]);
+    setDragCouponId(null);
+    setDragOverIndex(null);
+  };
+
+  const persistCouponPriorities = async (ordered: Store[]) => {
+    setSavingCouponOrder(true);
+    try {
+      for (let i = 0; i < ordered.length; i++) {
+        const c = ordered[i];
+        const res = await fetch("/api/coupons", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...c, priority: i }),
+        });
+        if (!res.ok) throw new Error("Failed to save order");
+      }
+      const priorityById = new Map(ordered.map((c, i) => [c.id, i]));
+      setCoupons((prev) =>
+        prev.map((c) =>
+          priorityById.has(c.id) ? { ...c, priority: priorityById.get(c.id) } : c
+        )
+      );
+      showMsg("ok", "Coupon order saved.");
+    } catch {
+      showMsg("err", "Failed to save coupon order");
+    } finally {
+      setSavingCouponOrder(false);
+    }
+  };
+
+  const handleCouponDrop = async (targetIndex: number) => {
+    if (!dragCouponId) return;
+    const fromIndex = modalCouponOrder.findIndex((c) => c.id === dragCouponId);
+    if (fromIndex < 0 || fromIndex === targetIndex) {
+      setDragCouponId(null);
+      setDragOverIndex(null);
+      return;
+    }
+    const next = [...modalCouponOrder];
+    const [moved] = next.splice(fromIndex, 1);
+    next.splice(targetIndex, 0, moved);
+    const withPriority = next.map((c, i) => ({ ...c, priority: i }));
+    setModalCouponOrder(withPriority);
+    setDragCouponId(null);
+    setDragOverIndex(null);
+    await persistCouponPriorities(withPriority);
+  };
+
   useEffect(() => {
     load();
   }, []);
@@ -90,6 +175,7 @@ export default function AdminStoresPage() {
     setEditingId(null);
     setShowCreateForm(false);
     setLogoFile(null);
+    setInitialEditName(null);
   };
 
   const handleDeleteAll = async () => {
@@ -372,8 +458,10 @@ export default function AdminStoresPage() {
               .filter(Boolean)
           : form.shoppingTipsBullets ?? [];
 
+      const storeId = (editingId ?? form.id ?? "").trim();
+
       const payload: Record<string, unknown> = {
-        id: editingId ?? undefined,
+        id: storeId || undefined,
         name,
         slug,
         autoGenerateSlug: form.autoGenerateSlug ?? true,
@@ -400,7 +488,8 @@ export default function AdminStoresPage() {
         status: form.status ?? "enable",
       };
 
-      if (editingId) {
+      if (storeId) {
+        const nameBeforeEdit = initialEditName;
         const res = await fetch("/api/stores", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -411,6 +500,30 @@ export default function AdminStoresPage() {
           throw new Error((d?.error as string) ?? "Update failed");
         }
         showMsg("ok", "Store updated");
+        resetForm();
+        await loadStoresOnly();
+        if (nameBeforeEdit) {
+          const oldKey = nameBeforeEdit.trim().toLowerCase();
+          const newKey = name.trim().toLowerCase();
+          if (oldKey !== newKey) {
+            setCoupons((prev) =>
+              prev.map((c) =>
+                (c.name ?? "").trim().toLowerCase() === oldKey
+                  ? { ...c, name, slug }
+                  : c
+              )
+            );
+          } else if (slug) {
+            setCoupons((prev) =>
+              prev.map((c) =>
+                (c.name ?? "").trim().toLowerCase() === newKey
+                  ? { ...c, slug }
+                  : c
+              )
+            );
+          }
+        }
+        return;
       } else {
         const res = await fetch("/api/stores", {
           method: "POST",
@@ -478,6 +591,7 @@ export default function AdminStoresPage() {
       status: s.status ?? "enable",
     });
     setEditingId(s.id);
+    setInitialEditName(s.name ?? "");
   };
 
   const addFaq = () => {
@@ -514,7 +628,8 @@ export default function AdminStoresPage() {
     });
   };
 
-  const showForm = showCreateForm || !!editingId;
+  const editingStoreId = (editingId ?? form.id ?? "").trim();
+  const showForm = showCreateForm || !!editingStoreId;
 
   return (
     <div className="space-y-6 max-w-6xl">
@@ -591,6 +706,7 @@ export default function AdminStoresPage() {
             type="button"
             onClick={() => {
               setEditingId(null);
+              setInitialEditName(null);
               setForm({ autoGenerateSlug: true, logoUploadMethod: "url", faqItems: [] });
               setShowCreateForm(true);
             }}
@@ -979,7 +1095,7 @@ export default function AdminStoresPage() {
             Mark as Trending
           </label>
           <div className="flex gap-3">
-            {editingId && (
+            {editingStoreId && (
               <button
                 type="button"
                 onClick={resetForm}
@@ -993,7 +1109,7 @@ export default function AdminStoresPage() {
               disabled={saving}
               className="rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-bold text-white hover:bg-blue-500 disabled:opacity-50 transition-colors"
             >
-              {saving ? "Saving…" : editingId ? "Update Store" : "Create Store"}
+              {saving ? "Saving…" : editingStoreId ? "Update Store" : "Create Store"}
             </button>
           </div>
         </div>
@@ -1086,7 +1202,16 @@ export default function AdminStoresPage() {
                         )}
                       </td>
                       <td className="px-4 py-3 text-slate-600">
-                        Total: {counts.total}, Active: {counts.active}, Inactive: {counts.inactive}
+                        <div className="text-xs leading-relaxed">
+                          Total: {counts.total}, Active: {counts.active}, Inactive: {counts.inactive}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => openCouponsModal(s)}
+                          className="mt-1.5 rounded-md bg-violet-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-violet-500 transition-colors"
+                        >
+                          View coupons
+                        </button>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex gap-2">
@@ -1114,6 +1239,138 @@ export default function AdminStoresPage() {
           </div>
         )}
       </div>
+
+      {/* Store coupons modal */}
+      {couponsModalStore && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="store-coupons-title"
+          onClick={closeCouponsModal}
+        >
+          <div
+            className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4">
+              <div>
+                <h2 id="store-coupons-title" className="text-lg font-bold text-slate-900">
+                  Coupons — {couponsModalStore.name ?? "Store"}
+                </h2>
+                <p className="mt-1 text-sm text-slate-600">
+                  {modalCouponOrder.length} coupon{modalCouponOrder.length !== 1 ? "s" : ""} ·{" "}
+                  {modalCouponOrder.filter((c) => c.status !== "disable").length} active ·{" "}
+                  {modalCouponOrder.filter((c) => c.status === "disable").length} inactive
+                </p>
+                <p className="mt-1 text-xs text-violet-700">
+                  Drag rows to set display order (priority). Top = shown first on store page.
+                  {savingCouponOrder && <span className="ml-2 text-slate-500">Saving…</span>}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeCouponsModal}
+                className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                aria-label="Close"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="overflow-y-auto flex-1 px-5 py-4">
+              {modalCouponOrder.length === 0 ? (
+                <p className="text-center text-slate-500 py-8">No coupons for this store.</p>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-left">
+                      <th className="pb-2 pr-2 w-8 font-semibold text-slate-700" aria-label="Drag" />
+                      <th className="pb-2 pr-3 font-semibold text-slate-700">#</th>
+                      <th className="pb-2 pr-3 font-semibold text-slate-700">Title</th>
+                      <th className="pb-2 pr-3 font-semibold text-slate-700">Code</th>
+                      <th className="pb-2 pr-3 font-semibold text-slate-700">Status</th>
+                      <th className="pb-2 font-semibold text-slate-700">Expiry</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {modalCouponOrder.map((c, idx) => (
+                      <tr
+                        key={c.id}
+                        draggable={!savingCouponOrder}
+                        onDragStart={() => setDragCouponId(c.id)}
+                        onDragEnd={() => {
+                          setDragCouponId(null);
+                          setDragOverIndex(null);
+                        }}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          setDragOverIndex(idx);
+                        }}
+                        onDragLeave={() => setDragOverIndex((i) => (i === idx ? null : i))}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          void handleCouponDrop(idx);
+                        }}
+                        className={`border-b border-slate-100 last:border-0 transition-colors ${
+                          dragCouponId === c.id ? "opacity-40 bg-slate-50" : ""
+                        } ${dragOverIndex === idx && dragCouponId !== c.id ? "bg-violet-50 ring-1 ring-violet-200" : ""} ${
+                          savingCouponOrder ? "pointer-events-none" : ""
+                        }`}
+                      >
+                        <td className="py-2.5 pr-2 text-slate-400 cursor-grab active:cursor-grabbing">
+                          <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden>
+                            <path d="M7 4a1 1 0 11-2 0 1 1 0 012 0zm6 0a1 1 0 11-2 0 1 1 0 012 0zM7 10a1 1 0 11-2 0 1 1 0 012 0zm6 0a1 1 0 11-2 0 1 1 0 012 0zM7 16a1 1 0 11-2 0 1 1 0 012 0zm6 0a1 1 0 11-2 0 1 1 0 012 0z" />
+                          </svg>
+                        </td>
+                        <td className="py-2.5 pr-3 text-slate-500 font-mono text-xs">{idx + 1}</td>
+                        <td className="py-2.5 pr-3 text-slate-900 max-w-[200px]">
+                          <span className="line-clamp-2" title={c.couponTitle ?? ""}>
+                            {c.couponTitle?.trim() || "–"}
+                          </span>
+                        </td>
+                        <td className="py-2.5 pr-3 font-medium text-slate-800">
+                          {c.couponCode?.trim() || "–"}
+                        </td>
+                        <td className="py-2.5 pr-3">
+                          <span
+                            className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${
+                              c.status === "disable"
+                                ? "bg-slate-200 text-slate-600"
+                                : "bg-emerald-100 text-emerald-800"
+                            }`}
+                          >
+                            {c.status === "disable" ? "Inactive" : "Active"}
+                          </span>
+                        </td>
+                        <td className="py-2.5 text-slate-600 whitespace-nowrap">
+                          {c.expiry?.trim() || "–"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+            <div className="border-t border-slate-200 px-5 py-3 flex justify-end gap-2 shrink-0">
+              <a
+                href={`/admin/coupons`}
+                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Open Coupons admin
+              </a>
+              <button
+                type="button"
+                onClick={closeCouponsModal}
+                className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
