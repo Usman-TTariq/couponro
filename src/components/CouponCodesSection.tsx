@@ -3,16 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { Store } from "@/types/store";
+import { getCouponCircleBadge } from "@/lib/coupon-circle-badge";
 
 type Props = {
   coupons: Store[];
   storeByName: Record<string, { logoUrl?: string }>;
 };
-
-function parseDiscount(text: string): string {
-  const match = text.match(/(\d+%|\$\d+|\d+\s*%|%\s*off)/i);
-  return match ? match[1].trim() : "";
-}
 
 function getCouponCode(c: Store): string {
   const code = c.couponCode ?? (c as Record<string, unknown>).coupon_code ?? "";
@@ -69,7 +65,7 @@ function CouponCodeCard({
   const slug = coupon.slug || coupon.name?.toLowerCase().replace(/\s+/g, "-") || "";
   const title = coupon.couponTitle?.trim() || coupon.badgeLabel?.trim() || `${coupon.name} discount`;
   const description = coupon.description?.trim() || `Use this code at checkout for ${coupon.name}.`;
-  const discountStr = parseDiscount(coupon.badgeLabel ?? coupon.couponTitle ?? "") || "CODE";
+  const discountStr = getCouponCircleBadge(coupon);
   const isVerified = coupon.verified !== false;
 
   const handleClick = () => {

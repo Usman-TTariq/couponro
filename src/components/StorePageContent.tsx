@@ -7,18 +7,15 @@ import { getShowCodeButtonLabel } from "@/lib/coupon-button-labels";
 import { getCouponDetailPath } from "@/lib/coupon-slug";
 import { copyToClipboardIfNonEmpty } from "@/lib/copy-to-clipboard";
 import CouponPopup from "@/components/CouponPopup";
+import {
+  getCouponCircleBadge,
+  isDefaultCircleBadge,
+} from "@/lib/coupon-circle-badge";
 
 function newCopyId(): string {
   return typeof crypto !== "undefined" && crypto.randomUUID
     ? crypto.randomUUID()
     : `c_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
-}
-
-function getCouponBadge(c: Store): string {
-  const text = [c.badgeLabel ?? "", c.couponTitle ?? ""].join(" ").trim();
-  const match = text.match(/(\$\d+(?:\.\d{1,2})?|\d+\s*%|%\s*off)/i);
-  if (match) return match[1].replace(/\s+/g, "").toUpperCase();
-  return (c.couponCode ?? "").toString().trim() ? "CODE" : "DEAL";
 }
 
 function hasActualCode(c: Store): boolean {
@@ -379,7 +376,8 @@ function StoreCouponCard({
   onOpenDetail: () => void;
   onOpenPopup: () => void;
 }) {
-  const badge = getCouponBadge(coupon);
+  const badge = getCouponCircleBadge(coupon);
+  const defaultBadge = isDefaultCircleBadge(badge);
   const code = getCouponCode(coupon);
   const hasCode = code.length > 0;
   const codeDisplay = code.toUpperCase();
@@ -391,9 +389,23 @@ function StoreCouponCard({
   return (
     <li className="group rounded-xl border-2 border-rebecca/20 bg-white p-3 sm:p-5 hover:border-rebecca/50 hover:shadow-md transition-all duration-200 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
       <div className="flex gap-3 sm:gap-4 flex-1 min-w-0">
-        <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-lobster text-white flex flex-col items-center justify-center overflow-hidden shadow-sm">
-          <span className={`font-extrabold leading-none tracking-wide ${badge === "DEAL" ? "text-lg sm:text-xl" : "text-sm sm:text-base"}`}>{badge}</span>
-          {badge !== "DEAL" ? <span className="text-[9px] font-semibold uppercase mt-1 opacity-95">Coupon</span> : null}
+        <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-lobster text-white flex flex-col items-center justify-center overflow-hidden shadow-sm px-1">
+          <span
+            className={`font-extrabold leading-tight tracking-wide text-center whitespace-pre-line ${
+              defaultBadge
+                ? badge === "DEAL"
+                  ? "text-lg sm:text-xl"
+                  : "text-sm sm:text-base"
+                : badge.includes("\n") || badge.length > 8
+                  ? "text-[9px] sm:text-[10px]"
+                  : "text-xs sm:text-sm"
+            }`}
+          >
+            {badge}
+          </span>
+          {badge === "CODE" ? (
+            <span className="text-[9px] font-semibold uppercase mt-1 opacity-95">Coupon</span>
+          ) : null}
         </div>
         <div className="min-w-0">
           {isVerified && (

@@ -11,29 +11,16 @@ import Footer from "@/components/Footer";
 import CouponPopup from "@/components/CouponPopup";
 import { getCouponDetailPath } from "@/lib/coupon-slug";
 import { copyToClipboardIfNonEmpty } from "@/lib/copy-to-clipboard";
+import {
+  getCouponCircleBadge,
+  isDefaultCircleBadge,
+} from "@/lib/coupon-circle-badge";
 
 const PER_PAGE = 12;
 
 function getCouponCode(c: Store): string {
   const code = c.couponCode ?? (c as Record<string, unknown>).coupon_code ?? "";
   return String(code).trim();
-}
-
-function parseDiscount(text: string): string {
-  const match = text.match(/(\d+%|\$\d+|\d+\s*%|%\s*off)/i);
-  return match ? match[1].trim() : "";
-}
-
-function getDiscountLabel(coupon: Store): string {
-  const haystack = [
-    coupon.badgeLabel ?? "",
-    coupon.couponTitle ?? "",
-  ]
-    .join(" ")
-    .trim();
-  const parsed = parseDiscount(haystack);
-  if (parsed) return parsed.replace(/\s+/g, " ").toUpperCase();
-  return getCouponCode(coupon).length > 0 ? "CODE" : "DEAL";
 }
 
 function newCopyId(): string {
@@ -300,7 +287,8 @@ function FeaturedCouponCard({
   const slug = coupon.slug || coupon.name?.toLowerCase().replace(/\s+/g, "-") || "";
   const offerTitle = coupon.couponTitle?.trim() || coupon.badgeLabel?.trim() || `${coupon.name} offer`;
   const description = coupon.description?.trim() || offerTitle;
-  const discountLabel = getDiscountLabel(coupon);
+  const discountLabel = getCouponCircleBadge(coupon);
+  const defaultBadge = isDefaultCircleBadge(discountLabel);
   const showCodeLabel = getShowCodeButtonLabel(coupon);
   const isVerified = coupon.verified !== false;
 
@@ -309,11 +297,21 @@ function FeaturedCouponCard({
       <div className="flex flex-col sm:flex-row gap-4 p-4 sm:p-5 items-start sm:items-center">
         {/* Left: discount badge (logo replaced) */}
         <div className="flex flex-col items-center sm:items-start gap-2 flex-shrink-0 sm:w-32">
-          <div className="w-24 h-24 rounded-full bg-lobster text-white flex flex-col items-center justify-center overflow-hidden shadow-sm">
-            <span className={`font-extrabold leading-none tracking-wide ${discountLabel === "DEAL" ? "text-2xl" : "text-xl"}`}>
+          <div className="w-24 h-24 rounded-full bg-lobster text-white flex flex-col items-center justify-center overflow-hidden shadow-sm px-1">
+            <span
+              className={`font-extrabold leading-tight tracking-wide text-center whitespace-pre-line ${
+                defaultBadge
+                  ? discountLabel === "DEAL"
+                    ? "text-2xl"
+                    : "text-xl"
+                  : discountLabel.includes("\n") || discountLabel.length > 8
+                    ? "text-[10px] sm:text-xs"
+                    : "text-sm sm:text-base"
+              }`}
+            >
               {discountLabel}
             </span>
-            {discountLabel !== "DEAL" ? (
+            {discountLabel === "CODE" ? (
               <span className="text-[10px] font-semibold uppercase mt-1 opacity-95">Coupon</span>
             ) : null}
           </div>

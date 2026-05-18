@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import type { Store } from "@/types/store";
 import { STORE_CATEGORIES } from "@/lib/store-categories";
 import { slugify } from "@/lib/slugify";
@@ -1354,12 +1355,12 @@ export default function AdminStoresPage() {
               )}
             </div>
             <div className="border-t border-slate-200 px-5 py-3 flex justify-end gap-2 shrink-0">
-              <a
-                href={`/admin/coupons`}
-                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              <Link
+                href={`/admin/coupons?store=${encodeURIComponent(couponsModalStore.name ?? "")}`}
+                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 inline-block"
               >
                 Open Coupons admin
-              </a>
+              </Link>
               <button
                 type="button"
                 onClick={closeCouponsModal}

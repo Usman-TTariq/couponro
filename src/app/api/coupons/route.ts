@@ -14,6 +14,7 @@ import {
 } from "@/lib/stores";
 import type { Store } from "@/types/store";
 import { slugify } from "@/lib/slugify";
+import { repairCouponTextFields } from "@/lib/fix-text-encoding";
 
 const SUPABASE_REQUEST_TIMEOUT_MS = 20000;
 
@@ -115,9 +116,10 @@ export async function POST(request: NextRequest) {
       active: body?.active !== false,
       verified: body?.verified !== false,
     };
-    await insertCoupon(coupon);
+    const saved = repairCouponTextFields(coupon);
+    await insertCoupon(saved);
     revalidateTag("coupons");
-    return NextResponse.json(coupon);
+    return NextResponse.json(saved);
   } catch (e) {
     console.error("[api/coupons] POST:", e);
     const msg = e instanceof Error ? e.message : "Failed to create coupon";
@@ -168,9 +170,10 @@ export async function PUT(request: NextRequest) {
       active: body?.active !== false,
       verified: body?.verified !== false,
     };
-    await updateCoupon(id, coupon);
+    const saved = repairCouponTextFields(coupon);
+    await updateCoupon(id, saved);
     revalidateTag("coupons");
-    return NextResponse.json(coupon);
+    return NextResponse.json(saved);
   } catch (e) {
     console.error("[api/coupons] PUT:", e);
     const msg = e instanceof Error ? e.message : "Failed to update coupon";

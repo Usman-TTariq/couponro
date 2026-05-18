@@ -12,24 +12,13 @@ import {
   getCouponPageSlug,
   getStoreSlugSegment,
 } from "@/lib/coupon-slug";
+import { getCouponCircleBadge } from "@/lib/coupon-circle-badge";
 
 type Props = { params: Promise<{ slug: string[] }> };
 
 function getCouponCode(c: Store): string {
   const code = c.couponCode ?? (c as Record<string, unknown>).coupon_code ?? "";
   return String(code).trim();
-}
-
-function parseDiscount(text: string): string {
-  const m = text.match(/(\$\d+(?:\.\d{1,2})?|\d+\s*%|%\s*off)/i);
-  return m ? m[1].replace(/\s+/g, "").toUpperCase() : "";
-}
-
-function getDiscountLabel(coupon: Store): string {
-  const text = [coupon.badgeLabel ?? "", coupon.couponTitle ?? ""].join(" ").trim();
-  const parsed = parseDiscount(text);
-  if (parsed) return parsed;
-  return getCouponCode(coupon) ? "CODE" : "DEAL";
 }
 
 async function resolveCouponPair(storeSlug: string, couponSlug: string): Promise<Store | null> {
@@ -120,7 +109,7 @@ export default async function CouponPage({ params }: Props) {
     if (!currentHasLogo && nextHasLogo) storeByNameWithLogo.set(key, s);
   }
   const title = getCouponDisplayTitle(coupon);
-  const discount = getDiscountLabel(coupon);
+  const discount = getCouponCircleBadge(coupon);
   const code = getCouponCode(coupon);
   const hasCode = code.length > 0;
   const link = (coupon.trackingUrl ?? coupon.storeWebsiteUrl ?? coupon.link ?? store?.trackingUrl ?? store?.storeWebsiteUrl ?? "").trim();
@@ -213,7 +202,7 @@ export default async function CouponPage({ params }: Props) {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {related.map((item) => {
                     const itemTitle = getCouponDisplayTitle(item);
-                    const itemDiscount = getDiscountLabel(item);
+                    const itemDiscount = getCouponCircleBadge(item);
                     const itemStore = storeByNameWithLogo.get((item.name ?? "").trim().toLowerCase());
                     const itemLogo = (itemStore?.logoUrl ?? item.logoUrl ?? "").trim();
                     return (
@@ -287,7 +276,7 @@ export default async function CouponPage({ params }: Props) {
                           {rLogo ? (
                             <img src={rLogo} alt={r.name ?? "Store"} className="w-full h-full object-contain p-0.5" />
                           ) : (
-                            <span className="text-[10px] font-bold text-lobster">{getDiscountLabel(r)}</span>
+                            <span className="text-[10px] font-bold text-lobster">{getCouponCircleBadge(r)}</span>
                           )}
                         </span>
                         <span className="line-clamp-1">{getCouponDisplayTitle(r)}</span>

@@ -7,6 +7,7 @@ import {
   SUPABASE_COUPONS_TABLE,
 } from "./supabase-server";
 import { slugify } from "./slugify";
+import { repairCouponTextFields } from "./fix-text-encoding";
 
 const CACHE_REVALIDATE = 15; // seconds – balance freshness (after delete/add) vs Supabase load
 
@@ -73,7 +74,10 @@ async function getStoresRaw(): Promise<Store[]> {
     const stores = (rows ?? [])
       .map((r: { id: string; data: Store }) => {
         if (!r.data) return null;
-        return { ...r.data, id: r.id || r.data.id || "" } as Store;
+        return repairCouponTextFields({
+          ...r.data,
+          id: r.id || r.data.id || "",
+        } as Store);
       })
       .filter(Boolean) as Store[];
     stores.sort((a, b) =>
@@ -106,7 +110,10 @@ export async function getStoreById(id: string): Promise<Store | null> {
   }
   if (!row?.data) return null;
   const r = row as { id: string; data: Store };
-  return { ...r.data, id: r.id || r.data.id || "" } as Store;
+  return repairCouponTextFields({
+    ...r.data,
+    id: r.id || r.data.id || "",
+  } as Store);
 }
 
 function requireSupabaseCoupons() {
@@ -188,7 +195,7 @@ function couponRowToStore(rowId: string, raw: unknown): Store {
   const link = linkPick ?? trackingPick ?? base.link;
   const trackingUrl = trackingPick ?? linkPick ?? base.trackingUrl ?? base.link;
 
-  return {
+  return repairCouponTextFields({
     ...base,
     id: pickStr(o, ["id"]) || rowId,
     name,
@@ -196,7 +203,7 @@ function couponRowToStore(rowId: string, raw: unknown): Store {
     couponTitle,
     ...(link ? { link } : {}),
     ...(trackingUrl ? { trackingUrl } : {}),
-  };
+  });
 }
 
 /** Fetch all coupon rows (PostgREST default max ~1000 per request — paginate). */

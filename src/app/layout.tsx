@@ -47,6 +47,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <meta charSet="utf-8" />
         <script async src="https://www.googletagmanager.com/gtag/js?id=AW-18023143985" />
         <script
           dangerouslySetInnerHTML={{

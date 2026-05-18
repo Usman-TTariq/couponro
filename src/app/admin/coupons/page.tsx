@@ -8,6 +8,7 @@ import { slugify } from "@/lib/slugify";
 import { parseCSV } from "@/lib/parse-csv";
 import { fetchWithTimeout } from "@/lib/fetch-with-timeout";
 import StoreSearchSelect from "@/components/admin/StoreSearchSelect";
+import { readTextFileWithEncoding, repairDisplayText } from "@/lib/fix-text-encoding";
 
 const UPLOAD_TIMEOUT_MS = 45000;
 const LOAD_TIMEOUT_MS = 25000;
@@ -16,6 +17,7 @@ function AdminCouponsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editIdFromUrl = searchParams.get("edit");
+  const storeFromUrl = searchParams.get("store");
 
   const [stores, setStores] = useState<Store[]>([]);
   const [coupons, setCoupons] = useState<Store[]>([]);
@@ -81,6 +83,14 @@ function AdminCouponsPageContent() {
   };
 
   useEffect(() => {
+    if (storeFromUrl != null && storeFromUrl !== searchQuery) {
+      setSearchQuery(storeFromUrl);
+      setPage(1);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sync filter when ?store= changes
+  }, [storeFromUrl]);
+
+  useEffect(() => {
     load();
   }, [page, statusFilter, searchQuery]);
 
@@ -144,7 +154,7 @@ function AdminCouponsPageContent() {
   const handleUploadCouponsCsv = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const text = await file.text();
+    const text = await readTextFileWithEncoding(file);
     let rows: Record<string, string>[];
     try {
       rows = parseCSV(text);
@@ -237,9 +247,9 @@ function AdminCouponsPageContent() {
         skipped++;
         continue;
       }
-      const title = (r["Title"] ?? r["title"] ?? "").trim();
-      const code = (r["Code"] ?? r["code"] ?? "").trim();
-      const desc = (r["Description"] ?? r["description"] ?? "").trim();
+      const title = repairDisplayText((r["Title"] ?? r["title"] ?? "").trim());
+      const code = repairDisplayText((r["Code"] ?? r["code"] ?? "").trim());
+      const desc = repairDisplayText((r["Description"] ?? r["description"] ?? "").trim());
       if (!desc && !title && !code) {
         skipped++;
         continue;
@@ -641,11 +651,30 @@ function AdminCouponsPageContent() {
       </div>
 
       <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 sm:gap-4">
+        {storeFromUrl ? (
+          <p className="w-full text-sm text-slate-600 rounded-lg bg-slate-100 border border-slate-200 px-3 py-2">
+            Showing coupons for{" "}
+            <span className="font-semibold text-slate-900">{storeFromUrl}</span>
+            {" · "}
+            <Link href="/admin/coupons" className="text-blue-600 hover:underline">
+              Show all stores
+            </Link>
+          </p>
+        ) : null}
         <input
           type="text"
           placeholder="Store name or Row ID..."
           value={searchQuery}
-          onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setPage(1);
+            if (storeFromUrl) {
+              const sp = new URLSearchParams(searchParams.toString());
+              sp.delete("store");
+              const q = sp.toString();
+              router.replace(q ? `/admin/coupons?${q}` : "/admin/coupons");
+            }
+          }}
           className="w-full sm:flex-1 sm:min-w-[200px] sm:max-w-xl rounded-lg border-2 border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:ring-2 focus:ring-slate-400/30 outline-none"
         />
         <div className="flex flex-wrap items-center gap-3">

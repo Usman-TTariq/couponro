@@ -10,6 +10,10 @@ import CouponPopup from "@/components/CouponPopup";
 import { getCouponDetailPath } from "@/lib/coupon-slug";
 import { getShowCodeButtonLabel } from "@/lib/coupon-button-labels";
 import { copyToClipboardIfNonEmpty } from "@/lib/copy-to-clipboard";
+import {
+  getCouponCircleBadge,
+  isDefaultCircleBadge,
+} from "@/lib/coupon-circle-badge";
 
 const SITE_NAME = "SeemPromo";
 const PER_PAGE = 12;
@@ -18,11 +22,6 @@ type SortBy = "newest" | "popularity" | "ending_soon" | "expired";
 function getCouponCode(c: Store): string {
   const code = c.couponCode ?? (c as Record<string, unknown>).coupon_code ?? "";
   return String(code).trim();
-}
-
-function parseDiscount(text: string): string {
-  const match = text.match(/(\d+%|\$\d+|\d+\s*%|%\s*off)/i);
-  return match ? match[1].trim() : "";
 }
 
 function newCopyId(): string {
@@ -357,8 +356,12 @@ function FeaturedDealCard({
   const slug = deal.slug || deal.name?.toLowerCase().replace(/\s+/g, "-") || "";
   const offerTitle = deal.couponTitle?.trim() || deal.badgeLabel?.trim() || `${deal.name} offer`;
   const description = deal.description?.trim() || offerTitle;
-  const discountStr = parseDiscount(deal.badgeLabel ?? deal.couponTitle ?? "");
-  const dealLabel = discountStr ? `${discountStr} OFF` : "DEAL";
+  const badge = getCouponCircleBadge(deal);
+  const dealLabel = isDefaultCircleBadge(badge)
+    ? badge
+    : badge.includes("%") || badge.startsWith("$")
+      ? `${badge.replace(/\n/g, " ")} OFF`
+      : badge.replace(/\n/g, " ");
   const actionLabel = getShowCodeButtonLabel(deal);
 
   return (

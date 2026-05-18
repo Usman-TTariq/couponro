@@ -4,6 +4,7 @@ import { getCouponsRaw, insertCoupon, updateCoupon } from "@/lib/stores";
 import { couponImportDedupeKey } from "@/lib/coupon-import-dedupe";
 import type { Store } from "@/types/store";
 import { slugify } from "@/lib/slugify";
+import { repairCouponTextFields } from "@/lib/fix-text-encoding";
 
 function newId(): string {
   return `c_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
@@ -121,8 +122,9 @@ export async function POST(request: NextRequest) {
           id: existing.id,
           createdAt: existing.createdAt,
         };
-        await updateCoupon(existing.id, merged);
-        byKey.set(key, merged);
+        const fixed = repairCouponTextFields(merged);
+        await updateCoupon(existing.id, fixed);
+        byKey.set(key, fixed);
         updated++;
       } else {
         const id = typeof b?.id === "string" && b.id.trim() ? b.id.trim() : newId();
@@ -149,8 +151,9 @@ export async function POST(request: NextRequest) {
           active,
           verified,
         };
-        await insertCoupon(c);
-        byKey.set(key, c);
+        const fixed = repairCouponTextFields(c);
+        await insertCoupon(fixed);
+        byKey.set(key, fixed);
         created++;
       }
     }
