@@ -49,7 +49,11 @@ function pickStoreFromBody(body: Record<string, unknown>, existing?: Store): Sto
 
     subStoreName: typeof body?.subStoreName === "string" ? body.subStoreName : existing?.subStoreName,
     storePageHeading: typeof body?.storePageHeading === "string" ? body.storePageHeading : existing?.storePageHeading,
-    autoGenerateSlug: body?.autoGenerateSlug === true || (existing?.autoGenerateSlug !== false && body?.autoGenerateSlug !== false),
+    autoGenerateSlug:
+      body?.autoGenerateSlug === false
+        ? false
+        : body?.autoGenerateSlug === true ||
+          (existing?.autoGenerateSlug !== false && body?.autoGenerateSlug !== false),
     logoAltText: typeof body?.logoAltText === "string" ? body.logoAltText : existing?.logoAltText,
     logoUploadMethod: body?.logoUploadMethod === "upload" ? "upload" : (existing?.logoUploadMethod ?? "url"),
 
@@ -99,6 +103,17 @@ export async function POST(request: NextRequest) {
         { error: "name is required" },
         { status: 400 }
       );
+    }
+    const requestedId =
+      typeof body?.id === "string" ? body.id.trim() : "";
+    if (requestedId) {
+      const exists = await getStoreById(requestedId);
+      if (exists) {
+        return NextResponse.json(
+          { error: "Store already exists. Use update instead of create." },
+          { status: 409 }
+        );
+      }
     }
     const store = pickStoreFromBody(body);
     store.createdAt = new Date().toISOString();

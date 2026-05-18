@@ -39,6 +39,7 @@ export default function AdminStoresPage() {
     faqItems: [],
   });
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [logoUploading, setLogoUploading] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -174,6 +175,7 @@ export default function AdminStoresPage() {
       faqItems: [],
     });
     setEditingId(null);
+    setIsEditing(false);
     setShowCreateForm(false);
     setLogoFile(null);
     setInitialEditName(null);
@@ -446,9 +448,11 @@ export default function AdminStoresPage() {
     setSaving(true);
     try {
       const slug =
-        form.autoGenerateSlug !== false
-          ? slugify(name)
-          : (form.slug ?? "").trim() || slugify(name);
+        isEditing && form.autoGenerateSlug === false
+          ? (form.slug ?? "").trim() || slugify(name)
+          : form.autoGenerateSlug !== false
+            ? slugify(name)
+            : (form.slug ?? "").trim() || slugify(name);
 
       const faqs = form.faqItems?.filter((f) => f.question.trim() || f.answer.trim()) ?? [];
       const shoppingTipsBullets =
@@ -459,13 +463,12 @@ export default function AdminStoresPage() {
               .filter(Boolean)
           : form.shoppingTipsBullets ?? [];
 
-      const storeId = (editingId ?? form.id ?? "").trim();
-
       const payload: Record<string, unknown> = {
-        id: storeId || undefined,
         name,
         slug,
-        autoGenerateSlug: form.autoGenerateSlug ?? true,
+        autoGenerateSlug: isEditing
+          ? form.autoGenerateSlug === false
+          : form.autoGenerateSlug ?? true,
         subStoreName: form.subStoreName?.trim() || undefined,
         storePageHeading: form.storePageHeading?.trim() || undefined,
         logoUrl: form.logoUrl?.trim() || "",
@@ -489,12 +492,20 @@ export default function AdminStoresPage() {
         status: form.status ?? "enable",
       };
 
-      if (storeId) {
+      if (isEditing) {
+        const storeId = (editingId ?? form.id ?? "").trim();
+        if (!storeId) {
+          showMsg(
+            "err",
+            "Store ID is missing. Click Cancel, then Edit on the store again before saving."
+          );
+          return;
+        }
         const nameBeforeEdit = initialEditName;
         const res = await fetch("/api/stores", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          body: JSON.stringify({ ...payload, id: storeId }),
         });
         if (!res.ok) {
           const d = await res.json().catch(() => ({}));
@@ -562,12 +573,18 @@ export default function AdminStoresPage() {
   };
 
   const openEdit = (s: Store) => {
+    const rowId = (s.id ?? "").trim();
+    if (!rowId) {
+      showMsg("err", "This store has no database ID. Refresh the page and try again.");
+      return;
+    }
+    setIsEditing(true);
     setShowCreateForm(true);
     setForm({
-      id: s.id,
+      id: rowId,
       name: s.name,
-      slug: s.slug,
-      autoGenerateSlug: !!s.slug ? false : true,
+      slug: s.slug ?? slugify(s.name ?? ""),
+      autoGenerateSlug: false,
       subStoreName: s.subStoreName,
       storePageHeading: s.storePageHeading,
       logoUrl: s.logoUrl,
@@ -591,7 +608,7 @@ export default function AdminStoresPage() {
       markAsTrending: s.markAsTrending ?? false,
       status: s.status ?? "enable",
     });
-    setEditingId(s.id);
+    setEditingId(rowId);
     setInitialEditName(s.name ?? "");
   };
 
@@ -629,8 +646,8 @@ export default function AdminStoresPage() {
     });
   };
 
-  const editingStoreId = (editingId ?? form.id ?? "").trim();
-  const showForm = showCreateForm || !!editingStoreId;
+  const editingStoreId = isEditing ? (editingId ?? form.id ?? "").trim() : "";
+  const showForm = showCreateForm || isEditing;
 
   return (
     <div className="space-y-6 max-w-6xl">
@@ -707,6 +724,7 @@ export default function AdminStoresPage() {
             type="button"
             onClick={() => {
               setEditingId(null);
+              setIsEditing(false);
               setInitialEditName(null);
               setForm({ autoGenerateSlug: true, logoUploadMethod: "url", faqItems: [] });
               setShowCreateForm(true);
@@ -817,12 +835,16 @@ export default function AdminStoresPage() {
                   <input
                     type="checkbox"
                     checked={form.autoGenerateSlug !== false}
+                    disabled={isEditing}
                     onChange={(e) => setFormField("autoGenerateSlug", e.target.checked)}
                   />
                   Auto-generate from name
                 </label>
               </div>
-              <p className="mt-1 text-xs text-slate-500">URL will be: /stores/slug or /promotions/slug</p>
+              <p className="mt-1 text-xs text-slate-500">
+                URL will be: /stores/slug
+                {isEditing ? " — edit slug directly when updating a store." : ""}
+              </p>
             </div>
             <div>
               <label className={labelClass}>Logo Upload Method</label>
