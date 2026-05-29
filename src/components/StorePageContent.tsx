@@ -12,6 +12,7 @@ import {
   isDefaultCircleBadge,
   couponHasFreeShipping,
 } from "@/lib/coupon-circle-badge";
+import { getCouponOutboundUrl } from "@/lib/coupon-outbound-url";
 
 function newCopyId(): string {
   return typeof crypto !== "undefined" && crypto.randomUUID
@@ -131,18 +132,18 @@ export default function StorePageContent({
                 storeLogoUrl={store?.logoUrl}
                 onOpenDetail={() => {
                   const detailUrl = getCouponDetailPath(c);
-                  const trackingUrl = (c.trackingUrl ?? c.storeWebsiteUrl ?? c.link ?? store?.trackingUrl ?? store?.storeWebsiteUrl ?? "").toString().trim();
-                  if (trackingUrl && trackingUrl !== "#") {
-                    window.open(trackingUrl, "_blank", "noopener,noreferrer");
+                  const outboundUrl = getCouponOutboundUrl(c, store);
+                  if (outboundUrl && outboundUrl !== "#") {
+                    window.open(outboundUrl, "_blank", "noopener,noreferrer");
                   }
                   window.location.href = detailUrl;
                 }}
                 onOpenPopup={() => {
                   copyToClipboardIfNonEmpty(getCouponCode(c));
                   const base = slug ? `/stores/${encodeURIComponent(slug)}` : "/coupons";
-                  const trackingUrl = (c.trackingUrl ?? c.storeWebsiteUrl ?? c.link ?? store?.trackingUrl ?? store?.storeWebsiteUrl ?? "").toString().trim();
-                  if (trackingUrl && trackingUrl !== "#") {
-                    window.open(trackingUrl, "_blank", "noopener,noreferrer");
+                  const outboundUrl = getCouponOutboundUrl(c, store);
+                  if (outboundUrl && outboundUrl !== "#") {
+                    window.open(outboundUrl, "_blank", "noopener,noreferrer");
                   }
                   window.location.href = `${base}?popup=${encodeURIComponent(c.id)}&copy=${encodeURIComponent(newCopyId())}`;
                 }}

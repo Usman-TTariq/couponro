@@ -2,20 +2,11 @@
 
 import { useState, useEffect } from "react";
 import type { Store } from "@/types/store";
+import { getCouponOutboundUrl } from "@/lib/coupon-outbound-url";
 
 function getCode(c: Store): string {
   const code = c.couponCode ?? (c as Record<string, unknown>).coupon_code ?? "";
   return String(code).trim();
-}
-
-function getCouponUrl(c: Store, fallbackUrl?: string): string {
-  const u =
-    c.trackingUrl?.trim() ||
-    c.storeWebsiteUrl?.trim() ||
-    c.link?.trim() ||
-    fallbackUrl?.trim() ||
-    "";
-  return u || "#";
 }
 
 type Props = {
@@ -50,7 +41,9 @@ export default function CouponPopup({ coupon, onClose, storeLogoUrl, fallbackUrl
 
   const code = getCode(coupon);
   const hasCode = code.length > 0;
-  const url = getCouponUrl(coupon, fallbackUrl);
+  const url =
+    getCouponOutboundUrl(coupon, fallbackUrl ? { trackingUrl: fallbackUrl } : null) ||
+    "#";
   const title = coupon.couponTitle?.trim() || coupon.badgeLabel?.trim() || `${coupon.name ?? ""} offer`;
   const storeName = coupon.name?.trim() || "Store";
   const logoUrl = storeLogoUrl || coupon.logoUrl || "";

@@ -14,6 +14,7 @@ import {
   getCouponCircleBadge,
   isDefaultCircleBadge,
 } from "@/lib/coupon-circle-badge";
+import { getCouponOutboundUrl } from "@/lib/coupon-outbound-url";
 
 const SITE_NAME = "SeemPromo";
 const PER_PAGE = 12;
@@ -203,36 +204,18 @@ function DealsPageContent() {
                       onOpenDetail={() => {
                         const detailUrl = getCouponDetailPath(deal);
                         const storeInfo = storeByName[(deal.name ?? "").trim()];
-                        const trackingUrl = (
-                          deal.trackingUrl ??
-                          deal.storeWebsiteUrl ??
-                          deal.link ??
-                          storeInfo?.trackingUrl ??
-                          storeInfo?.storeWebsiteUrl ??
-                          ""
-                        )
-                          .toString()
-                          .trim();
-                        if (trackingUrl && trackingUrl !== "#") {
-                          window.open(trackingUrl, "_blank", "noopener,noreferrer");
+                        const outboundUrl = getCouponOutboundUrl(deal, storeInfo);
+                        if (outboundUrl && outboundUrl !== "#") {
+                          window.open(outboundUrl, "_blank", "noopener,noreferrer");
                         }
                         window.location.href = detailUrl;
                       }}
                       onOpenPopup={() => {
                         copyToClipboardIfNonEmpty(getCouponCode(deal));
                         const storeInfo = storeByName[(deal.name ?? "").trim()];
-                        const trackingUrl = (
-                          deal.trackingUrl ??
-                          deal.storeWebsiteUrl ??
-                          deal.link ??
-                          storeInfo?.trackingUrl ??
-                          storeInfo?.storeWebsiteUrl ??
-                          ""
-                        )
-                          .toString()
-                          .trim();
-                        if (trackingUrl && trackingUrl !== "#") {
-                          window.open(trackingUrl, "_blank", "noopener,noreferrer");
+                        const outboundUrl = getCouponOutboundUrl(deal, storeInfo);
+                        if (outboundUrl && outboundUrl !== "#") {
+                          window.open(outboundUrl, "_blank", "noopener,noreferrer");
                         }
                         window.location.href = `/deals?popup=${encodeURIComponent(deal.id)}&copy=${encodeURIComponent(newCopyId())}`;
                       }}

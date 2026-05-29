@@ -13,6 +13,7 @@ import {
   getStoreSlugSegment,
 } from "@/lib/coupon-slug";
 import { getCouponCircleBadge } from "@/lib/coupon-circle-badge";
+import { getCouponOutboundUrl } from "@/lib/coupon-outbound-url";
 
 type Props = { params: Promise<{ slug: string[] }> };
 
@@ -112,7 +113,7 @@ export default async function CouponPage({ params }: Props) {
   const discount = getCouponCircleBadge(coupon);
   const code = getCouponCode(coupon);
   const hasCode = code.length > 0;
-  const link = (coupon.trackingUrl ?? coupon.storeWebsiteUrl ?? coupon.link ?? store?.trackingUrl ?? store?.storeWebsiteUrl ?? "").trim();
+  const link = getCouponOutboundUrl(coupon, store).trim();
   const logoUrl = (store?.logoUrl ?? coupon.logoUrl ?? "").trim();
   const storeSlug = store?.slug || coupon.slug || coupon.name?.toLowerCase().replace(/\s+/g, "-") || "";
   const description = coupon.description?.trim() || `${coupon.name} coupon details and coupon information.`;

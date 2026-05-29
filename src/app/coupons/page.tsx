@@ -16,6 +16,7 @@ import {
   isDefaultCircleBadge,
   couponHasFreeShipping,
 } from "@/lib/coupon-circle-badge";
+import { getCouponOutboundUrl } from "@/lib/coupon-outbound-url";
 
 const PER_PAGE = 12;
 
@@ -138,36 +139,18 @@ function CouponsPageContent() {
                   onOpenDetail={() => {
                     const detailUrl = getCouponDetailPath(coupon);
                     const storeInfo = storeByName[(coupon.name ?? "").trim()];
-                    const trackingUrl = (
-                      coupon.trackingUrl ??
-                      coupon.storeWebsiteUrl ??
-                      coupon.link ??
-                      storeInfo?.trackingUrl ??
-                      storeInfo?.storeWebsiteUrl ??
-                      ""
-                    )
-                      .toString()
-                      .trim();
-                    if (trackingUrl && trackingUrl !== "#") {
-                      window.open(trackingUrl, "_blank", "noopener,noreferrer");
+                    const outboundUrl = getCouponOutboundUrl(coupon, storeInfo);
+                    if (outboundUrl && outboundUrl !== "#") {
+                      window.open(outboundUrl, "_blank", "noopener,noreferrer");
                     }
                     window.location.href = detailUrl;
                   }}
                   onOpenPopup={() => {
                     copyToClipboardIfNonEmpty(getCouponCode(coupon));
                     const storeInfo = storeByName[(coupon.name ?? "").trim()];
-                    const trackingUrl = (
-                      coupon.trackingUrl ??
-                      coupon.storeWebsiteUrl ??
-                      coupon.link ??
-                      storeInfo?.trackingUrl ??
-                      storeInfo?.storeWebsiteUrl ??
-                      ""
-                    )
-                      .toString()
-                      .trim();
-                    if (trackingUrl && trackingUrl !== "#") {
-                      window.open(trackingUrl, "_blank", "noopener,noreferrer");
+                    const outboundUrl = getCouponOutboundUrl(coupon, storeInfo);
+                    if (outboundUrl && outboundUrl !== "#") {
+                      window.open(outboundUrl, "_blank", "noopener,noreferrer");
                     }
                     window.location.href = `/coupons?popup=${encodeURIComponent(coupon.id)}&copy=${encodeURIComponent(newCopyId())}`;
                   }}

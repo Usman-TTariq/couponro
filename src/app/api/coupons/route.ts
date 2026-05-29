@@ -160,10 +160,9 @@ export async function PUT(request: NextRequest) {
       typeof body?.link === "string" ? body.link.trim() : existing.link ?? "";
     const link = linkTrim || undefined;
     const trackingTrim =
-      typeof body?.trackingUrl === "string"
-        ? body.trackingUrl.trim()
-        : existing.trackingUrl ?? "";
-    const trackingUrl = trackingTrim || linkTrim || undefined;
+      typeof body?.trackingUrl === "string" ? body.trackingUrl.trim() : "";
+    // Coupon URL (link) is canonical — do not keep a stale trackingUrl when link changes
+    const trackingUrl = linkTrim || trackingTrim || undefined;
     const badgeLabel =
       "badgeLabel" in body && body.badgeLabel != null
         ? String(body.badgeLabel).trim() || undefined
