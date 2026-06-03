@@ -48,6 +48,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
+        <meta name="p:domain_verify" content="e5644ea4a58ec8c6a00b6c15fca8af6f" />
         <script async src="https://www.googletagmanager.com/gtag/js?id=AW-18023143985" />
         <script
           dangerouslySetInnerHTML={{
