@@ -43,6 +43,8 @@ function AdminCouponsPageContent() {
   const [selectedCouponIds, setSelectedCouponIds] = useState<Set<string>>(new Set());
   const [deletingSelected, setDeletingSelected] = useState(false);
   const uploadCouponsInputRef = useRef<HTMLInputElement>(null);
+  /** Prevents ?edit= from re-opening the form after update/cancel while URL is still clearing */
+  const dismissedEditIdRef = useRef<string | null>(null);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const limit = 20;
@@ -115,6 +117,7 @@ function AdminCouponsPageContent() {
   };
 
   const resetForm = () => {
+    if (editingId) dismissedEditIdRef.current = editingId;
     setForm({
       couponType: "deal",
       priority: 0,
@@ -527,7 +530,11 @@ function AdminCouponsPageContent() {
   };
 
   useEffect(() => {
-    if (!editIdFromUrl) return;
+    if (!editIdFromUrl) {
+      dismissedEditIdRef.current = null;
+      return;
+    }
+    if (dismissedEditIdRef.current === editIdFromUrl) return;
     if (editingId === editIdFromUrl && showCreateForm) return;
 
     const inList = coupons.find((c) => c.id === editIdFromUrl);
