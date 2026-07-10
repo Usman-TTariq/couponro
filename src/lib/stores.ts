@@ -266,11 +266,26 @@ export async function getCouponsRaw(): Promise<Store[]> {
   });
 }
 
-export const getCoupons = unstable_cache(
-  getCouponsRaw,
-  ["coupons-list"],
-  { revalidate: CACHE_REVALIDATE, tags: ["coupons"] }
-);
+/** In-memory cache — full coupon list exceeds Next.js unstable_cache 2MB limit (~5k+ rows). */
+type CouponsMemoryCache = { data: Store[]; at: number };
+let couponsMemoryCache: CouponsMemoryCache | null = null;
+
+export function invalidateCouponsMemoryCache(): void {
+  couponsMemoryCache = null;
+}
+
+export async function getCoupons(): Promise<Store[]> {
+  const now = Date.now();
+  if (
+    couponsMemoryCache &&
+    now - couponsMemoryCache.at < CACHE_REVALIDATE * 1000
+  ) {
+    return couponsMemoryCache.data;
+  }
+  const data = await getCouponsRaw();
+  couponsMemoryCache = { data, at: now };
+  return data;
+}
 
 export type CouponsPaginatedOptions = {
   page: number;
@@ -283,6 +298,102 @@ export type CouponsPaginatedOptions = {
 function hasCode(c: Store): boolean {
   const code = (c.couponCode ?? (c as Record<string, unknown>).coupon_code ?? "").toString().trim();
   return code.length > 0;
+}
+
+function escapePostgrestIlike(term: string): string {
+  return term.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
+}
+
+type CouponQueryFilters = Pick<CouponsPaginatedOptions, "status" | "search">;
+
+function applyCouponDbFilters<T extends { or: (filters: string) => T; eq: (col: string, val: string) => T }>(
+  query: T,
+  filters: CouponQueryFilters
+): T {
+  let q = query;
+  if (filters.status === "disable") {
+    q = q.eq("data->>status", "disable");
+  } else if (filters.status === "enable") {
+    q = q.or("data->>status.eq.enable,data->>status.is.null");
+  }
+  const search = filters.search?.trim();
+  if (search) {
+    const pattern = `%${escapePostgrestIlike(search)}%`;
+    q = q.or(
+      [
+        `data->>name.ilike.${pattern}`,
+        `data->>couponTitle.ilike.${pattern}`,
+        `data->>coupon_title.ilike.${pattern}`,
+        `data->>couponCode.ilike.${pattern}`,
+        `data->>coupon_code.ilike.${pattern}`,
+        `data->>link.ilike.${pattern}`,
+        `data->>trackingUrl.ilike.${pattern}`,
+        `data->>tracking_url.ilike.${pattern}`,
+        `id.ilike.${pattern}`,
+      ].join(",")
+    );
+  }
+  return q;
+}
+
+async function countFilteredCouponRows(filters: CouponQueryFilters): Promise<number> {
+  const supabase = getSupabaseCoupons();
+  if (!supabase) return 0;
+  let query = supabase
+    .from(SUPABASE_COUPONS_TABLE)
+    .select("id", { count: "exact", head: true });
+  query = applyCouponDbFilters(query, filters);
+  const { count, error } = await query;
+  if (error) {
+    const msg = summarizeSupabaseErrorMessage(error.message);
+    throw new Error(`Supabase coupons count: ${msg}`);
+  }
+  return typeof count === "number" ? count : 0;
+}
+
+async function fetchFilteredCouponPage(
+  filters: CouponQueryFilters,
+  rangeFrom: number,
+  rangeTo: number
+): Promise<{ id: string; data: unknown }[]> {
+  const supabase = getSupabaseCoupons();
+  if (!supabase) return [];
+  let query = supabase.from(SUPABASE_COUPONS_TABLE).select("id, data");
+  query = applyCouponDbFilters(query, filters);
+  query = query
+    .order("data->>priority", { ascending: true, nullsFirst: false })
+    .order("data->>createdAt", { ascending: false });
+  const { data: rows, error } = await query.range(rangeFrom, rangeTo);
+  if (error) {
+    const msg = summarizeSupabaseErrorMessage(error.message);
+    throw new Error(`Supabase coupons: ${msg}`);
+  }
+  return rows ?? [];
+}
+
+async function fetchAllFilteredCouponRows(
+  filters: CouponQueryFilters
+): Promise<{ id: string; data: unknown }[]> {
+  const out: { id: string; data: unknown }[] = [];
+  let from = 0;
+  for (;;) {
+    const batch = await fetchFilteredCouponPage(filters, from, from + COUPONS_PAGE_SIZE - 1);
+    out.push(...batch);
+    if (batch.length < COUPONS_PAGE_SIZE) break;
+    from += COUPONS_PAGE_SIZE;
+  }
+  return out;
+}
+
+function mapCouponRows(rows: { id: string; data: unknown }[]): Store[] {
+  const coupons = rows.map((r) => couponRowToStore(r.id ?? "", r.data)) as Store[];
+  coupons.sort((a, b) => {
+    const pa = a.priority ?? 999;
+    const pb = b.priority ?? 999;
+    if (pa !== pb) return pa - pb;
+    return (b.createdAt ?? "").localeCompare(a.createdAt ?? "");
+  });
+  return coupons;
 }
 
 /** Load one coupon row from DB (no list cache). */
@@ -311,36 +422,33 @@ export async function getCouponById(id: string): Promise<Store | null> {
 
 export async function getCouponsPaginated(
   options: CouponsPaginatedOptions,
-  useFreshData?: boolean
+  _useFreshData?: boolean
 ): Promise<{ coupons: Store[]; total: number }> {
-  const all = useFreshData ? await getCouponsRaw() : await getCoupons();
-  let list = all;
-  if (options.status && options.status !== "all") {
-    list = list.filter((c) => (c.status ?? "enable") === options.status);
-  }
-  if (options.search?.trim()) {
-    const q = options.search.trim().toLowerCase();
-    list = list.filter(
-      (c) =>
-        (c.name ?? "").toLowerCase().includes(q) ||
-        (c.id ?? "").toLowerCase().includes(q) ||
-        (c.couponTitle ?? "").toLowerCase().includes(q) ||
-        (c.couponCode ?? "").toLowerCase().includes(q) ||
-        (c.link ?? "").toLowerCase().includes(q) ||
-        (c.trackingUrl ?? "").toLowerCase().includes(q)
-    );
-  }
-  if (options.codesFirst) {
-    list = [...list].sort((a, b) => (hasCode(b) ? 1 : 0) - (hasCode(a) ? 1 : 0));
-  }
-  const totalFromList = list.length;
-  // Always use list length for pagination total. DB head-count can exceed rows returned (PostgREST limits)
-  // or diverge from parsed/filtered list — that made coupons look "missing" on admin pages.
-  const totalToUse = totalFromList;
-  if (options.limit <= 0) return { coupons: list, total: totalToUse };
-  const start = (options.page - 1) * options.limit;
-  const coupons = list.slice(start, start + options.limit);
-  return { coupons, total: totalToUse };
+  const filters: CouponQueryFilters = {
+    status: options.status,
+    search: options.search,
+  };
+
+  return withRetry("coupons-paginated", async () => {
+    const total = await countFilteredCouponRows(filters);
+
+    if (options.limit <= 0) {
+      const rows = await fetchAllFilteredCouponRows(filters);
+      let list = mapCouponRows(rows);
+      if (options.codesFirst) {
+        list = [...list].sort((a, b) => (hasCode(b) ? 1 : 0) - (hasCode(a) ? 1 : 0));
+      }
+      return { coupons: list, total };
+    }
+
+    const start = (options.page - 1) * options.limit;
+    const rows = await fetchFilteredCouponPage(filters, start, start + options.limit - 1);
+    let coupons = mapCouponRows(rows);
+    if (options.codesFirst) {
+      coupons = [...coupons].sort((a, b) => (hasCode(b) ? 1 : 0) - (hasCode(a) ? 1 : 0));
+    }
+    return { coupons, total };
+  });
 }
 
 export async function deleteAllCoupons(): Promise<void> {
@@ -353,6 +461,7 @@ export async function deleteAllCoupons(): Promise<void> {
   if (ids.length === 0) return;
   const { error } = await supabase.from(SUPABASE_COUPONS_TABLE).delete().in("id", ids);
   if (error) throw new Error(error.message);
+  invalidateCouponsMemoryCache();
 }
 
 export async function insertStore(store: Store): Promise<void> {
@@ -387,6 +496,7 @@ export async function insertCoupon(coupon: Store): Promise<void> {
     .from(SUPABASE_COUPONS_TABLE)
     .insert({ id: coupon.id, data: coupon });
   if (error) throw new Error(error.message);
+  invalidateCouponsMemoryCache();
 }
 
 export async function updateCoupon(id: string, coupon: Store): Promise<void> {
@@ -396,6 +506,7 @@ export async function updateCoupon(id: string, coupon: Store): Promise<void> {
     .update({ data: coupon })
     .eq("id", id);
   if (error) throw new Error(error.message);
+  invalidateCouponsMemoryCache();
 }
 
 export async function deleteCoupon(id: string): Promise<void> {
@@ -405,6 +516,7 @@ export async function deleteCoupon(id: string): Promise<void> {
     .delete()
     .eq("id", id);
   if (error) throw new Error(error.message);
+  invalidateCouponsMemoryCache();
 }
 
 const COUPON_UPDATE_BATCH = 10;
