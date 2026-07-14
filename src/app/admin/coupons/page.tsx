@@ -11,7 +11,7 @@ import StoreSearchSelect from "@/components/admin/StoreSearchSelect";
 import { readTextFileWithEncoding, repairDisplayText } from "@/lib/fix-text-encoding";
 
 const UPLOAD_TIMEOUT_MS = 45000;
-const LOAD_TIMEOUT_MS = 25000;
+const LOAD_TIMEOUT_MS = 45000;
 
 function AdminCouponsPageContent() {
   const router = useRouter();
@@ -24,7 +24,7 @@ function AdminCouponsPageContent() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [statusFilter, setStatusFilter] = useState<"all" | "enable" | "disable">("all");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(() => storeFromUrl ?? "");
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [form, setForm] = useState<Partial<Store> & { id?: string; selectedStoreId?: string }>({
     couponType: "deal",
@@ -49,20 +49,25 @@ function AdminCouponsPageContent() {
   const [total, setTotal] = useState(0);
   const limit = 20;
 
+  const loadStores = async () => {
+    try {
+      const sRes = await fetchWithTimeout("/api/stores", { cache: "no-store" }, LOAD_TIMEOUT_MS);
+      const sData = await sRes.json().catch(() => []);
+      setStores(Array.isArray(sData) ? sData : []);
+    } catch {
+      /* StoreSearchSelect can still work once stores recover */
+    }
+  };
+
   const load = async () => {
     setLoading(true);
     try {
-      const [sRes, cRes] = await Promise.all([
-        fetchWithTimeout("/api/stores", { cache: "no-store" }, LOAD_TIMEOUT_MS),
-        fetchWithTimeout(
-          `/api/coupons?page=${page}&limit=${limit}&status=${statusFilter}&q=${encodeURIComponent(searchQuery.trim())}&fresh=1`,
-          { cache: "no-store" },
-          LOAD_TIMEOUT_MS
-        ),
-      ]);
-      const sData = await sRes.json().catch(() => []);
+      const cRes = await fetchWithTimeout(
+        `/api/coupons?page=${page}&limit=${limit}&status=${statusFilter}&q=${encodeURIComponent(searchQuery.trim())}`,
+        { cache: "no-store" },
+        LOAD_TIMEOUT_MS
+      );
       const cData = await cRes.json().catch(() => ({}));
-      setStores(Array.isArray(sData) ? sData : []);
       if (!cRes.ok) {
         const errMsg = typeof cData?.error === "string" ? cData.error : "Failed to load coupons.";
         setMessage({ type: "err", text: errMsg });
@@ -86,6 +91,10 @@ function AdminCouponsPageContent() {
   };
 
   useEffect(() => {
+    void loadStores();
+  }, []);
+
+  useEffect(() => {
     if (storeFromUrl != null && storeFromUrl !== searchQuery) {
       setSearchQuery(storeFromUrl);
       setPage(1);
@@ -95,6 +104,7 @@ function AdminCouponsPageContent() {
 
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reload when page/filters change
   }, [page, statusFilter, searchQuery]);
 
   const showMsg = (type: "ok" | "err", text: string) => {

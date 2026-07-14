@@ -33,6 +33,9 @@ export default function AdminStoresPage() {
   const [message, setMessage] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [statusFilter, setStatusFilter] = useState<"all" | "enable" | "disable">("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 20;
   const [form, setForm] = useState<FormState>({
     autoGenerateSlug: true,
     logoUploadMethod: "url",
@@ -44,7 +47,9 @@ export default function AdminStoresPage() {
   const [logoUploading, setLogoUploading] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [coupons, setCoupons] = useState<Store[]>([]);
+  const [couponCountByStore, setCouponCountByStore] = useState<
+    Record<string, { total: number; active: number; inactive: number }>
+  >({});
   const [uploadingStores, setUploadingStores] = useState(false);
   const [uploadStoresProgress, setUploadStoresProgress] = useState<string | null>(null);
   const [removingDuplicates, setRemovingDuplicates] = useState(false);
@@ -52,60 +57,103 @@ export default function AdminStoresPage() {
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [couponsModalStore, setCouponsModalStore] = useState<Store | null>(null);
   const [modalCouponOrder, setModalCouponOrder] = useState<Store[]>([]);
+  const [modalCouponsLoading, setModalCouponsLoading] = useState(false);
   const [dragCouponId, setDragCouponId] = useState<string | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [savingCouponOrder, setSavingCouponOrder] = useState(false);
   const [initialEditName, setInitialEditName] = useState<string | null>(null);
   const uploadStoresInputRef = useRef<HTMLInputElement>(null);
+  const countsLoadedRef = useRef(false);
 
-  const loadStoresOnly = async () => {
-    const storesRes = await fetchWithTimeout("/api/stores", { cache: "no-store" }, 30000);
-    const storesData = await storesRes.json();
-    setStores(Array.isArray(storesData) ? storesData : []);
+  const loadCouponCounts = async () => {
+    try {
+      const countsRes = await fetchWithTimeout(
+        "/api/coupons?counts=1",
+        { cache: "no-store" },
+        45000
+      );
+      const countsData = await countsRes.json().catch(() => ({}));
+      if (countsData?.counts && typeof countsData.counts === "object") {
+        setCouponCountByStore(countsData.counts);
+      }
+    } catch {
+      /* counts are secondary — table still usable without them */
+    }
+  };
+
+  const storesListUrl = (opts?: { page?: number; limit?: number }) => {
+    const p = opts?.page ?? page;
+    const l = opts?.limit ?? limit;
+    return `/api/stores?page=${p}&limit=${l}&status=${statusFilter}&q=${encodeURIComponent(searchQuery.trim())}`;
   };
 
   const load = async () => {
     setLoading(true);
     try {
-      const [storesRes, couponsRes] = await Promise.all([
-        fetchWithTimeout("/api/stores", { cache: "no-store" }, 30000),
-        fetchWithTimeout("/api/coupons", { cache: "no-store" }, 30000),
-      ]);
-      const storesData = await storesRes.json();
-      const couponsData = await couponsRes.json().catch(() => []);
-      setStores(Array.isArray(storesData) ? storesData : []);
-      setCoupons(Array.isArray(couponsData) ? couponsData : []);
+      const storesRes = await fetchWithTimeout(storesListUrl(), { cache: "no-store" }, 30000);
+      const storesData = await storesRes.json().catch(() => ({}));
+      if (!storesRes.ok) {
+        throw new Error(typeof storesData?.error === "string" ? storesData.error : "Failed to load stores");
+      }
+      if (storesData?.stores && typeof storesData?.total === "number") {
+        setStores(Array.isArray(storesData.stores) ? storesData.stores : []);
+        setTotal(storesData.total);
+      } else {
+        setStores(Array.isArray(storesData) ? storesData : []);
+        setTotal(Array.isArray(storesData) ? storesData.length : 0);
+      }
+      setSelectedIds(new Set());
     } catch (e) {
       const msg = e instanceof Error && e.name === "AbortError"
         ? "Request timed out. Check Supabase connection."
-        : "Failed to load stores";
+        : e instanceof Error ? e.message : "Failed to load stores";
       setMessage({ type: "err", text: msg });
     } finally {
       setLoading(false);
     }
+    if (!countsLoadedRef.current) {
+      countsLoadedRef.current = true;
+      void loadCouponCounts();
+    }
   };
 
-  const couponCountByStore: Record<string, { total: number; active: number; inactive: number }> = {};
-  for (const c of coupons) {
-    const name = (c.name ?? "").trim();
-    if (!name) continue;
-    if (!couponCountByStore[name]) couponCountByStore[name] = { total: 0, active: 0, inactive: 0 };
-    couponCountByStore[name].total += 1;
-    if (c.status !== "disable") couponCountByStore[name].active += 1;
-    else couponCountByStore[name].inactive += 1;
-  }
+  const fetchAllMatchingStores = async (): Promise<Store[]> => {
+    const res = await fetchWithTimeout(storesListUrl({ page: 1, limit: 0 }), { cache: "no-store" }, 60000);
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(typeof data?.error === "string" ? data.error : "Failed to load stores");
+    if (Array.isArray(data?.stores)) return data.stores as Store[];
+    return Array.isArray(data) ? (data as Store[]) : [];
+  };
 
-  const storeNameKey = (name: string) => (name ?? "").trim().toLowerCase();
-
-  const getCouponsForStore = (storeName: string) =>
-    coupons.filter((c) => storeNameKey(c.name ?? "") === storeNameKey(storeName));
-
-  const openCouponsModal = (store: Store) => {
-    const list = sortCouponsByPriority(getCouponsForStore(store.name ?? ""));
-    setModalCouponOrder(list);
+  const openCouponsModal = async (store: Store) => {
     setCouponsModalStore(store);
+    setModalCouponOrder([]);
     setDragCouponId(null);
     setDragOverIndex(null);
+    setModalCouponsLoading(true);
+    try {
+      const name = (store.name ?? "").trim();
+      const res = await fetchWithTimeout(
+        `/api/coupons?storeName=${encodeURIComponent(name)}`,
+        { cache: "no-store" },
+        30000
+      );
+      const data = await res.json().catch(() => ({}));
+      const list = Array.isArray(data?.coupons) ? (data.coupons as Store[]) : [];
+      setModalCouponOrder(sortCouponsByPriority(list));
+      const active = list.filter((c) => c.status !== "disable").length;
+      const inactive = list.filter((c) => c.status === "disable").length;
+      if (name) {
+        setCouponCountByStore((prev) => ({
+          ...prev,
+          [name]: { total: list.length, active, inactive },
+        }));
+      }
+    } catch {
+      setMessage({ type: "err", text: "Failed to load store coupons" });
+    } finally {
+      setModalCouponsLoading(false);
+    }
   };
 
   const closeCouponsModal = () => {
@@ -113,6 +161,7 @@ export default function AdminStoresPage() {
     setModalCouponOrder([]);
     setDragCouponId(null);
     setDragOverIndex(null);
+    setModalCouponsLoading(false);
   };
 
   const persistCouponPriorities = async (ordered: Store[]) => {
@@ -127,12 +176,6 @@ export default function AdminStoresPage() {
         });
         if (!res.ok) throw new Error("Failed to save order");
       }
-      const priorityById = new Map(ordered.map((c, i) => [c.id, i]));
-      setCoupons((prev) =>
-        prev.map((c) =>
-          priorityById.has(c.id) ? { ...c, priority: priorityById.get(c.id) } : c
-        )
-      );
       showMsg("ok", "Coupon order saved.");
     } catch {
       showMsg("err", "Failed to save coupon order");
@@ -161,7 +204,8 @@ export default function AdminStoresPage() {
 
   useEffect(() => {
     load();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reload when page/filters change
+  }, [page, statusFilter, searchQuery]);
 
   const showMsg = (type: "ok" | "err", text: string) => {
     setMessage({ type, text });
@@ -184,29 +228,18 @@ export default function AdminStoresPage() {
   const handleDeleteAll = async () => {
     if (!confirm("Delete ALL stores? This cannot be undone.")) return;
     try {
-      for (const s of stores) {
+      const all = await fetchAllMatchingStores();
+      for (const s of all) {
         await fetch(`/api/stores?id=${encodeURIComponent(s.id)}`, { method: "DELETE" });
       }
       showMsg("ok", "All stores deleted");
       resetForm();
+      setPage(1);
       load();
     } catch {
       showMsg("err", "Failed to delete all");
     }
   };
-
-  const filteredStores = stores.filter((s) => {
-    if (statusFilter !== "all" && s.status !== statusFilter) return false;
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      return (
-        (s.name ?? "").toLowerCase().includes(q) ||
-        (s.slug ?? "").toLowerCase().includes(q) ||
-        (s.subStoreName ?? "").toLowerCase().includes(q)
-      );
-    }
-    return true;
-  });
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
@@ -218,10 +251,10 @@ export default function AdminStoresPage() {
   };
 
   const toggleSelectAll = () => {
-    if (selectedIds.size === filteredStores.length) {
+    if (selectedIds.size === stores.length) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(filteredStores.map((s) => s.id)));
+      setSelectedIds(new Set(stores.map((s) => s.id)));
     }
   };
 
@@ -253,8 +286,15 @@ export default function AdminStoresPage() {
 
   const handleRemoveDuplicateStores = async () => {
     const nameKey = (n: string) => (n ?? "").trim().toLowerCase();
+    let allStores: Store[];
+    try {
+      allStores = await fetchAllMatchingStores();
+    } catch {
+      showMsg("err", "Failed to load stores for duplicate check");
+      return;
+    }
     const byName: Record<string, Store[]> = {};
-    for (const s of stores) {
+    for (const s of allStores) {
       const k = nameKey(s.name);
       if (!byName[k]) byName[k] = [];
       byName[k].push(s);
@@ -276,6 +316,7 @@ export default function AdminStoresPage() {
         await fetch(`/api/stores?id=${encodeURIComponent(s.id)}`, { method: "DELETE" });
       }
       showMsg("ok", `Removed ${toDelete.length} duplicate store(s).`);
+      setPage(1);
       load();
     } catch {
       showMsg("err", "Failed to remove duplicates");
@@ -307,7 +348,27 @@ export default function AdminStoresPage() {
     let duplicatesRemoved = 0;
     let fail = 0;
     const nameKey = (n: string) => (n ?? "").trim().toLowerCase();
-    let storesList = [...stores];
+    let storesList: Store[];
+    try {
+      setUploadStoresProgress("Loading existing stores…");
+      const allRes = await fetchWithTimeout(
+        "/api/stores?page=1&limit=0&status=all&q=",
+        { cache: "no-store" },
+        60000
+      );
+      const allData = await allRes.json().catch(() => ({}));
+      storesList = Array.isArray(allData?.stores)
+        ? (allData.stores as Store[])
+        : Array.isArray(allData)
+          ? (allData as Store[])
+          : [];
+    } catch {
+      setUploadingStores(false);
+      setUploadStoresProgress(null);
+      e.target.value = "";
+      showMsg("err", "Failed to load existing stores before upload.");
+      return;
+    }
     for (let i = 0; i < rows.length; i++) {
       setUploadStoresProgress(`Uploading ${i + 1} of ${rows.length}…`);
       const r = rows[i];
@@ -377,25 +438,30 @@ export default function AdminStoresPage() {
     } else if (fail > 0) showMsg("err", `All ${fail} row(s) failed to upload.`);
   };
 
-  const handleExportCsv = () => {
-    const headers = ["Store ID", "Store Name", "Slug", "Country", "Category", "Tracking Link", "Status"];
-    const rows = filteredStores.map((s) => [
-      s.id,
-      s.name ?? "",
-      s.slug ?? "",
-      (s.countryCodes ?? "").split(",")[0]?.trim() ?? "",
-      (s.categories ?? [])[0] ?? "",
-      s.trackingUrl ?? s.storeWebsiteUrl ?? "",
-      s.status ?? "enable",
-    ]);
-    const csv = [headers.join(","), ...rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))].join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `stores-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(a.href);
-    showMsg("ok", "CSV exported");
+  const handleExportCsv = async () => {
+    try {
+      const all = await fetchAllMatchingStores();
+      const headers = ["Store ID", "Store Name", "Slug", "Country", "Category", "Tracking Link", "Status"];
+      const rows = all.map((s) => [
+        s.id,
+        s.name ?? "",
+        s.slug ?? "",
+        (s.countryCodes ?? "").split(",")[0]?.trim() ?? "",
+        (s.categories ?? [])[0] ?? "",
+        s.trackingUrl ?? s.storeWebsiteUrl ?? "",
+        s.status ?? "enable",
+      ]);
+      const csv = [headers.join(","), ...rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))].join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `stores-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      showMsg("ok", `CSV exported (${all.length} stores)`);
+    } catch {
+      showMsg("err", "Failed to export CSV");
+    }
   };
 
   const setFormField = <K extends keyof FormState>(key: K, value: FormState[K]) => {
@@ -501,7 +567,6 @@ export default function AdminStoresPage() {
           );
           return;
         }
-        const nameBeforeEdit = initialEditName;
         const res = await fetch("/api/stores", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -513,28 +578,7 @@ export default function AdminStoresPage() {
         }
         showMsg("ok", "Store updated");
         resetForm();
-        await loadStoresOnly();
-        if (nameBeforeEdit) {
-          const oldKey = nameBeforeEdit.trim().toLowerCase();
-          const newKey = name.trim().toLowerCase();
-          if (oldKey !== newKey) {
-            setCoupons((prev) =>
-              prev.map((c) =>
-                (c.name ?? "").trim().toLowerCase() === oldKey
-                  ? { ...c, name, slug }
-                  : c
-              )
-            );
-          } else if (slug) {
-            setCoupons((prev) =>
-              prev.map((c) =>
-                (c.name ?? "").trim().toLowerCase() === newKey
-                  ? { ...c, slug }
-                  : c
-              )
-            );
-          }
-        }
+        await load();
         return;
       } else {
         const res = await fetch("/api/stores", {
@@ -665,7 +709,10 @@ export default function AdminStoresPage() {
                 type="radio"
                 name="statusFilter"
                 checked={statusFilter === s}
-                onChange={() => setStatusFilter(s)}
+                onChange={() => {
+                  setStatusFilter(s);
+                  setPage(1);
+                }}
                 className="text-slate-600"
               />
               {s === "all" ? "All" : s === "enable" ? "Enable" : "Disable"}
@@ -681,7 +728,10 @@ export default function AdminStoresPage() {
               type="text"
               placeholder="Enter store name"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setPage(1);
+              }}
               className="pl-9 w-52 rounded-lg border-2 border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:ring-2 focus:ring-slate-400/30 outline-none"
             />
           </div>
@@ -1146,11 +1196,12 @@ export default function AdminStoresPage() {
             <div className="inline-block h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-emerald-500" />
             <p className="mt-3 text-sm text-slate-500">Loading…</p>
           </div>
-        ) : filteredStores.length === 0 ? (
+        ) : stores.length === 0 ? (
           <div className="p-12 text-center text-sm text-slate-500">
             No stores yet. Click &quot;Create New Store&quot; to add one.
           </div>
         ) : (
+          <>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -1158,7 +1209,7 @@ export default function AdminStoresPage() {
                   <th className="px-4 py-3 w-10">
                     <input
                       type="checkbox"
-                      checked={filteredStores.length > 0 && selectedIds.size === filteredStores.length}
+                      checked={stores.length > 0 && selectedIds.size === stores.length}
                       onChange={toggleSelectAll}
                       className="h-4 w-4 rounded border-slate-300 text-blue-600 cursor-pointer"
                       title="Select all"
@@ -1176,7 +1227,7 @@ export default function AdminStoresPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredStores.map((s, i) => {
+                {stores.map((s, i) => {
                   const counts = couponCountByStore[s.name ?? ""] ?? { total: 0, active: 0, inactive: 0 };
                   const country = (s.countryCodes ?? "").split(",")[0]?.trim() || "–";
                   const category = (s.categories ?? [])[0] ?? "–";
@@ -1195,7 +1246,7 @@ export default function AdminStoresPage() {
                           className="h-4 w-4 rounded border-slate-300 text-blue-600 cursor-pointer"
                         />
                       </td>
-                      <td className="px-4 py-3 font-mono text-sm text-slate-700">{i + 1}</td>
+                      <td className="px-4 py-3 font-mono text-sm text-slate-700">{(page - 1) * limit + i + 1}</td>
                       <td className="px-4 py-2">
                         {s.logoUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
@@ -1260,6 +1311,35 @@ export default function AdminStoresPage() {
               </tbody>
             </table>
           </div>
+          {total > limit && (
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-slate-50/50 px-3 sm:px-4 py-3">
+              <p className="text-sm text-slate-600">
+                Showing {(page - 1) * limit + 1}–{Math.min(page * limit, total)} of {total}
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                  className="rounded-lg border-2 border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:pointer-events-none"
+                >
+                  Previous
+                </button>
+                <span className="text-sm text-slate-600">
+                  Page {page} of {Math.ceil(total / limit) || 1}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.min(Math.ceil(total / limit), p + 1))}
+                  disabled={page >= Math.ceil(total / limit)}
+                  className="rounded-lg border-2 border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:pointer-events-none"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+          </>
         )}
       </div>
 
@@ -1303,7 +1383,9 @@ export default function AdminStoresPage() {
               </button>
             </div>
             <div className="overflow-y-auto flex-1 px-5 py-4">
-              {modalCouponOrder.length === 0 ? (
+              {modalCouponsLoading ? (
+                <p className="text-center text-slate-500 py-8">Loading coupons…</p>
+              ) : modalCouponOrder.length === 0 ? (
                 <p className="text-center text-slate-500 py-8">No coupons for this store.</p>
               ) : (
                 <table className="w-full text-sm">

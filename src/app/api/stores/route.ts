@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidateTag, revalidatePath } from "next/cache";
 import {
   getStores,
+  getStoresPaginated,
   getStoreById,
   insertStore,
   updateStore,
@@ -81,8 +82,25 @@ const CACHE_HEADERS = {
   "Cache-Control": "private, max-age=0, must-revalidate",
 };
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const page = searchParams.get("page");
+    const limit = searchParams.get("limit");
+    if (page !== null || limit !== null) {
+      const pageNum = Math.max(1, parseInt(page ?? "1", 10) || 1);
+      const parsedLimit = parseInt(limit ?? "20", 10);
+      const limitNum = limit === "0" ? 0 : Math.min(100, Math.max(0, parsedLimit) || 20);
+      const status = (searchParams.get("status") ?? "all") as "all" | "enable" | "disable";
+      const q = searchParams.get("q") ?? "";
+      const { stores, total } = await getStoresPaginated({
+        page: pageNum,
+        limit: limitNum,
+        status: status === "enable" || status === "disable" ? status : "all",
+        search: q,
+      });
+      return NextResponse.json({ stores, total }, { headers: CACHE_HEADERS });
+    }
     const stores = await getStores();
     return NextResponse.json(stores, { headers: CACHE_HEADERS });
   } catch (e) {

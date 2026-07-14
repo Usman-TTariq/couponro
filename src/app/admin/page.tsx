@@ -38,49 +38,71 @@ const quickActions = [
 ];
 
 export default function AdminDashboardPage() {
-  const [stores, setStores] = useState<Store[]>([]);
-  const [coupons, setCoupons] = useState<Store[]>([]);
+  const [recentCoupons, setRecentCoupons] = useState<Store[]>([]);
+  const [totalCoupons, setTotalCoupons] = useState(0);
+  const [activeCount, setActiveCount] = useState(0);
+  const [storeNames, setStoreNames] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [storeFilter, setStoreFilter] = useState<string>("all");
 
   useEffect(() => {
-    async function load() {
+    async function loadStores() {
+      try {
+        const sRes = await fetch("/api/stores?page=1&limit=0&status=all&q=", {
+          cache: "no-store",
+        });
+        const sData = await sRes.json().catch(() => ({}));
+        const list: Store[] = Array.isArray(sData?.stores)
+          ? sData.stores
+          : Array.isArray(sData)
+            ? sData
+            : [];
+        const names = Array.from(
+          new Set(list.map((s) => (s.name ?? "").trim()).filter(Boolean))
+        ).sort((a, b) => a.localeCompare(b));
+        setStoreNames(names);
+      } catch {
+        /* dropdown optional */
+      }
+    }
+    void loadStores();
+  }, []);
+
+  useEffect(() => {
+    async function loadCoupons() {
       setLoading(true);
       try {
-        const [sRes, cRes] = await Promise.all([
-          fetch("/api/stores", { cache: "no-store" }),
-          fetch("/api/coupons", { cache: "no-store" }),
+        const q = storeFilter === "all" ? "" : storeFilter;
+        const [allRes, activeRes, recentRes] = await Promise.all([
+          fetch("/api/coupons?page=1&limit=1&status=all", { cache: "no-store" }),
+          fetch("/api/coupons?page=1&limit=1&status=enable", { cache: "no-store" }),
+          fetch(
+            `/api/coupons?page=1&limit=10&status=enable&q=${encodeURIComponent(q)}`,
+            { cache: "no-store" }
+          ),
         ]);
-        const sData = await sRes.json();
-        const cData = await cRes.json();
-        setStores(Array.isArray(sData) ? sData : []);
-        setCoupons(Array.isArray(cData) ? cData : []);
+        const allData = await allRes.json().catch(() => ({}));
+        const activeData = await activeRes.json().catch(() => ({}));
+        const recentData = await recentRes.json().catch(() => ({}));
+
+        if (typeof allData?.total === "number") setTotalCoupons(allData.total);
+        if (typeof activeData?.total === "number") setActiveCount(activeData.total);
+        setRecentCoupons(
+          Array.isArray(recentData?.coupons) ? (recentData.coupons as Store[]) : []
+        );
       } finally {
         setLoading(false);
       }
     }
-    load();
-  }, []);
-
-  const activeCoupons = coupons.filter((c) => c.status !== "disable");
-  const totalCoupons = coupons.length;
-  const recentCoupons =
-    storeFilter === "all"
-      ? activeCoupons.slice(0, 10)
-      : activeCoupons
-          .filter((c) => c.name === storeFilter)
-          .slice(0, 10);
-
-  const storeNames = Array.from(
-    new Set(coupons.map((c) => c.name).filter(Boolean))
-  ).sort();
+    void loadCoupons();
+  }, [storeFilter]);
 
   const totalUses = 0;
   const avgDiscount = "0.00%";
 
   const statCards = [
     { label: "Total Coupons", value: totalCoupons, color: "text-blue-700", bg: "bg-blue-100 border-2 border-blue-400" },
-    { label: "Active Coupons", value: activeCoupons.length, color: "text-emerald-700", bg: "bg-emerald-100 border-2 border-emerald-500" },
+    { label: "Active Coupons", value: activeCount, color: "text-emerald-700", bg: "bg-emerald-100 border-2 border-emerald-500" },
     { label: "Total Uses", value: totalUses, color: "text-violet-700", bg: "bg-violet-100 border-2 border-violet-400" },
     { label: "Avg Discount", value: avgDiscount, color: "text-amber-700", bg: "bg-amber-100 border-2 border-amber-400" },
   ];
@@ -160,7 +182,11 @@ export default function AdminDashboardPage() {
             Recent Coupons
           </h2>
           <Link
-            href="/admin/coupons"
+            href={
+              storeFilter === "all"
+                ? "/admin/coupons"
+                : `/admin/coupons?store=${encodeURIComponent(storeFilter)}`
+            }
             className="text-xs font-bold text-emerald-600 hover:text-emerald-700"
           >
             View all →

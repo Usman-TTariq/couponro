@@ -93,6 +93,130 @@ export const getStores = unstable_cache(
   { revalidate: CACHE_REVALIDATE, tags: ["stores"] }
 );
 
+const STORES_PAGE_SIZE = 1000;
+
+export type StoresPaginatedOptions = {
+  page: number;
+  limit: number;
+  status?: "all" | "enable" | "disable";
+  search?: string;
+};
+
+type StoreQueryFilters = Pick<StoresPaginatedOptions, "status" | "search">;
+
+function escapePostgrestIlikeStore(term: string): string {
+  return term.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
+}
+
+function applyStoreDbFilters<T extends { or: (filters: string) => T; eq: (col: string, val: string) => T }>(
+  query: T,
+  filters: StoreQueryFilters
+): T {
+  let q = query;
+  if (filters.status === "disable") {
+    q = q.eq("data->>status", "disable");
+  } else if (filters.status === "enable") {
+    q = q.or("data->>status.eq.enable,data->>status.is.null");
+  }
+  const search = filters.search?.trim();
+  if (search) {
+    const pattern = `%${escapePostgrestIlikeStore(search)}%`;
+    q = q.or(
+      [
+        `data->>name.ilike.${pattern}`,
+        `data->>slug.ilike.${pattern}`,
+        `data->>subStoreName.ilike.${pattern}`,
+        `id.ilike.${pattern}`,
+      ].join(",")
+    );
+  }
+  return q;
+}
+
+function mapStoreRows(rows: { id: string; data: Store | null }[]): Store[] {
+  const stores = (rows ?? [])
+    .map((r) => {
+      if (!r.data) return null;
+      return repairCouponTextFields({
+        ...r.data,
+        id: r.id || r.data.id || "",
+      } as Store);
+    })
+    .filter(Boolean) as Store[];
+  stores.sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
+  return stores;
+}
+
+async function countFilteredStoreRows(filters: StoreQueryFilters): Promise<number> {
+  const supabase = getSupabase();
+  if (!supabase) return 0;
+  let query = supabase
+    .from(SUPABASE_STORES_TABLE)
+    .select("id", { count: "exact", head: true });
+  query = applyStoreDbFilters(query, filters);
+  const { count, error } = await query;
+  if (error) {
+    const msg = summarizeSupabaseErrorMessage(error.message);
+    throw new Error(`Supabase stores count: ${msg}`);
+  }
+  return typeof count === "number" ? count : 0;
+}
+
+async function fetchFilteredStorePage(
+  filters: StoreQueryFilters,
+  rangeFrom: number,
+  rangeTo: number
+): Promise<{ id: string; data: Store | null }[]> {
+  const supabase = getSupabase();
+  if (!supabase) return [];
+  let query = supabase.from(SUPABASE_STORES_TABLE).select("id, data");
+  query = applyStoreDbFilters(query, filters);
+  query = query.order("data->>createdAt", { ascending: false });
+  const { data: rows, error } = await query.range(rangeFrom, rangeTo);
+  if (error) {
+    const msg = summarizeSupabaseErrorMessage(error.message);
+    throw new Error(`Supabase stores: ${msg}`);
+  }
+  return (rows ?? []) as { id: string; data: Store | null }[];
+}
+
+async function fetchAllFilteredStoreRows(
+  filters: StoreQueryFilters
+): Promise<{ id: string; data: Store | null }[]> {
+  const out: { id: string; data: Store | null }[] = [];
+  let from = 0;
+  for (;;) {
+    const batch = await fetchFilteredStorePage(filters, from, from + STORES_PAGE_SIZE - 1);
+    out.push(...batch);
+    if (batch.length < STORES_PAGE_SIZE) break;
+    from += STORES_PAGE_SIZE;
+  }
+  return out;
+}
+
+/** Paginated stores for admin — avoids loading the full table on every page view. */
+export async function getStoresPaginated(
+  options: StoresPaginatedOptions
+): Promise<{ stores: Store[]; total: number }> {
+  const filters: StoreQueryFilters = {
+    status: options.status,
+    search: options.search,
+  };
+
+  return withRetry("stores-paginated", async () => {
+    const total = await countFilteredStoreRows(filters);
+
+    if (options.limit <= 0) {
+      const rows = await fetchAllFilteredStoreRows(filters);
+      return { stores: mapStoreRows(rows), total };
+    }
+
+    const start = (options.page - 1) * options.limit;
+    const rows = await fetchFilteredStorePage(filters, start, start + options.limit - 1);
+    return { stores: mapStoreRows(rows), total };
+  });
+}
+
 /** Single store by row id — avoids loading the full stores list on update. */
 export async function getStoreById(id: string): Promise<Store | null> {
   const trimmed = (id ?? "").trim();
@@ -270,8 +394,21 @@ export async function getCouponsRaw(): Promise<Store[]> {
 type CouponsMemoryCache = { data: Store[]; at: number };
 let couponsMemoryCache: CouponsMemoryCache | null = null;
 
+type CountsMemoryCache = { data: CouponStoreCounts; at: number };
+let countsMemoryCache: CountsMemoryCache | null = null;
+
+export type CouponStoreCounts = Record<
+  string,
+  { total: number; active: number; inactive: number }
+>;
+
 export function invalidateCouponsMemoryCache(): void {
   couponsMemoryCache = null;
+  countsMemoryCache = null;
+}
+
+export function invalidateCouponCountsMemoryCache(): void {
+  countsMemoryCache = null;
 }
 
 export async function getCoupons(): Promise<Store[]> {
@@ -284,6 +421,114 @@ export async function getCoupons(): Promise<Store[]> {
   }
   const data = await getCouponsRaw();
   couponsMemoryCache = { data, at: now };
+  return data;
+}
+
+/** Paginate coupons matching a single JSONB text column via ilike (exact, case-insensitive). */
+async function fetchCouponRowsByDataField(
+  column: "data->>slug" | "data->>name",
+  value: string
+): Promise<{ id: string; data: unknown }[]> {
+  const supabase = getSupabaseCoupons();
+  if (!supabase) return [];
+  const out: { id: string; data: unknown }[] = [];
+  let from = 0;
+  for (;;) {
+    const { data: rows, error } = await supabase
+      .from(SUPABASE_COUPONS_TABLE)
+      .select("id, data")
+      .ilike(column, value)
+      .range(from, from + COUPONS_PAGE_SIZE - 1);
+    if (error) {
+      const msg = summarizeSupabaseErrorMessage(error.message);
+      throw new Error(`Supabase coupons for store: ${msg}`);
+    }
+    const batch = rows ?? [];
+    out.push(...batch);
+    if (batch.length < COUPONS_PAGE_SIZE) break;
+    from += COUPONS_PAGE_SIZE;
+  }
+  return out;
+}
+
+/**
+ * Coupons for one store — filters in PostgREST instead of loading the full table.
+ * Matches by JSONB slug and/or store name (same fields used by the store page JS filter).
+ */
+export async function getCouponsForStore(opts: {
+  slug: string;
+  storeName?: string;
+  /** When true (admin), include disabled coupons. Public pages keep them filtered out. */
+  includeDisabled?: boolean;
+}): Promise<Store[]> {
+  const slug = opts.slug.toLowerCase().trim();
+  const storeName = (opts.storeName ?? "").trim();
+  if (!slug && !storeName) return [];
+
+  return withRetry("coupons-for-store", async () => {
+    const [bySlug, byName] = await Promise.all([
+      slug
+        ? fetchCouponRowsByDataField("data->>slug", slug)
+        : Promise.resolve([] as { id: string; data: unknown }[]),
+      storeName
+        ? fetchCouponRowsByDataField("data->>name", storeName)
+        : Promise.resolve([] as { id: string; data: unknown }[]),
+    ]);
+
+    const byId = new Map<string, { id: string; data: unknown }>();
+    for (const row of [...bySlug, ...byName]) {
+      byId.set(row.id, row);
+    }
+
+    const list = mapCouponRows([...byId.values()]);
+    if (opts.includeDisabled) return list;
+    return list.filter((c) => c.status !== "disable");
+  });
+}
+
+/**
+ * Per-store coupon totals without loading full coupon JSON payloads.
+ * Selects only name + status fields so admin Stores can show counts fast.
+ */
+export async function getCouponCountsByStoreName(): Promise<CouponStoreCounts> {
+  const now = Date.now();
+  if (
+    countsMemoryCache &&
+    now - countsMemoryCache.at < CACHE_REVALIDATE * 1000
+  ) {
+    return countsMemoryCache.data;
+  }
+
+  const data = await withRetry("coupon-counts", async () => {
+    const supabase = getSupabaseCoupons();
+    if (!supabase) return {} as CouponStoreCounts;
+    const counts: CouponStoreCounts = {};
+    let from = 0;
+    for (;;) {
+      const { data: rows, error } = await supabase
+        .from(SUPABASE_COUPONS_TABLE)
+        .select("name:data->>name, status:data->>status")
+        .range(from, from + COUPONS_PAGE_SIZE - 1);
+      if (error) {
+        const msg = summarizeSupabaseErrorMessage(error.message);
+        throw new Error(`Supabase coupon counts: ${msg}`);
+      }
+      const batch = (rows ?? []) as { name?: string | null; status?: string | null }[];
+      for (const row of batch) {
+        const name = (row.name ?? "").trim();
+        if (!name) continue;
+        if (!counts[name]) counts[name] = { total: 0, active: 0, inactive: 0 };
+        counts[name].total += 1;
+        if (row.status === "disable") counts[name].inactive += 1;
+        else counts[name].active += 1;
+      }
+      if (batch.length < COUPONS_PAGE_SIZE) break;
+      from += COUPONS_PAGE_SIZE;
+    }
+    return counts;
+  });
+
+  countsMemoryCache = { data, at: Date.now() };
   return data;
 }
 

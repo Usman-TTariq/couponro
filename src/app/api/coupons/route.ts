@@ -7,6 +7,8 @@ const CACHE_HEADERS = {
 import {
   getCoupons,
   getCouponsPaginated,
+  getCouponsForStore,
+  getCouponCountsByStoreName,
   getCouponByIdRaw,
   insertCoupon,
   updateCoupon,
@@ -17,7 +19,8 @@ import type { Store } from "@/types/store";
 import { slugify } from "@/lib/slugify";
 import { repairCouponTextFields } from "@/lib/fix-text-encoding";
 
-const SUPABASE_REQUEST_TIMEOUT_MS = 20000;
+const SUPABASE_REQUEST_TIMEOUT_MS = 45000;
+const SUPABASE_FULL_LIST_TIMEOUT_MS = 90000;
 
 function newId(): string {
   return `c_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
@@ -35,6 +38,28 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
+
+    if (searchParams.get("counts") === "1") {
+      const counts = await withTimeout(
+        getCouponCountsByStoreName(),
+        SUPABASE_FULL_LIST_TIMEOUT_MS
+      );
+      return NextResponse.json({ counts }, { headers: CACHE_HEADERS });
+    }
+
+    const storeName = (searchParams.get("storeName") ?? "").trim();
+    if (storeName) {
+      const coupons = await withTimeout(
+        getCouponsForStore({
+          slug: "",
+          storeName,
+          includeDisabled: true,
+        }),
+        SUPABASE_REQUEST_TIMEOUT_MS
+      );
+      return NextResponse.json({ coupons }, { headers: CACHE_HEADERS });
+    }
+
     const page = searchParams.get("page");
     const limit = searchParams.get("limit");
     if (page !== null || limit !== null) {
@@ -56,11 +81,11 @@ export async function GET(request: NextRequest) {
           },
           fresh
         ),
-        SUPABASE_REQUEST_TIMEOUT_MS
+        limitNum === 0 ? SUPABASE_FULL_LIST_TIMEOUT_MS : SUPABASE_REQUEST_TIMEOUT_MS
       );
       return NextResponse.json({ coupons, total }, { headers: CACHE_HEADERS });
     }
-    const coupons = await withTimeout(getCoupons(), SUPABASE_REQUEST_TIMEOUT_MS);
+    const coupons = await withTimeout(getCoupons(), SUPABASE_FULL_LIST_TIMEOUT_MS);
     return NextResponse.json(coupons, { headers: CACHE_HEADERS });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "";

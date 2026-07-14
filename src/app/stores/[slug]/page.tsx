@@ -1,6 +1,7 @@
+import { cache } from "react";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { getStores, getCoupons, slugify } from "@/lib/stores";
+import { getStores, getCouponsForStore, slugify } from "@/lib/stores";
 import { getBlogSlugForStore } from "@/lib/blog-posts";
 import type { Store } from "@/types/store";
 import Header from "@/components/Header";
@@ -60,14 +61,15 @@ export async function generateMetadata({
   }
 }
 
-async function getStoreData(slug: string): Promise<{
+/** Deduped across generateMetadata + page in the same request. */
+const getStoreData = cache(async (slug: string): Promise<{
   store: Store | null;
   storeCoupons: Store[];
   displayName: string;
   otherStores: Store[];
-}> {
+}> => {
   const raw = slug.toLowerCase().trim();
-  const [stores, coupons] = await Promise.all([getStores(), getCoupons()]);
+  const stores = await getStores();
   const enabledStores = stores.filter((s) => s.status !== "disable");
   const matchedStore = enabledStores.find(
     (s) =>
@@ -83,6 +85,15 @@ async function getStoreData(slug: string): Promise<{
       : undefined;
   const store = bestStoreForName ?? matchedStore ?? null;
   const storeNameKey = (store?.name ?? matchedStore?.name ?? "").trim().toLowerCase();
+  const displayNameCandidate =
+    store?.name ?? matchedStore?.name ?? "";
+
+  const coupons = await getCouponsForStore({
+    slug: raw,
+    storeName: displayNameCandidate || undefined,
+  });
+
+  // Keep the same client-side match rules for parity (slugify / normalizeSlug edge cases).
   const storeCoupons = coupons.filter((c) => {
     if (c.status === "disable") return false;
     const slugMatch =
@@ -92,6 +103,7 @@ async function getStoreData(slug: string): Promise<{
     if (storeNameKey && (c.name ?? "").trim().toLowerCase() === storeNameKey) return true;
     return false;
   });
+
   const displayName = store?.name ?? matchedStore?.name ?? storeCoupons[0]?.name ?? "Store";
   const withDisplayNameLogo =
     displayName.trim().length > 0
@@ -102,7 +114,7 @@ async function getStoreData(slug: string): Promise<{
   const effectiveStore = withDisplayNameLogo ?? store ?? matchedStore ?? null;
   const otherStores = enabledStores.filter((s) => s.id !== effectiveStore?.id).slice(0, 6);
   return { store: effectiveStore, storeCoupons, displayName, otherStores };
-}
+});
 
 export default async function StorePage({
   params,
